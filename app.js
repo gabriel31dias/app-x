@@ -303,6 +303,7 @@ function openModal(id) {
     document.body.style.overflow = "hidden";
   }
   if (id === "modal-withdraw") Saques.abrir();
+  if (id === "modal-deposit") Deposit.reset();
   if (id === "modal-profile" || id === "modal-notifications") Bonus.atualizar();
 }
 
@@ -810,18 +811,42 @@ function spinGenericSlot() {
 // PIX DEPOSIT INTEGRATION
 // ==========================================================================
 let selectedDepositAmount = null; // nada marcado: a pessoa escolhe antes de gerar
+const DEPOSIT_TEXT_INICIAL = "Apos gerar o PIX, o saldo sera creditado automaticamente quando o pagamento for confirmado.";
+const DEPOSIT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // PIX esquecido sai da fila depois de 1 dia
 const Deposit = {
-  current: null,
+  current: null, // PIX mostrado no modal agora
+  pending: [],   // PIX gerados e ainda não pagos: seguem sendo consultados mesmo com o modal fechado ou reaberto
   timer: null,
 
   load() {
-    try { return JSON.parse(localStorage.getItem("orama_pending_deposit")); } catch { return null; }
+    try {
+      const v = JSON.parse(localStorage.getItem("orama_pending_deposit"));
+      return (Array.isArray(v) ? v : v?.id ? [v] : []).filter(d => d?.id && Date.now() - (d.createdAt || 0) < DEPOSIT_MAX_AGE_MS);
+    } catch { return []; }
   },
 
-  save(deposit) {
-    this.current = deposit;
-    if (deposit) localStorage.setItem("orama_pending_deposit", JSON.stringify(deposit));
+  persist() {
+    if (this.pending.length) localStorage.setItem("orama_pending_deposit", JSON.stringify(this.pending));
     else localStorage.removeItem("orama_pending_deposit");
+  },
+
+  remove(dep) {
+    this.pending = this.pending.filter(d => d.id !== dep.id);
+    if (this.current?.id === dep.id) this.current = null;
+    this.persist();
+    if (!this.pending.length) clearInterval(this.timer);
+  },
+
+  // modal aberto: sempre formulário limpo, sem QR antigo. PIX anteriores continuam na fila de consulta.
+  reset() {
+    this.current = null;
+    selectedDepositAmount = null;
+    document.querySelectorAll(".btn-preset").forEach(b => b.classList.remove("selected"));
+    const input = document.getElementById("deposit-custom-val");
+    if (input) input.value = "";
+    this.setPixCode(null);
+    this.setStatus(DEPOSIT_TEXT_INICIAL);
+    this.setButton("Escolha um valor", true);
   },
 
   setStatus(message, kind = "info") {
@@ -877,7 +902,9 @@ const Deposit = {
         credited: false,
         createdAt: Date.now(),
       };
-      this.save(deposit);
+      this.current = deposit;
+      this.pending.push(deposit);
+      this.persist();
       this.setPixCode(deposit.pixEmv);
       this.setStatus("PIX gerado. Copie o codigo e pague; estou consultando ate confirmar.");
       this.setButton("Aguardando pagamento...", true);
@@ -892,81 +919,84 @@ const Deposit = {
 
   startPolling() {
     clearInterval(this.timer);
-    this.timer = setInterval(() => this.pollNow(), 3000);
+    if (this.pending.length) this.timer = setInterval(() => this.pollNow(), 3000);
   },
 
-  async pollNow() {
-    if (!this.current?.id) return;
-    try {
-      const data = await apiFetch(`/depositos/${encodeURIComponent(this.current.id)}`);
-      const status = String(data.status || this.current.status || "").toLowerCase();
-      this.current.status = status;
-      this.current.amountCents = data.grossAmountCents || this.current.amountCents;
-      this.current.pixEmv = data.pixEmv || this.current.pixEmv;
-      this.setPixCode(this.current.pixEmv);
+  pollNow() {
+    return Promise.all(this.pending.map(dep => this.pollOne(dep)));
+  },
 
-      if (PIX_SUCCESS_STATUSES.has(status)) {
-        this.credit(data);
-        return;
+  async pollOne(dep) {
+    const shown = () => this.current?.id === dep.id;
+    try {
+      const data = await apiFetch(`/depositos/${encodeURIComponent(dep.id)}`);
+      if (!this.pending.includes(dep)) return; // já resolvido por outra consulta
+      const status = String(data.status || dep.status || "").toLowerCase();
+      dep.status = status;
+      dep.amountCents = data.grossAmountCents || dep.amountCents;
+      dep.pixEmv = data.pixEmv || dep.pixEmv;
+
+      if (PIX_SUCCESS_STATUSES.has(status)) return this.credit(dep, data);
+      if (PIX_FAILURE_STATUSES.has(status)) return this.fail(dep, status);
+      this.persist();
+      if (shown()) {
+        this.setPixCode(dep.pixEmv);
+        this.setStatus(`Pagamento ainda ${status || "pendente"}. Consultando novamente...`);
       }
-      if (PIX_FAILURE_STATUSES.has(status)) {
-        this.fail(status);
-        return;
-      }
-      this.save(this.current);
-      this.setStatus(`Pagamento ainda ${status || "pendente"}. Consultando novamente...`);
     } catch (err) {
-      this.setStatus(`Nao consegui consultar agora: ${errorMessage(err)}`, "error");
+      if (shown()) this.setStatus(`Nao consegui consultar agora: ${errorMessage(err)}`, "error");
     }
   },
 
-  credit(data) {
-    clearInterval(this.timer);
-    const amount = centsToReais(data.grossAmountCents || this.current.amountCents);
-    if (!this.current.credited) {
+  credit(dep, data) {
+    const shown = this.current?.id === dep.id;
+    const amount = centsToReais(data.grossAmountCents || dep.amountCents);
+    if (!dep.credited) {
+      dep.credited = true;
       State.balance += amount;
       State.userXp += Math.floor(amount * 10);
-      const pending = State.depositHistory.find(item => item.status === "Aguardando" && item.amount === this.current.amount);
+      const pending = State.depositHistory.find(item => item.status === "Aguardando" && item.amount === dep.amount);
       if (pending) pending.status = "Aprovado";
       else State.depositHistory.unshift({ date: "Agora mesmo", amount, status: "Aprovado", method: "PIX" });
       updateBalanceUI();
       Sounds.playCoin();
       showToast(`Deposito de ${formatCurrency(amount)} creditado!`, "🎉");
     }
-    this.setStatus("Pagamento confirmado. Saldo atualizado.", "ok");
-    this.setButton("Gerar novo PIX");
-    this.save(null);
-    this.setPixCode(null);
+    this.remove(dep);
+    if (shown) {
+      this.setStatus("Pagamento confirmado. Saldo atualizado.", "ok");
+      this.setButton("Gerar novo PIX");
+      this.setPixCode(null);
+    }
   },
 
-  fail(status) {
-    clearInterval(this.timer);
-    const pending = State.depositHistory.find(item => item.status === "Aguardando" && item.amount === this.current.amount);
+  fail(dep, status) {
+    const shown = this.current?.id === dep.id;
+    const pending = State.depositHistory.find(item => item.status === "Aguardando" && item.amount === dep.amount);
     if (pending) pending.status = "Falhou";
-    this.setStatus(`Deposito ${status}. Gere um novo PIX para tentar novamente.`, "error");
-    this.setButton("Gerar novo PIX");
-    this.save(null);
-    this.setPixCode(null);
+    this.remove(dep);
+    if (shown) {
+      this.setStatus(`Deposito ${status}. Gere um novo PIX para tentar novamente.`, "error");
+      this.setButton("Gerar novo PIX");
+      this.setPixCode(null);
+    }
   },
 
+  // ao carregar a página: volta a consultar em segundo plano os PIX gerados antes (sem mostrar QR)
   resume() {
-    const pending = this.load();
-    if (!pending?.id) return;
-    this.current = pending;
-    this.setPixCode(pending.pixEmv);
-    this.setStatus("Ha um PIX pendente. Retomando consulta do pagamento...");
-    this.setButton("Aguardando pagamento...", true);
+    this.pending = this.load();
+    this.persist();
+    if (!this.pending.length) return;
     this.pollNow();
     this.startPolling();
   },
 };
 
-// escolher/trocar o valor: se já tinha um PIX gerado (e não pago), descarta e pede pra gerar de novo
+// escolher/trocar o valor: o PIX mostrado sai da tela (segue sendo consultado) e pede pra gerar de novo
 function setDepositAmount(amt) {
   selectedDepositAmount = amt >= 1 ? Math.round(amt * 100) / 100 : null;
-  if (Deposit.current && !Deposit.current.credited) {
-    clearInterval(Deposit.timer);
-    Deposit.save(null);
+  if (Deposit.current) {
+    Deposit.current = null;
     Deposit.setPixCode(null);
     Deposit.setStatus("Valor alterado. Gere um novo PIX.");
   }
@@ -1004,7 +1034,7 @@ function copyPixCode() {
 function confirmDeposit() {
   Sounds.playClick();
   if (!selectedDepositAmount) { Deposit.setStatus("Escolha um valor primeiro.", "error"); return; }
-  if (Deposit.current && !Deposit.current.credited) return; // já tem PIX gerado aguardando pagamento
+  if (Deposit.current) return; // já tem PIX na tela aguardando pagamento
   Deposit.create(selectedDepositAmount);
 }
 
