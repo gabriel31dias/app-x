@@ -102,10 +102,19 @@ paint_mask = np.zeros(bgimg.shape[:2], np.uint8)
 for name, g in LEGS.items():
     poly = lambda pts: np.array([(x - 60, y - 360) for x, y in pts], np.int32)
     m = np.zeros(full.shape[:2], np.uint8); cv2.fillPoly(m, [poly(g['cut'])], 255)
-    if name == 'rump': cv2.fillPoly(m, [poly(LEGS['leg_back']['cut'])], 0)  # a coxa é só da perna (senão sobra um pedaço quando ela chuta)
+    # bumbum e perna de trás rebolam: a borda do corte some aos poucos (senão o canto reto espeta pra fora
+    # da silhueta ao girar) e o corpo guarda uma faixa parada por cima dessa borda (hole encolhido)
+    twerk = name in ('rump', 'leg_back')
+    if twerk:
+        soft = cv2.GaussianBlur(cv2.erode(m, np.ones((13, 13), np.uint8)), (0, 0), 5)
+        if name == 'leg_back': cv2.fillPoly(soft, [poly(LEGS['rump']['cut'])], 0); m = np.maximum(soft, m & cv2.fillPoly(np.zeros_like(m), [poly(LEGS['rump']['cut'])], 255))  # colada no bumbum fica dura: os dois giram juntos
+        else: m = soft
+    if name == 'rump':  # a coxa é só da perna (senão sobra um pedaço quando ela chuta); 3px de sobra por cima da perna pra não abrir risco na emenda
+        m[cv2.erode(cv2.fillPoly(np.zeros_like(m), [poly(LEGS['leg_back']['cut'])], 255), np.ones((7, 7), np.uint8)) > 0] = 0
     piece = full.copy(); piece[..., 3] = (piece[..., 3].astype(np.uint16) * m // 255).astype(np.uint8)
     Image.fromarray(piece, 'RGBA').save(D + name + '.webp', quality=90)
     h = np.zeros(full.shape[:2], np.uint8); cv2.fillPoly(h, [poly(g['hole'])], 255)
+    if twerk: h = cv2.erode(h, np.ones((41, 41), np.uint8))
     h = cv2.GaussianBlur(h, (0, 0), 1.5)
     body[..., 3] = (body[..., 3].astype(np.uint16) * (255 - h) // 255).astype(np.uint8)
     # a perna pintada no fundo também sai (senão aparece dobrada quando a peça mexe)
