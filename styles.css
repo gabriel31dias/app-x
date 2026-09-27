@@ -1,0 +1,1636 @@
+/* ==========================================================================
+   ORAMA GAMES - ULTRA HIGH FIDELITY THEME & STYLESHEET
+   Matching 100% the Reference Design
+   ========================================================================== */
+
+:root {
+  --bg-dark: #040e08;
+  --bg-gradient: radial-gradient(circle at 50% 10%, #0c331a 0%, #051a0d 45%, #020a05 100%);
+  --card-bg: rgba(7, 26, 15, 0.85);
+  --card-border: rgba(20, 205, 94, 0.25);
+  --card-border-glow: rgba(20, 205, 94, 0.6);
+  --neon-green: #14cd5e;
+  --neon-green-bright: #00e676;
+  --neon-green-glow: #00ff66;
+  --gold: #f5c542;
+  --gold-glow: #ffd700;
+  --text-white: #ffffff;
+  --text-dim: #8fa996;
+  --text-muted: #5e7766;
+  --app-max-width: 460px;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --radius-pill: 9999px;
+  --bottom-nav-h: 74px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-dark);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(20, 205, 94, 0.18) 0%, transparent 60%),
+    radial-gradient(circle at 10% 40%, rgba(10, 80, 40, 0.25) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(10, 80, 40, 0.25) 0%, transparent 50%),
+    linear-gradient(180deg, #051d10 0%, #030d07 50%, #010603 100%);
+  background-attachment: fixed;
+  color: var(--text-white);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: hidden;
+}
+
+/* Background Leaf Silhouette & Fireflies Overlay */
+.bg-ambience {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-ambience::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background-image: 
+    radial-gradient(ellipse 20px 40px at 20% 30%, #3fe87f 0%, transparent 70%),
+    radial-gradient(ellipse 35px 60px at 80% 20%, #3fe87f 0%, transparent 70%),
+    radial-gradient(ellipse 25px 50px at 15% 75%, #3fe87f 0%, transparent 70%),
+    radial-gradient(ellipse 30px 55px at 85% 85%, #3fe87f 0%, transparent 70%);
+  filter: blur(8px);
+}
+
+.firefly {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #a3ff66;
+  box-shadow: 0 0 10px 3px rgba(163, 255, 102, 0.7);
+  animation: floatFirefly 8s ease-in-out infinite alternate, pulseFirefly 2.5s ease-in-out infinite;
+}
+
+@keyframes floatFirefly {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -40px); }
+  100% { transform: translate(-20px, -80px); }
+}
+
+@keyframes pulseFirefly {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 0.9; transform: scale(1.3); }
+}
+
+/* Main Mobile/App Container */
+.app-container {
+  width: 100%;
+  max-width: var(--app-max-width);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 12px 14px calc(var(--bottom-nav-h) + 24px);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ==========================================================================
+   HEADER SECTION
+   ========================================================================== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.logo-container {
+  flex-shrink: 1;
+  min-width: 0;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo-container:active {
+  transform: scale(0.95);
+}
+
+.logo-img {
+  display: block;
+  max-width: 100%;
+  max-height: 80px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Balance Pill */
+.balance-pill {
+  background: linear-gradient(180deg, #072615 0%, #03140a 100%);
+  border: 1.5px solid var(--neon-green);
+  border-radius: var(--radius-pill);
+  padding: 4px 6px 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 12px rgba(20, 205, 94, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.balance-pill:active {
+  transform: scale(0.96);
+  border-color: var(--neon-green-bright);
+}
+
+.coin-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.balance-amount {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-white);
+  letter-spacing: -0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-add-balance {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #1bdc6a 0%, #0ea34b 100%);
+  border: 1px solid #73ff9e;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+/* User Profile Badge */
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-pill);
+  transition: background 0.2s ease;
+}
+
+.user-profile-badge:active {
+  background: rgba(20, 205, 94, 0.15);
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--neon-green);
+  box-shadow: 0 0 10px rgba(20, 205, 94, 0.45);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.username {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-white);
+  white-space: nowrap;
+}
+
+.user-level {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Notification Bell */
+.btn-notification {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--gold);
+  transition: transform 0.2s ease;
+}
+
+.btn-notification:active {
+  transform: scale(0.9);
+}
+
+.btn-notification svg {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff334b;
+  box-shadow: 0 0 8px #ff334b;
+  border: 1.5px solid #06190f;
+}
+
+/* ==========================================================================
+   HERO BANNER CAROUSEL
+   ========================================================================== */
+.hero-banner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-banner-card {
+  width: 100%;
+  aspect-ratio: 795 / 380;
+  border-radius: 20px;
+  border: 2px solid var(--neon-green);
+  box-shadow: 0 0 24px rgba(20, 205, 94, 0.28), 0 10px 20px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background: #061e11 url('assets/hero_banner.png') center/cover no-repeat;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hero-banner-card:active {
+  transform: scale(0.985);
+}
+
+/* Invisible clickable hotspot matching the "JOGAR AGORA >" button in banner */
+.hero-cta-hotspot {
+  position: absolute;
+  left: 5%;
+  bottom: 8%;
+  width: 48%;
+  height: 24%;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.dot {
+  height: 6px;
+  border-radius: 4px;
+  background: #243b2e;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+
+.dot.active {
+  width: 20px;
+  background: var(--neon-green-bright);
+  box-shadow: 0 0 8px var(--neon-green-glow);
+}
+
+.dot:not(.active) {
+  width: 6px;
+}
+
+/* ==========================================================================
+   TOP CATEGORIES BAR (6 Cards)
+   ========================================================================== */
+.categories-nav {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 2px 7px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #071f13 0%, #031009 100%);
+  border: 1.2px solid rgba(20, 205, 94, 0.18);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.4, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.cat-card svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  transition: transform 0.2s ease;
+}
+
+.cat-card:hover {
+  border-color: rgba(20, 205, 94, 0.5);
+  color: var(--text-white);
+}
+
+.cat-card:active {
+  transform: scale(0.94);
+}
+
+.cat-card.active {
+  background: linear-gradient(180deg, #18c55a 0%, #0d8a3c 100%);
+  border: 1.2px solid #57ff98;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(20, 205, 94, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.cat-card.active svg {
+  fill: #ffffff;
+}
+
+/* ==========================================================================
+   FEATURED GAMES SECTION ("🔥 Jogos em Destaque")
+   ========================================================================== */
+.section-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-white);
+  letter-spacing: -0.2px;
+}
+
+.section-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neon-green-bright);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.section-link:hover {
+  opacity: 0.85;
+}
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.game-card {
+  position: relative;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-3px);
+}
+
+.game-card:active {
+  transform: scale(0.96);
+}
+
+.game-img-wrapper {
+  width: 100%;
+  aspect-ratio: 1 / 0.8;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.game-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Star Favorite Button */
+.btn-fav {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  border: 0;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.2s ease;
+}
+
+.btn-fav svg {
+  width: 16px;
+  height: 16px;
+  stroke: #ffffff;
+  stroke-width: 2;
+  fill: none;
+  transition: all 0.2s ease;
+}
+
+.btn-fav.active svg {
+  fill: var(--gold);
+  stroke: var(--gold);
+  filter: drop-shadow(0 0 6px var(--gold));
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 2px 0;
+}
+
+.game-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+
+.game-category {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+/* ==========================================================================
+   ALL GAMES SECTION ("🎮 Todos os Jogos")
+   ========================================================================== */
+.filter-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+}
+
+.filter-chips-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, #071f13 0%, #031009 100%);
+  border: 1px solid rgba(20, 205, 94, 0.2);
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  border-color: rgba(20, 205, 94, 0.5);
+  color: var(--text-white);
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.chip.active {
+  background: linear-gradient(180deg, #18c55a 0%, #0d8a3c 100%);
+  border: 1px solid #57ff98;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(20, 205, 94, 0.4);
+}
+
+.chip-filter-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #071f13 0%, #031009 100%);
+  border: 1px solid rgba(20, 205, 94, 0.25);
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.chip-filter-btn:active {
+  transform: scale(0.92);
+}
+
+.all-games-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 380px) {
+  .all-games-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+.all-games-grid .game-img-wrapper {
+  aspect-ratio: 1 / 0.85;
+}
+
+.all-games-grid .game-title {
+  font-size: 12px;
+}
+
+.all-games-grid .game-category {
+  font-size: 10.5px;
+}
+
+/* ==========================================================================
+   FLOATING BOTTOM NAVIGATION BAR
+   ========================================================================== */
+.bottom-nav-container {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: calc(var(--app-max-width) - 12px);
+  height: 64px;
+  background: rgba(3, 16, 9, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(20, 205, 94, 0.5);
+  border-radius: 36px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 24px rgba(20, 205, 94, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  z-index: 50;
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 0;
+  border-radius: 20px;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.4, 1);
+  border: 0;
+  background: transparent;
+}
+
+.nav-tab svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.nav-tab:active {
+  transform: scale(0.92);
+}
+
+/* Active Início Tab */
+.nav-tab.active {
+  background: rgba(20, 205, 94, 0.15);
+  border: 1px solid rgba(20, 205, 94, 0.4);
+  color: var(--neon-green-bright);
+}
+
+.nav-tab.active svg {
+  fill: var(--neon-green-bright);
+  filter: drop-shadow(0 0 8px var(--neon-green-bright));
+}
+
+/* Center Depositar Floating Button */
+.nav-deposit-wrapper {
+  position: relative;
+  flex: 1.1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  padding-bottom: 6px;
+}
+
+.btn-deposit-float {
+  position: absolute;
+  top: -34px;
+  width: 78px;
+  height: 78px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: pulseDeposit 2.5s ease-in-out infinite;
+}
+
+.btn-deposit-float:active {
+  transform: scale(0.92);
+}
+
+.btn-deposit-float img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+@keyframes pulseDeposit {
+  0%, 100% { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(245, 197, 66, 0.5)); }
+  50% { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 16px rgba(245, 197, 66, 0.9)); }
+}
+
+/* ==========================================================================
+   MODAL DIALOGS & DRAWERS (Deposit, Profile, Ranking, Notifications, Games)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  display: none;
+  place-items: center;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.show {
+  display: grid;
+  opacity: 1;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  background: linear-gradient(180deg, #092617 0%, #04120a 100%);
+  border: 1.5px solid var(--neon-green);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(20, 205, 94, 0.3);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(20, 205, 94, 0.2);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-close-modal {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 0;
+  color: var(--text-dim);
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-close-modal:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ==========================================================================
+   DEPOSIT (PIX) MODAL DETAILS
+   ========================================================================== */
+.pix-badge {
+  background: rgba(20, 205, 94, 0.15);
+  border: 1px solid var(--neon-green);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pix-badge-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pix-badge-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neon-green-bright);
+}
+
+.pix-bonus-tag {
+  background: linear-gradient(90deg, #ff9a1f, #f5c542);
+  color: #000;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.deposit-grid-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.btn-preset {
+  padding: 12px 6px;
+  background: #06190f;
+  border: 1px solid rgba(20, 205, 94, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--text-white);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.btn-preset.selected {
+  background: linear-gradient(180deg, #14cd5e 0%, #0a823a 100%);
+  border-color: #73ff9e;
+  box-shadow: 0 0 12px rgba(20, 205, 94, 0.5);
+}
+
+.deposit-custom-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: #04120a;
+  border: 1.5px solid rgba(20, 205, 94, 0.4);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  outline: none;
+}
+
+.deposit-custom-input:focus {
+  border-color: var(--neon-green-bright);
+  box-shadow: 0 0 10px rgba(20, 205, 94, 0.4);
+}
+
+.pix-qr-box {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.pix-qr-img {
+  width: 160px;
+  height: 160px;
+  background: #fff;
+}
+
+.pix-code-container {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.pix-code-input {
+  flex: 1;
+  padding: 8px 10px;
+  background: #051a0e;
+  border: 1px solid rgba(20, 205, 94, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: 12px;
+  outline: none;
+}
+
+.deposit-status {
+  min-height: 18px;
+  margin: -2px 0 0;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.btn-copy-pix {
+  padding: 8px 14px;
+  background: var(--neon-green);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: #000;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-submit-deposit {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, #1fe36e 0%, #0d9943 100%);
+  border: 2px solid #73ff9e;
+  color: #000;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(20, 205, 94, 0.6);
+  transition: transform 0.2s ease;
+}
+
+.btn-submit-deposit:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
+}
+
+.btn-submit-deposit:active {
+  transform: scale(0.97);
+}
+
+/* ==========================================================================
+   PLAYABLE SLOT MACHINE MODAL ("Capivara da Sorte")
+   ========================================================================== */
+.slot-modal-card {
+  max-width: 480px;
+  background: radial-gradient(ellipse at 50% -10%, #2f8a3e 0%, #155232 40%, #06180e 100%);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  padding: 0;
+}
+
+.slot-game-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+
+.slot-frame {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1330 / 1742;
+  background: url('board.png') bottom/100% auto no-repeat;
+  position: relative;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.7));
+}
+
+.slot-capy-anim {
+  position: absolute;
+  z-index: 1;
+  left: -0.59%;
+  top: -3.2%;
+  width: 95.21%;
+  aspect-ratio: 1;
+  background: url('sprites/capy-logo.png') 0 0/1200% 100% no-repeat;
+  animation: capyLogoAnim 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes capyLogoAnim {
+  0% { background-position-x: 0; animation-timing-function: steps(12, jump-none); }
+  55% { background-position-x: 100%; animation-timing-function: step-end; }
+  56%, 100% { background-position-x: 0; }
+}
+
+.slot-reels {
+  position: absolute;
+  left: 15.86%;
+  top: 62.51%;
+  width: 68.2%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 2.4%;
+}
+
+.slot-reel {
+  height: 140px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.slot-reel.spinning .strip {
+  filter: blur(1.5px) brightness(1.1);
+}
+
+.slot-cell {
+  height: 46.66px;
+  display: grid;
+  place-items: center;
+  padding: 4%;
+  transition: opacity 0.3s;
+}
+
+.slot-cell svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.6));
+}
+
+.slot-cell.win {
+  background: radial-gradient(circle, rgba(212, 255, 90, 0.35), transparent 70%);
+}
+
+.slot-cell.win svg {
+  animation: pulseCell 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulseCell {
+  to { transform: scale(1.12); }
+}
+
+.slot-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.slot-lines polyline {
+  fill: none;
+  stroke: #e6ff8a;
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px #9dff3a);
+  stroke-dasharray: 400;
+  animation: drawLine 0.5s ease-out forwards;
+}
+
+@keyframes drawLine {
+  from { stroke-dashoffset: 400; }
+  to { stroke-dashoffset: 0; }
+}
+
+.slot-hud {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.slot-hud-box {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(200, 245, 106, 0.4);
+  border-radius: 10px;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.slot-hud-box small {
+  display: block;
+  font-size: 10px;
+  color: #c8f56a;
+  letter-spacing: 1px;
+}
+
+.slot-hud-box b {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.slot-msg {
+  font-size: 13px;
+  font-weight: 700;
+  color: #eaff9a;
+  text-shadow: 0 0 8px #6fdc2a;
+  text-align: center;
+  min-height: 18px;
+}
+
+.slot-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.slot-bet-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slot-bet-wrapper b {
+  min-width: 44px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.slot-bet-wrapper small {
+  display: block;
+  font-size: 10px;
+  color: #c8f56a;
+}
+
+.slot-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #7ee07a, #2f8a3e 50%, #12451f);
+  border: 2px solid #d9a066;
+  box-shadow: 0 3px 0 #0b2e1a;
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.slot-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0b2e1a;
+}
+
+.slot-btn-spin {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 4px solid #fff3b0;
+  background: radial-gradient(circle at 35% 30%, #ffe6a8, #ff9a1f 45%, #c65a08);
+  box-shadow: 0 5px 0 #6b3000, 0 8px 20px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 179, 0, 0.4);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.slot-btn-spin:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #6b3000;
+}
+
+.slot-btn-spin svg {
+  width: 34px;
+  height: 34px;
+  fill: #fff;
+}
+
+.slot-btn-spin.busy svg {
+  animation: rotSpin 0.6s linear infinite;
+}
+
+@keyframes rotSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Big Win Celebration Overlay */
+.win-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: radial-gradient(circle, rgba(47, 138, 62, 0.85), rgba(6, 24, 14, 0.95));
+  z-index: 120;
+  text-align: center;
+  padding: 16px;
+}
+
+.win-overlay.show {
+  display: flex;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.win-overlay h2 {
+  font: 900 clamp(32px, 8vw, 48px) Georgia, serif;
+  background: linear-gradient(#fbffd8, #d4f06a 45%, #e0a92a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #0b2e1a);
+}
+
+.win-overlay .amt {
+  font-size: clamp(34px, 10vw, 54px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 20px #9dff3a;
+}
+
+.win-overlay .win-anim {
+  width: min(260px, 60vw);
+  aspect-ratio: 1;
+  background: url('sprites/capy-win.webp') 0 0/1200% 100% no-repeat;
+  animation: winIn 1s steps(12, jump-none) forwards, winLoop 0.6s steps(6, jump-none) 1s infinite alternate;
+}
+
+@keyframes winIn {
+  from { background-position-x: 0; }
+  to { background-position-x: 100%; }
+}
+
+@keyframes winLoop {
+  from { background-position-x: 54.5455%; }
+  to { background-position-x: 100%; }
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(4, 25, 13, 0.95);
+  border: 1.5px solid var(--neon-green);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(20, 205, 94, 0.4);
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), toastOut 0.3s ease 2.7s forwards;
+}
+
+@keyframes toastIn {
+  from { transform: translateY(-30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toastOut {
+  to { transform: translateY(-20px); opacity: 0; }
+}
+
+/* Botão da música de fundo */
+.btn-music {
+  position: fixed;
+  right: 12px;
+  bottom: 104px;
+  z-index: 60;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 197, 66, 0.6);
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.btn-music.off {
+  opacity: 0.55;
+}
+
+/* Celular: some o nome/nível (fica só a foto) pra sobrar espaço pro logo */
+@media (max-width: 480px) {
+  .user-info { display: none; }
+  .logo-img { max-height: 64px; }
+}
+
+/* saldo sempre numa linha só ("R$ 17,00" não quebra) */
+.balance-amount { white-space: nowrap; }
+
+/* Entrada do logo ao abrir o site: cresce quicando e depois um brilho passa por cima */
+.logo-container {
+  position: relative;
+  animation: logoPop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.logo-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%) -150% 0 / 250% 100% no-repeat;
+  -webkit-mask: url(assets/logo_orama.png) center / contain no-repeat;
+  mask: url(assets/logo_orama.png) center / contain no-repeat;
+  animation: logoShine 0.9s ease-in-out 0.8s both;
+}
+
+@keyframes logoPop {
+  0% { transform: scale(0) rotate(-12deg); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes logoShine {
+  from { background-position: -150% 0; }
+  to { background-position: 250% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-container, .logo-container::after { animation: none; }
+}
+
+/* ==========================================================================
+   LOGIN / CADASTRO
+   ========================================================================== */
+.auth-card {
+  padding: 22px 20px 18px;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.auth-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.auth-logo {
+  width: 150px;
+  margin: 0 auto 4px;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
+}
+
+.auth-title {
+  font-size: 22px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.auth-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.auth-field > span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.auth-field input {
+  width: 100%;
+  padding: 12px 14px;
+  background: #04120a;
+  border: 1.5px solid rgba(20, 205, 94, 0.4);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 16px; /* 16px evita o zoom automático do iPhone */
+  outline: none;
+  color-scheme: dark;
+}
+
+.auth-field input:focus {
+  border-color: var(--neon-green-bright);
+  box-shadow: 0 0 10px rgba(20, 205, 94, 0.4);
+}
+
+.auth-row input {
+  padding: 12px 8px;
+}
+
+.auth-field.invalid input {
+  border-color: #ff5a5a;
+}
+
+.auth-err,
+.auth-form-err {
+  font-size: 12px;
+  color: #ff7a7a;
+  min-height: 0;
+}
+
+.auth-err:empty,
+.auth-form-err:empty {
+  display: none;
+}
+
+.auth-form-err {
+  text-align: center;
+}
+
+.auth-pass {
+  position: relative;
+}
+
+.auth-pass input {
+  padding-right: 46px;
+}
+
+.auth-eye {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.auth-eye.on {
+  opacity: 1;
+}
+
+.auth-strength {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.auth-strength i {
+  display: block;
+  height: 100%;
+  width: 0;
+  transition: width 0.25s ease, background 0.25s ease;
+}
+
+.auth-forgot {
+  align-self: flex-end;
+  background: none;
+  border: 0;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.auth-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.auth-check input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--neon-green);
+}
+
+.auth-check a,
+.auth-switch button {
+  color: var(--neon-green-bright);
+  font-weight: 800;
+}
+
+.auth-switch {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: 12px;
+}
+
+.auth-switch button {
+  background: none;
+  border: 0;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.auth-legal {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1.5px solid rgba(255, 90, 90, 0.6);
+  color: #ff7a7a;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Jogo em tela cheia por cima do site */
+.game-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: none;
+  background: #06180e;
+}
+
+.game-overlay.show {
+  display: block;
+}
+
+.game-overlay iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.game-back {
+  position: absolute;
+  top: auto;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  left: 10px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(245, 197, 66, 0.6);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* QR do PIX gerado na hora */
+.pix-qr-img { display: grid; place-items: center; }
+.pix-qr-img svg { width: 100%; height: 100%; display: block; shape-rendering: crispEdges; }
+#pix-qr { width: min(240px, 70vw); height: min(240px, 70vw); }
+.pix-qr-empty { font-size: 12px; color: #555; text-align: center; padding: 10px; line-height: 1.4; }
+
+.pix-qr-box[hidden] { display: none; }
+.btn-submit-deposit:disabled { filter: grayscale(.7) brightness(.7); cursor: not-allowed; box-shadow: none; }
+
+/* jogos que pedem o Voltar no alto (ex.: Gatinho no celular) */
+.game-overlay.back-top .game-back { top: max(10px, env(safe-area-inset-top)); bottom: auto; }
+
+/* ===== Saque ===== */
+.saque-link { background: none; border: 0; color: var(--text-dim); font-size: 13px; margin-top: 4px; cursor: pointer; }
+.saque-link b { color: var(--neon-green-bright); text-decoration: underline; }
+.saque-saldo { display: flex; justify-content: space-between; align-items: center; background: #04120a; border: 1px solid rgba(20,205,94,0.25); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--text-dim); }
+.saque-saldo b { font-size: 20px; color: var(--neon-green-bright); }
+.saque-label { font-size: 13px; font-weight: 700; color: var(--text-dim); }
+.saque-chave { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.saque-chave b { color: #fff; }
+.saque-chave small { font-size: 11px; opacity: .8; }
+.saque-lista-titulo { font-size: 13px; font-weight: 700; color: var(--text-dim); margin-top: 6px; }
+.saque-lista { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+.saque-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #04120a; border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+.saque-item small { display: block; color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+.saque-badge { flex-shrink: 0; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+.saque-badge.pendente { background: rgba(245,158,11,.15); color: #F5B94B; }
+.saque-badge.aprovado { background: rgba(69,188,86,.15); color: #45BC56; }
+.saque-badge.cancelado { background: rgba(204,8,84,.15); color: #ff5a8a; }
+.saque-vazio { font-size: 12px; color: var(--text-dim); text-align: center; padding: 8px; }

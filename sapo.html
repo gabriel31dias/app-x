@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Sapinho Pulador Crash</title>
+<link rel="preload" as="image" href="assets/sapo/bg.webp">
+<style>
+/* Tela sobre a arte (assets/sapo/bg.webp 941x1672, gerada por tools/sapo_assets.py):
+   posições em px da arte convertidas pra % no JS (place), textos em cqw */
+:root{--g:#5cff5c;--r:#ff4a4a;--y:#ffd54a}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#050b20;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/sapo/bg.webp) center/cover;filter:blur(24px) brightness(.4);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/sapo/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden}
+.abs{position:absolute}
+.hit{position:absolute;border-radius:2.5cqw;transition:background .15s,transform .1s}
+.hit:active{background:#fff3;transform:scale(.94)}
+.hit.off{background:#0009}
+#bal{display:flex;align-items:center;font:800 var(--f,4.2cqw) system-ui;overflow:hidden;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* histórico: pílulas verde (>= 2x) / vermelha */
+#hist{display:flex;flex-direction:column;gap:1cqw;overflow:hidden}
+#hist b{flex:0 0 auto;height:3.6cqw;border-radius:.8cqw;display:grid;place-items:center;font:900 2.7cqw system-ui;font-variant-numeric:tabular-nums}
+#hist .hi{background:linear-gradient(#1f7a35,#0f4a20);color:#cfffd2}
+#hist .lo{background:linear-gradient(#7a1f24,#4a0f14);color:#ffd0d0}
+#hist b:first-child{box-shadow:0 0 0 .3cqw #fff8}
+/* painel "suas apostas" */
+#mine{display:flex;flex-direction:column;font-size:2.5cqw}
+#mine h3{font:900 2.8cqw system-ui;color:#9fd8ff;padding:1cqw 1.5cqw;border-bottom:.2cqw solid #ffffff22}
+#mine .r{display:grid;grid-template-columns:1.1fr .8fr 1.1fr;gap:1cqw;padding:1.1cqw 1.5cqw;font-size:2.3cqw;font-variant-numeric:tabular-nums;white-space:nowrap}
+#mine .r:nth-child(odd){background:#ffffff08}
+#mine .r .w{color:var(--g);text-align:right}
+#mine .r .l{color:#ff8a8a;text-align:right}
+#mine .r i{font-style:normal;color:#ffe08a}
+#mine .empty{padding:2cqw 1.5cqw;opacity:.6;font-size:2.4cqw}
+/* multiplicador grande */
+#mult{left:20%;width:49%;top:18.5%;text-align:center;font:900 12cqw/1 system-ui;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 .6cqw 0 #0a3a10,0 0 4cqw #3bff5c;pointer-events:none;z-index:4;transition:color .3s}
+#mult.hot{color:#fff27a;animation:throb .5s ease-in-out infinite alternate}
+#mult.crashed{color:var(--r);text-shadow:0 .6cqw 0 #3a0000,0 0 5cqw #f00;animation:shake .4s}
+#mult.won{color:var(--g)}
+#sub{left:20%;width:49%;top:26%;text-align:center;font:900 3.6cqw system-ui;text-shadow:0 .3cqw 0 #000,0 0 2cqw #000;pointer-events:none;z-index:4}
+#count{left:25%;width:39%;top:27.6%;pointer-events:none;z-index:4}
+#count i{display:block;height:1.5cqw;border-radius:1cqw;background:#0008;overflow:hidden;margin-top:1cqw}
+#count i::after{content:"";display:block;height:100%;width:var(--p,100%);background:linear-gradient(90deg,#9dff5c,#27c93f);transition:width .1s linear}
+/* sapo + efeitos (sprites em tiras; tamanho do quadro vem do SPR) */
+.spr{position:absolute;background-repeat:no-repeat;pointer-events:none}
+#frog{z-index:3;filter:drop-shadow(0 1cqw 1.5cqw #000a);transform-origin:50% 100%;will-change:left,top,height}
+.ring{position:absolute;border-radius:50%;border:.6cqw solid #b6ff7a;box-shadow:0 0 3cqw #7dff3a;pointer-events:none;z-index:2;animation:ring .8s ease-out forwards}
+@keyframes ring{from{transform:scale(.3);opacity:1}to{transform:scale(1.4);opacity:0}}
+.trail{position:absolute;width:1.4cqw;height:1.4cqw;border-radius:50%;background:radial-gradient(#fff6b0,#ffb020 60%,transparent 70%);pointer-events:none;z-index:2;animation:trail .6s ease-out forwards}
+@keyframes trail{to{transform:translateY(3cqw) scale(.2);opacity:0}}
+/* controles de baixo */
+#bet,#auto{display:grid;place-items:center;white-space:nowrap;font:900 4.6cqw system-ui;font-variant-numeric:tabular-nums}
+#go{border-radius:5cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;font:900 7cqw/1 system-ui;text-shadow:0 .4cqw 0 #0a4a10;letter-spacing:.2cqw}
+#go small{font:800 3cqw system-ui;opacity:.9;margin-top:.8cqw}
+#go.cancel{background:#b01818cc}
+#go.cash{background:linear-gradient(#ffcf3a,#e08a00);color:#3a1a00;text-shadow:none;animation:cashPulse .45s ease-in-out infinite alternate}
+#go:disabled{filter:grayscale(.7) brightness(.7);cursor:default}
+@keyframes cashPulse{to{box-shadow:0 0 0 .6cqw #fff3b0,0 0 5cqw #ffd54a}}
+#msg{left:0;right:0;top:82.4%;text-align:center;font:800 3.2cqw/1 system-ui;text-shadow:0 0 1.5cqw #000,0 .3cqw 0 #000;pointer-events:none;z-index:4}
+.coin{position:fixed;top:40%;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6b0,#ffc83a 50%,#c8860a);box-shadow:inset 0 0 0 3px #e0a020;z-index:30;pointer-events:none;animation:coin 1.4s cubic-bezier(.2,.6,.4,1) forwards}
+@keyframes coin{to{transform:translate(var(--dx),-45vh) scale(.5);opacity:0}}
+@keyframes throb{to{transform:scale(1.06)}}
+@keyframes shake{25%{transform:translateX(-2cqw)}75%{transform:translateX(2cqw)}}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid #5cff5c;border-radius:16px;background:#0b1a3a;color:#fff;padding:16px;font:14px/1.45 system-ui}
+dialog::backdrop{background:#000b}
+dialog h3{color:#9dff5c;text-align:center;margin-bottom:8px}
+dialog table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+dialog td{padding:4px 2px;border-bottom:1px solid #fff2}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:#5cff5c;color:#0a3a10;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff18;color:#fff;border-radius:12px;padding:10px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Sapinho Pulador Crash</h1>
+  <button class="hit" id="menu" aria-label="Menu"></button>
+  <b class="abs" id="bal">R$ 0,00</b>
+  <button class="hit" id="dep" aria-label="Depositar"></button>
+  <button class="hit" id="top" aria-label="Seus maiores ganhos"></button>
+  <button class="hit" id="stats" aria-label="Estatísticas"></button>
+  <button class="hit" id="snd" aria-label="Som"></button>
+  <div class="abs" id="hist"></div>
+  <div class="abs" id="mine"></div>
+  <div class="spr" id="frog"></div>
+  <div class="abs" id="mult">1.00x</div>
+  <div class="abs" id="sub"></div>
+  <div class="abs" id="count"><div id="countTxt" style="text-align:center;font:900 3.6cqw system-ui;text-shadow:0 .3cqw 0 #000">Próximo pulo em 5s</div><i id="countBar"></i></div>
+  <button class="hit" id="bDown" aria-label="Diminuir aposta"></button>
+  <b class="abs" id="bet">R$ 10,00</b>
+  <button class="hit" id="bUp" aria-label="Aumentar aposta"></button>
+  <button class="hit" id="aDown" aria-label="Diminuir auto cashout"></button>
+  <b class="abs" id="auto">2.00x</b>
+  <button class="hit" id="aUp" aria-label="Aumentar auto cashout"></button>
+  <button class="hit" id="go"></button>
+  <div class="abs" id="msg" aria-live="polite"></div>
+</main>
+
+<dialog id="dlgRules">
+  <h3>Como jogar</h3>
+  <p>O sapinho decola e o multiplicador sobe a cada vitória-régia. Toque em <b>SACAR</b> antes dele cair na água pra ganhar a aposta vezes o multiplicador.<br><br>
+  <b>Auto cashout:</b> saca sozinho quando chegar no valor escolhido ("manual" desliga).<br><br>
+  A aposta feita durante um pulo vale para o próximo. O ponto de queda é sorteado antes de cada rodada com gerador criptográfico e ninguém sabe qual é. Em média o jogo devolve <b id="rtpInfo"></b> em qualquer ponto de saque. Máximo: <b id="maxInfo"></b>.</p>
+  <button onclick="dlgRules.close()">Fechar</button>
+</dialog>
+<dialog id="dlgList"><h3 id="listTitle"></h3><table id="listRows"></table><button onclick="dlgList.close()">Fechar</button></dialog>
+<dialog id="dlgMenu">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mRules">📋 Como jogar</button>
+    <button id="mMusic">🎵 Música</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button onclick="dlgMenu.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="sapo.js"></script>
+<script src="rodada.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('sapo')</script><!-- admin assiste ao vivo -->
+<script>
+const { RTP, MAX, drawCrash, multAt, timeFor } = SP;
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => 'R$ ' + x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fx = m => m.toFixed(2) + 'x';
+const START = 20, WAIT_MS = 5000, AFTER_MS = 3000;
+const BETS = [1, 2, 5, 10, 20, 50, 100, 250], AUTOS = [1.1, 1.2, 1.5, 2, 3, 5, 10, 20, 50, 100, 0]; // 0 = sem auto
+// tiras: [quadros, largura, altura] (saída do tools/sapo_assets.py)
+const SPR = { idle: [2, 180, 200], fly: [9, 206, 200], fall: [5, 149, 200], dead: [5, 181, 150], splash: [6, 122, 130] };
+
+// posições na arte (px de 941x1672) -> %
+const place = (el, [x, y, w, h]) => Object.assign(el.style, { left: x / 9.41 + '%', top: y / 16.72 + '%', width: w / 9.41 + '%', ...(h ? { height: h / 16.72 + '%' } : {}) });
+const PX = {
+  menu: [18, 18, 84, 82], bal: [704, 30, 150, 44], dep: [862, 22, 58, 58], top: [682, 98, 66, 60], stats: [770, 98, 66, 60], snd: [858, 98, 66, 60],
+  hist: [26, 352, 154, 616], mine: [662, 336, 262, 560],
+  bDown: [100, 1446, 78, 60], bet: [180, 1450, 184, 54], bUp: [366, 1446, 76, 60],
+  aDown: [502, 1446, 74, 60], auto: [576, 1450, 186, 54], aUp: [764, 1446, 74, 60], go: [62, 1532, 812, 110],
+};
+for (const id in PX) place($('#' + id), PX[id]);
+
+// caminho do sapo: vitórias-régias pintadas na arte (m = multiplicador do rótulo, s = escala pela distância)
+const PATH = [
+  { m: 1, x: 420, y: 1305, s: 1 }, { m: 1.25, x: 420, y: 1305, s: 1 }, { m: 1.68, x: 462, y: 1128, s: .7 },
+  { m: 2.4, x: 457, y: 998, s: .6 }, { m: 3.75, x: 486, y: 895, s: .46 }, { m: 5.2, x: 520, y: 818, s: .38 },
+  { m: 8.15, x: 555, y: 755, s: .31 }, { m: 20, x: 560, y: 470, s: .24 },
+];
+const FROG_H = 240; // altura do sapo (px da arte) na vitória-régia de baixo
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('sapo.saldo') || START; } catch {}
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('sapo.saldo', balance); } catch {}
+}
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let history = load('sapo.hist', []), mine = load('sapo.mine', []);
+
+// ---------- som ----------
+let ac, sfxOn = load('sapo.sfx', true), musicOn = load('sapo.music', true), musicTimer;
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+function tone(f, t, d, { type = 'sine', vol = .15, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+const now = () => audio().currentTime;
+const SFX = {
+  click() { tone(900, now(), .05, { type: 'triangle', vol: .07 }); },
+  ribbit(t = now()) { tone(200, t, .1, { type: 'sawtooth', vol: .1, slide: 110 }); tone(230, t + .13, .1, { type: 'sawtooth', vol: .08, slide: 120 }); },
+  launch() { tone(120, now(), .8, { type: 'sawtooth', vol: .08, slide: 600 }); },
+  hop(m) { tone(400 + Math.min(m, 20) * 40, now(), .12, { type: 'triangle', vol: .1, slide: 900 + Math.min(m, 20) * 60 }); },
+  splash() { const t = now(); for (let i = 0; i < 8; i++) tone(900 + Math.random() * 1600, t + i * .03, .09, { vol: .06, slide: 300 }); tone(140, t, .5, { vol: .12, slide: 60 }); },
+  cash() { const t = now(); [784, 988, 1175, 1568].forEach((f, i) => tone(f, t + i * .07, .2, { type: 'triangle', vol: .12 })); },
+  tick() { tone(1200, now(), .03, { type: 'square', vol: .03 }); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+const MEL = [523, 0, 659, 784, 0, 659, 587, 0, 523, 0, 440, 523, 0, 0, 392, 0];
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  let step = 0;
+  musicTimer = setInterval(() => {
+    const t = now(), n = MEL[step % MEL.length];
+    if (n) tone(n, t, .22, { type: 'triangle', vol: .04 });
+    if (step % 4 === 0) tone(131, t, .3, { vol: .06 });
+    step++;
+  }, 210);
+}
+const stopMusic = () => { clearInterval(musicTimer); musicTimer = null; };
+
+// ---------- sprites ----------
+const frog = $('#frog');
+let frogAnim = null, frogSet = '';
+function sprite(el, name, ms, loop = true) {
+  const [n, w, h] = SPR[name];
+  el.style.backgroundImage = `url(assets/sapo/${name}.webp)`;
+  el.style.backgroundSize = `${n * 100}% 100%`;
+  el.style.aspectRatio = `${w} / ${h}`;
+  return el.animate([{ backgroundPositionX: '0%' }, { backgroundPositionX: '100%' }], { duration: ms, easing: `steps(${n}, jump-none)`, iterations: loop ? Infinity : 1, fill: 'forwards' });
+}
+function frogAs(name, ms, loop) { if (frogSet === name) return; frogAnim?.cancel(); frogSet = name; frogAnim = sprite(frog, name, ms, loop); }
+function frogAt(x, y, s, rot = 0) {  // (x, y) = pé do sapo na arte
+  const h = FROG_H * s, [, w0, h0] = SPR[frogSet] || SPR.idle, w = h * w0 / h0;
+  Object.assign(frog.style, { left: (x - w / 2) / 9.41 + '%', top: (y - h) / 16.72 + '%', height: h / 16.72 + '%', width: w / 9.41 + '%', transform: `rotate(${rot}deg)` });
+}
+function fxAt(name, x, y, s, ms) {
+  const e = document.createElement('div'), [, w0, h0] = SPR[name], h = 150 * s, w = h * w0 / h0;
+  e.className = 'spr'; e.style.zIndex = 4;
+  Object.assign(e.style, { left: (x - w / 2) / 9.41 + '%', top: (y - h * .8) / 16.72 + '%', height: h / 16.72 + '%', width: w / 9.41 + '%' });
+  stage.append(e); sprite(e, name, ms, false); setTimeout(() => e.remove(), ms + 100);
+}
+function ring(p) {
+  const e = document.createElement('div'); e.className = 'ring';
+  const w = 330 * p.s, h = w * .3;
+  Object.assign(e.style, { left: (p.x - w / 2) / 9.41 + '%', top: (p.y - h / 2) / 16.72 + '%', width: w / 9.41 + '%', height: h / 16.72 + '%' });
+  stage.append(e); setTimeout(() => e.remove(), 850);
+}
+
+// posição no caminho pro multiplicador m (log entre vitórias-régias + arco do pulo)
+function pathAt(m) {
+  if (m >= PATH.at(-1).m) { const p = PATH.at(-1), t = performance.now() / 400; return { x: p.x + Math.sin(t) * 12, y: p.y + Math.cos(t * 1.3) * 10, s: p.s, rot: Math.sin(t) * 6 }; }
+  let i = 0; while (m >= PATH[i + 1].m) i++;
+  const a = PATH[i], b = PATH[i + 1], t = Math.log(m / a.m) / Math.log(b.m / a.m);
+  const hop = i + 1 === PATH.length - 1 ? 0 : Math.sin(Math.PI * t) * 100 * a.s; // último trecho é voo reto pro céu
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t - hop, s: a.s + (b.s - a.s) * t, rot: -10 * Math.sin(Math.PI * t) };
+}
+
+// ---------- estado ----------
+let state = 'wait', t0 = performance.now(), crashAt = 1, curMult = 1, lastPad = 0;
+let betIdx = BETS.indexOf(10), autoIdx = AUTOS.indexOf(2);
+let active = null;  // aposta desta rodada { bet, auto, cashed }
+let queued = null;  // aposta pra próxima rodada
+let quedaManualPendente = false;
+const msg = (t, c = '#fff') => { $('#msg').textContent = t; $('#msg').style.color = c; };
+
+function hud() {
+  $('#bal').textContent = brl(balance);
+  $('#bal').style.setProperty('--f', Math.min(4.2, 30 / brl(balance).length) + 'cqw'); // saldo grande encolhe pra caber
+  $('#bet').textContent = brl(BETS[betIdx]);
+  $('#auto').textContent = AUTOS[autoIdx] ? fx(AUTOS[autoIdx]) : 'manual';
+  const go = $('#go'); go.className = 'hit'; go.disabled = false;
+  if (state === 'fly' && active && !active.cashed) { go.classList.add('cash'); go.innerHTML = `SACAR<small>${brl(r2(active.bet * curMult))}</small>`; }
+  else if (state === 'wait' && active) { go.classList.add('cancel'); go.innerHTML = `CANCELAR<small>aposta de ${brl(active.bet)}</small>`; }
+  else if (queued) { go.classList.add('cancel'); go.innerHTML = `CANCELAR<small>aposta do próximo pulo</small>`; }
+  else go.innerHTML = state === 'wait' ? 'APOSTAR' : 'APOSTAR<small>no próximo pulo</small>';
+  $('#hist').innerHTML = history.slice(0, 15).map(m => `<b class="${m >= 2 ? 'hi' : 'lo'}">${fx(m)}</b>`).join('');
+  $('#mine').innerHTML = '<h3>SUAS APOSTAS</h3>' + (mine.length
+    ? mine.slice(0, 10).map(b => `<div class="r"><span>${brl(b.bet)}</span><i>${b.at ? fx(b.at) : '—'}</i><span class="${b.pay ? 'w' : 'l'}">${b.pay ? '+' + brl(b.pay) : fx(b.crash)}</span></div>`).join('')
+    : '<div class="empty">Suas apostas aparecem aqui</div>');
+}
+
+function startWait() {
+  state = 'wait'; t0 = performance.now(); curMult = 1; lastPad = 0;
+  active = queued; queued = null; // só a aposta feita no pulo anterior entra (a da rodada passada já foi paga ou perdida)
+  frog.style.opacity = 1; frogAs('idle', 700, true); frogAt(PATH[0].x, PATH[0].y, 1);
+  $('#mult').className = 'abs'; $('#mult').textContent = '1.00x'; $('#sub').textContent = '';
+  $('#count').style.display = 'block';
+  hud();
+}
+function startFly() {
+  state = 'fly'; t0 = performance.now(); crashAt = drawCrash();
+  $('#count').style.display = 'none';
+  frogAs('fly', 900, true); play('launch'); play('ribbit');
+  if (active) msg(`Apostou ${brl(active.bet)}${active.auto ? ` · auto em ${fx(active.auto)}` : ''}`);
+  else msg('');
+  hud();
+  if (quedaManualPendente) setTimeout(derrubarPorAdmin, 250);
+}
+function cashOut(at) {
+  if (!active || active.cashed) return;
+  active.cashed = true;
+  const pay = r2(active.bet * at);
+  balance = r2(balance + pay); save(); reportarRodada('sapo', active.bet, pay);
+  mine.unshift({ bet: active.bet, at, pay, crash: null }); mine = mine.slice(0, 30); store('sapo.mine', mine);
+  $('#mult').classList.add('won'); $('#sub').textContent = `Sacou ${brl(pay)}!`;
+  msg(`Você sacou em ${fx(at)} e ganhou ${brl(pay)}`, '#9dff5c');
+  play('cash'); coins();
+  hud();
+}
+function crash() {
+  state = 'crash'; t0 = performance.now(); curMult = crashAt;
+  $('#mult').textContent = fx(crashAt); $('#mult').className = 'abs crashed'; $('#sub').textContent = 'O SAPINHO CAIU!';
+  if (active && !active.cashed) {
+    reportarRodada('sapo', active.bet, 0);
+    mine.unshift({ bet: active.bet, at: null, pay: 0, crash: crashAt }); mine = mine.slice(0, 30); store('sapo.mine', mine);
+    msg(`Caiu em ${fx(crashAt)} · perdeu ${brl(active.bet)}`, '#ff8a8a');
+  } else if (!active) msg(`Caiu em ${fx(crashAt)}`);
+  const p = pathAt(Math.min(crashAt, PATH.at(-1).m - .01));
+  crashFrom = p; frogAs('fall', 600, false);
+  history.unshift(crashAt); history = history.slice(0, 100); store('sapo.hist', history);
+  if (mine[0]?.pay && mine[0].crash === null) { mine[0].crash = crashAt; store('sapo.mine', mine); }
+  active = null;
+  hud();
+}
+let crashFrom = null, splashed = false;
+
+function derrubarPorAdmin() {
+  if (state === 'fly') {
+    quedaManualPendente = false;
+    crashAt = Math.max(1, curMult);
+    msg('Queda manual acionada pelo admin', '#ff8a8a');
+    splashed = false;
+    crash();
+    return;
+  }
+  if (state === 'wait') {
+    quedaManualPendente = true;
+    msg('Queda manual armada para o próximo pulo', '#ffcf5c');
+  }
+}
+
+function frame(t) {
+  const el = t - t0;
+  if (state === 'wait') {
+    const left = Math.max(0, WAIT_MS - el);
+    $('#countTxt').textContent = `Próximo pulo em ${Math.ceil(left / 1000)}s`;
+    $('#countBar').style.setProperty('--p', (left / WAIT_MS) * 100 + '%');
+    if (left === 0) startFly();
+  } else if (state === 'fly') {
+    const m = Math.min(multAt(el), crashAt);
+    if (active && !active.cashed && active.auto && m >= active.auto && active.auto <= crashAt) { curMult = active.auto; cashOut(active.auto); }
+    curMult = m;
+    $('#mult').textContent = fx(m);
+    $('#mult').classList.toggle('hot', m >= 5 && !$('#mult').classList.contains('won'));
+    const p = pathAt(m);
+    frogAt(p.x, p.y, p.s, p.rot);
+    // passou por uma vitória-régia: brilho + som
+    while (lastPad + 1 < PATH.length - 1 && m >= PATH[lastPad + 1].m) { lastPad++; if (lastPad > 1) { ring(PATH[lastPad]); play('hop', m); } }
+    if (Math.random() < .5) { const tr = document.createElement('div'); tr.className = 'trail'; tr.style.left = p.x / 9.41 - 1.5 + '%'; tr.style.top = (p.y - FROG_H * p.s * .2) / 16.72 + '%'; stage.append(tr); setTimeout(() => tr.remove(), 650); }
+    if (active && !active.cashed) $('#go small').textContent = brl(r2(active.bet * m));
+    if (multAt(el) >= crashAt) { splashed = false; crash(); }
+  } else if (state === 'crash') {
+    // cai pra água: desce, gira, e espirra
+    const k = Math.min(1, el / 700), p = crashFrom;
+    frogAt(p.x + 40 * p.s * k, p.y + 120 * p.s * k * k, p.s, 25 * k);
+    if (k === 1 && !splashed) { splashed = true; frog.style.opacity = 0; fxAt('splash', p.x + 40 * p.s, p.y + 120 * p.s, Math.max(.5, p.s * 1.4), 700); play('splash'); }
+    if (el > AFTER_MS) startWait();
+  }
+  requestAnimationFrame(frame);
+}
+
+function coins() {
+  for (let i = 0; i < 14; i++) {
+    const c = document.createElement('div'); c.className = 'coin';
+    c.style.left = 35 + Math.random() * 30 + 'vw'; c.style.setProperty('--dx', (Math.random() - .5) * 60 + 'vw'); c.style.animationDelay = Math.random() * .3 + 's';
+    document.body.append(c); setTimeout(() => c.remove(), 1800);
+  }
+}
+
+// ---------- botões ----------
+// na espera, a aposta já feita pode ser cancelada (volta pro saldo)
+function cancelActive() { if (state === 'wait' && active) { balance = r2(balance + active.bet); active = null; save(); msg('Aposta cancelada'); hud(); } }
+$('#go').onclick = () => {
+  play('click');
+  if (state === 'fly' && active && !active.cashed) return cashOut(curMult);
+  if (state === 'wait' && active) return cancelActive();
+  if (queued) { balance = r2(balance + queued.bet); queued = null; save(); msg('Aposta cancelada'); return hud(); }
+  const bet = BETS[betIdx];
+  if (balance < bet) {
+    if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito', '#ff8a8a'); setTimeout(() => host.openModal('modal-deposit'), 1000); }
+    else if (!host && balance < BETS[0]) { balance = START; save(); msg('Créditos recarregados: ' + brl(START)); }
+    else msg('Saldo insuficiente, diminua a aposta', '#ff8a8a');
+    return hud();
+  }
+  balance = r2(balance - bet); save();
+  queued = { bet, auto: AUTOS[autoIdx], cashed: false };
+  if (state === 'wait') { active = queued; queued = null; msg(`Aposta de ${brl(bet)} feita`); }
+  else msg(`Aposta de ${brl(bet)} vale pro próximo pulo`);
+  hud();
+};
+const locked = () => state === 'wait' && active; // aposta já feita nesta espera: valor fica travado
+$('#bDown').onclick = () => { if (locked()) return; betIdx = Math.max(0, betIdx - 1); play('click'); hud(); };
+$('#bUp').onclick = () => { if (locked()) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); hud(); };
+$('#aDown').onclick = () => { autoIdx = Math.max(0, autoIdx - 1); play('click'); hud(); };
+$('#aUp').onclick = () => { autoIdx = Math.min(AUTOS.length - 1, autoIdx + 1); play('click'); hud(); };
+$('#dep').onclick = () => host ? host.openModal('modal-deposit') : msg('Depósito disponível no site');
+$('#snd').onclick = () => { sfxOn = !sfxOn; store('sapo.sfx', sfxOn); $('#snd').classList.toggle('off', !sfxOn); msg(sfxOn ? '🔊 Som ligado' : '🔇 Som desligado'); };
+$('#snd').classList.toggle('off', !sfxOn);
+$('#menu').onclick = () => { $('#mMusic').textContent = `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`; dlgMenu.showModal(); };
+$('#mRules').onclick = () => { dlgMenu.close(); dlgRules.showModal(); };
+$('#mMusic').onclick = () => { musicOn = !musicOn; store('sapo.music', musicOn); musicOn ? startMusic() : stopMusic(); $('#mMusic').textContent = `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`; };
+$('#mExit').onclick = () => {
+  if (active && !active.cashed && state === 'fly') return alert('Espere a rodada acabar ou saque antes de sair.');
+  if (active && state === 'wait') cancelActive();
+  if (queued) { balance = r2(balance + queued.bet); queued = null; save(); }
+  host ? host.closeGame() : (location.href = 'index.html');
+};
+$('#top').onclick = () => {
+  const best = mine.filter(b => b.pay).sort((a, b) => b.pay - a.pay).slice(0, 10);
+  $('#listTitle').textContent = '🏆 Seus maiores ganhos';
+  $('#listRows').innerHTML = best.length ? best.map(b => `<tr><td>${brl(b.bet)}</td><td>${fx(b.at)}</td><td style="color:#9dff5c">+${brl(b.pay)}</td></tr>`).join('') : '<tr><td>Nenhum ganho ainda</td></tr>';
+  dlgList.showModal();
+};
+$('#stats').onclick = () => {
+  const n = history.length, over = x => n ? Math.round(history.filter(m => m >= x).length / n * 100) + '%' : '—';
+  $('#listTitle').textContent = `📊 Últimas ${n} rodadas`;
+  $('#listRows').innerHTML = n ? [1.5, 2, 5, 10].map(x => `<tr><td>Passou de ${fx(x)}</td><td>${over(x)}</td></tr>`).join('') + `<tr><td>Maior</td><td>${fx(Math.max(...history))}</td></tr>` : '<tr><td>Sem rodadas ainda</td></tr>';
+  dlgList.showModal();
+};
+$('#rtpInfo').textContent = (RTP * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+$('#maxInfo').textContent = fx(MAX);
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !document.querySelector('dialog[open]')) { e.preventDefault(); $('#go').click(); } });
+document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
+window.addEventListener('orama:controle', e => {
+  if (e.detail?.tipo === 'crash:derrubar') derrubarPorAdmin();
+});
+// sair do jogo (fechar o iframe) com aposta na espera ou na fila: devolve
+addEventListener('pagehide', () => { if (state === 'wait' && active) cancelActive(); if (queued) { balance = r2(balance + queued.bet); queued = null; save(); } });
+
+startWait();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

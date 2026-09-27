@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Galinha Angola Crash</title>
+<link rel="preload" as="image" href="assets/crash/bg.webp">
+<style>
+/* Tela sobre a arte (assets/crash/bg.webp, 941x1672): posições em % da imagem, textos em cqw */
+:root{--y:#ffd23f;--g:#3bff7a;--r:#ff3b3b}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/crash/bg.webp) center/cover;filter:blur(24px) brightness(.4);z-index:-1}
+body{background:#1a0a08;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/crash/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden}
+.abs{position:absolute}
+.hit{position:absolute;border-radius:50%;transition:background .15s,transform .1s}
+.hit:active{background:#fff3;transform:scale(.95)}
+.num{position:absolute;display:grid;place-items:center;font:900 var(--f,5cqw)/1 system-ui;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+/* ---- cena do voo ---- */
+.scene{left:0;top:12.3%;width:100%;height:41.8%;overflow:hidden}
+.scene::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 110%,#ff8a1f55,transparent 60%),linear-gradient(#0000,#0000 70%,#1a060622)}
+.scene canvas{position:absolute;inset:0;width:100%;height:100%}
+.speed{position:absolute;inset:0;pointer-events:none;opacity:0;background:repeating-linear-gradient(200deg,transparent 0 22px,#fff3 23px 24px,transparent 25px 70px);animation:speed .35s linear infinite;transition:opacity .4s}
+.flying .speed{opacity:var(--sp,0)}
+@keyframes speed{to{background-position:-140px 60px}}
+.hen{position:absolute;left:0;top:0;width:46cqw;height:40cqw;transform-origin:50% 50%;will-change:transform;pointer-events:none;filter:drop-shadow(0 1cqw 2cqw #000a)}
+.hen img{width:100%;height:100%;object-fit:contain;display:block}
+.mult{left:0;top:3%;width:100%;text-align:center;font:900 13cqw/1 system-ui;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 .6cqw 0 #6a1a00,0 0 4cqw #ff8a1f;pointer-events:none;z-index:3;transition:color .3s}
+.mult.hot{color:#ffe36a;text-shadow:0 .6cqw 0 #6a1a00,0 0 6cqw #ff3b3b;animation:throb .5s ease-in-out infinite}
+.mult.crashed{color:var(--r);text-shadow:0 .6cqw 0 #3a0000,0 0 5cqw #ff0000;animation:shakeX .4s}
+.mult.won{color:var(--g)}
+.sub{left:0;top:20%;width:100%;text-align:center;font:900 4.2cqw system-ui;text-shadow:0 .3cqw 0 #000,0 0 2cqw #000;pointer-events:none;z-index:3}
+.count{left:20%;top:38%;width:60%;text-align:center;pointer-events:none;z-index:3}
+.count b{font:900 4cqw system-ui;text-shadow:0 .3cqw 0 #000}
+.count i{display:block;width:60%;height:1.6cqw;margin:1.4cqw auto 0;border-radius:1cqw;background:#0008;overflow:hidden}
+.count i::after{content:"";display:block;height:100%;width:var(--p,100%);background:linear-gradient(90deg,var(--y),#ff8a1f);transition:width .1s linear}
+.boom{position:absolute;width:40cqw;height:40cqw;margin:-20cqw 0 0 -20cqw;border-radius:50%;pointer-events:none;z-index:4;background:radial-gradient(circle,#fff 0,#ffe36a 18%,#ff8a1f 38%,#ff3b3b 55%,transparent 70%);animation:boom .7s ease-out forwards}
+@keyframes boom{from{transform:scale(.1);opacity:1}to{transform:scale(2.2);opacity:0}}
+.redflash,.goldflash{position:absolute;inset:0;pointer-events:none;opacity:0;z-index:5}
+.redflash{background:radial-gradient(circle,#ff000088,#ff000033)}
+.goldflash{background:radial-gradient(circle,#ffe36a88,#3bff7a22)}
+.redflash.on,.goldflash.on{animation:fl .7s ease-out}
+@keyframes fl{from{opacity:1}to{opacity:0}}
+.stage.shake{animation:shake var(--sd,.12s) linear infinite}
+@keyframes shake{25%{transform:translate(var(--sa,1px),calc(var(--sa,1px) * -1))}75%{transform:translate(calc(var(--sa,1px) * -1),var(--sa,1px))}}
+.stage.bigshake{animation:shake .06s linear 8;--sa:6px}
+.vignette{position:absolute;inset:0;pointer-events:none;z-index:2;box-shadow:inset 0 0 0 0 #ff000000;transition:box-shadow .3s}
+.flying .vignette{box-shadow:inset 0 0 var(--vg,0) calc(var(--vg,0) * .3) #ff1a0088}
+/* ---- HUD ---- */
+#bal{left:13.4%;top:3.6%;width:14.45%;height:2.9%}
+#info{left:87.8%;top:1.08%;width:9.56%;height:5.38%}
+.last{left:14.9%;top:54.8%;width:82.7%;height:2.87%;display:flex;align-items:center;gap:1.2cqw;overflow:hidden}
+.last span{flex-shrink:0;padding:.5cqw 1.8cqw;border-radius:1.4cqw;font:800 2.9cqw system-ui;font-variant-numeric:tabular-nums;border:.3cqw solid}
+.last .lo{background:#5a0a0a;border-color:#ff4a4a;color:#ffd0d0}
+.last .hi{background:#0a3a1a;border-color:#3bd46a;color:#d8ffe0}
+.last .mega{background:#4a3a00;border-color:var(--y);color:#fff3b0}
+.last span:first-child{animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+#aDown{left:4.46%;top:61.96%;width:7.44%;height:4.19%}
+#aUp{left:43.04%;top:61.96%;width:7.76%;height:4.19%}
+#amt{left:13.8%;top:62.32%;width:27.4%;height:3.35%}
+#cDown{left:57.17%;top:61.96%;width:7.44%;height:4.19%}
+#cUp{left:88.63%;top:61.96%;width:7.44%;height:4.19%}
+#auto{left:66.1%;top:62.32%;width:21.04%;height:3.35%;color:#ffe9a0}
+.chips{top:66.27%;height:3.23%;display:flex;gap:1cqw}
+.chips button{flex:1;border-radius:1.2cqw;background:linear-gradient(#5a3418,#2e1a0a);border:.3cqw solid #8a5a2a;font:800 3.3cqw system-ui;box-shadow:0 .4cqw 0 #1a0e04}
+.chips button:active{transform:translateY(.3cqw);box-shadow:none}
+.chips button.on{background:linear-gradient(#ffe36a,#f0a020);color:#3a1a00;border-color:#fff3b0}
+#betChips{left:3.83%;width:49.3%}
+#autoChips{left:56.11%;width:40.06%}
+#betBtn{left:4.25%;top:70.45%;width:48.35%;height:8.01%;border-radius:8cqw}
+#betBtn .lbl{position:absolute;left:34%;right:4%;top:14%;bottom:14%;display:grid;place-items:center;font:900 3.2cqw/1.1 system-ui;text-align:center;border-radius:2cqw;background:#b01818;opacity:0;pointer-events:none}
+#betBtn.queued .lbl,#betBtn.active .lbl{opacity:1}
+#betBtn.queued .lbl{background:linear-gradient(#e03030,#a01010)}
+#betBtn.active{background:#0007}
+#cashBtn{left:55.47%;top:70.45%;width:41.45%;height:8.01%;border-radius:8cqw;background:#000a;transition:background .2s,box-shadow .2s}
+#cashBtn.live{background:transparent;animation:cashPulse .5s ease-in-out infinite alternate}
+#cashVal{left:71.4%;top:73.44%;width:20.83%;height:4.07%;font-size:6.6cqw;color:#fff;text-shadow:0 .4cqw 0 #0a4a1a;pointer-events:none}
+@keyframes cashPulse{to{box-shadow:0 0 0 .6cqw #bfffd0,0 0 5cqw #3bff7a;background:#ffffff1a}}
+.rows{left:4.46%;top:82.66%;width:91.18%;height:15.43%;overflow:hidden;display:flex;flex-direction:column}
+.rows .r{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;align-items:center;min-height:2.1cqh;padding:.8cqw 2cqw;font:700 3cqw system-ui;font-variant-numeric:tabular-nums;border-bottom:.2cqw solid #ffffff12}
+.rows .r:nth-child(odd){background:#ffffff08}
+.rows .r>*:not(:first-child){text-align:center}
+.rows .r>:last-child{text-align:right}
+.rows .r.new{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.rows .ok{color:var(--g)}.rows .no{color:#ff7a7a}
+.rows .empty{padding:4cqw;text-align:center;color:#b8a898;font:600 3.2cqw system-ui}
+#msg{left:4%;top:50.6%;width:92%;height:3%;display:grid;place-items:center;font:800 3.2cqw system-ui;color:#fff3c8;text-shadow:0 .3cqw 0 #000,0 0 1.5cqw #ff8a1f;pointer-events:none}
+#musicBtn{left:2.6%;top:8.4%;width:9%;aspect-ratio:1;border-radius:50%;background:#0008;border:.35cqw solid var(--y);font-size:4.2cqw;display:grid;place-items:center}
+.coin{position:fixed;top:40%;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6b0,#ffc83a 50%,#c8860a);box-shadow:inset 0 0 0 3px #e0a020;z-index:30;pointer-events:none;animation:coin 1.4s cubic-bezier(.2,.6,.4,1) forwards}
+.coin::after{content:"$";position:absolute;inset:0;display:grid;place-items:center;font:900 17px system-ui;color:#a86a00}
+@keyframes coin{0%{transform:translate(0,0) scale(.4)}40%{transform:translate(var(--dx),var(--up)) scale(1.1)}100%{transform:translate(calc(var(--dx) * 1.4),110vh) rotate(var(--r));opacity:.9}}
+.feather{position:absolute;width:6cqw;pointer-events:none;z-index:3;animation:feather 2.2s ease-in forwards}
+@keyframes feather{to{transform:translate(var(--dx),40cqw) rotate(var(--r));opacity:0}}
+.winpop{left:0;top:44%;width:100%;text-align:center;font:900 11cqw system-ui;color:var(--g);text-shadow:0 .6cqw 0 #0a3a14,0 0 4cqw #3bff7a;pointer-events:none;z-index:6;opacity:0}
+.winpop.show{animation:winpop 1.8s ease-out}
+@keyframes winpop{0%{opacity:0;transform:scale(.3)}15%{opacity:1;transform:scale(1.15)}70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-30%)}}
+@keyframes throb{50%{transform:scale(1.06)}}
+@keyframes shakeX{25%{transform:translateX(-3%)}75%{transform:translateX(3%)}}
+@keyframes pop{from{transform:scale(.4);opacity:0}}
+dialog{margin:auto;max-width:min(92vw,400px);border:3px solid var(--y);border-radius:16px;background:#2a1208;color:#fff;padding:16px}
+dialog::backdrop{background:#000a}
+dialog h3{text-align:center;color:var(--y);margin-bottom:8px}
+dialog p{font-size:13px;line-height:1.55;color:#f3dcc8}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#3a1a00;font-weight:900}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Galinha Angola Crash</h1>
+  <div class="abs scene" id="scene">
+    <canvas id="cv"></canvas>
+    <div class="speed"></div>
+    <div class="hen" id="hen"><img id="henImg" src="assets/crash/idle_0.webp" alt=""></div>
+    <div class="abs mult" id="mult">1.00x</div>
+    <div class="abs sub" id="sub"></div>
+    <div class="abs count" id="count"><b id="countTxt">Próximo voo em 5s</b><i id="countBar"></i></div>
+    <div class="abs winpop" id="winpop"></div>
+    <div class="vignette"></div>
+    <div class="redflash" id="redflash"></div>
+    <div class="goldflash" id="goldflash"></div>
+  </div>
+  <b class="num" id="bal">0.00</b>
+  <button class="abs" id="musicBtn" aria-label="Música">🎵</button>
+  <button class="hit" id="info" aria-label="Como jogar"></button>
+  <div class="abs last" id="last"></div>
+  <div class="abs" id="msg" aria-live="polite"></div>
+  <button class="hit" id="aDown" aria-label="Diminuir aposta"></button>
+  <b class="num" id="amt">1.00</b>
+  <button class="hit" id="aUp" aria-label="Aumentar aposta"></button>
+  <button class="hit" id="cDown" aria-label="Diminuir auto cashout"></button>
+  <b class="num" id="auto">2.00x</b>
+  <button class="hit" id="cUp" aria-label="Aumentar auto cashout"></button>
+  <div class="abs chips" id="betChips"></div>
+  <div class="abs chips" id="autoChips"></div>
+  <button class="hit" id="betBtn" aria-label="Apostar"><span class="lbl" id="betLbl"></span></button>
+  <button class="hit" id="cashBtn" aria-label="Cash out" disabled></button>
+  <b class="num" id="cashVal">—</b>
+  <div class="abs rows" id="rows"><div class="empty">Suas apostas aparecem aqui</div></div>
+</main>
+
+<dialog id="dlg">
+  <h3>Como jogar</h3>
+  <p>A galinha decola no foguete e o multiplicador sobe. Toque em <b>CASH OUT</b> antes dela cair para ganhar a aposta vezes o multiplicador.<br><br>
+  <b>Auto cashout:</b> saca sozinho quando chegar no valor escolhido (toque de novo no chip marcado para desligar).<br><br>
+  A aposta feita durante um voo vale para o próximo. O ponto de queda é sorteado antes de cada voo e ninguém sabe qual é. Em média o jogo devolve 97% em qualquer ponto de saque. Créditos fictícios, jogo para diversão.</p>
+  <button onclick="dlg.close()">Fechar</button>
+</dialog>
+
+<script src="crash.js"></script>
+<script>
+const { drawCrash, multAt, timeFor } = CR;
+const $ = s => document.querySelector(s);
+const r2 = x => Math.round(x * 100) / 100;
+const money = x => x.toFixed(2);
+const fit = (el, txt, max, k) => { el.textContent = txt; el.style.setProperty('--f', Math.min(max, k / txt.length) + 'cqw'); };
+const BET_STEPS = [0.5, 1, 2, 5, 10, 25, 50, 100], BET_CHIPS = [1, 5, 10, 25, 50, 100];
+const AUTO_STEPS = [1.1, 1.2, 1.5, 2, 3, 5, 10, 20, 50, 100], AUTO_CHIPS = [1.5, 2, 5, 10];
+const WAIT_MS = 5000;
+
+// ---------- SPRITES ----------
+const F = {
+  idle: 5, run: 4, launch: 5, fly: 4, spin: 4, scare: 4, fall: 4, win: 3, expr: 5,
+};
+const SRC = (k, i) => `assets/crash/${k}_${i}.webp`;
+Object.entries(F).forEach(([k, n]) => { for (let i = 0; i < n; i++) new Image().src = SRC(k, i); });
+let anim = { k: 'idle', seq: [0, 1, 2, 3, 4, 3, 2, 1], ms: 140, loop: true, i: 0, t: 0 };
+function setAnim(k, seq, ms, loop = true) { anim = { k, seq, ms, loop, i: 0, t: 0 }; $('#henImg').src = SRC(k, seq[0]); }
+
+// ---------- ÁUDIO ----------
+let actx, musicOn = true;
+try { musicOn = localStorage.getItem('crash.music') !== 'off'; } catch {}
+const ac = () => (actx ??= new (window.AudioContext || window.webkitAudioContext)());
+let nb;
+function noiseBuf(a) { return nb ??= (() => { const b = a.createBuffer(1, a.sampleRate, a.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })(); }
+function tone(f, t, d, type = 'triangle', vol = .07, f2, dest) {
+  const a = ac(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(dest || a.destination); o.start(t); o.stop(t + d);
+}
+function noise(t, d, freq, vol, type = 'bandpass', dest) {
+  const a = ac(), s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = noiseBuf(a); f.type = type; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  s.connect(f).connect(g).connect(dest || a.destination); s.start(t, Math.random()); s.stop(t + d);
+}
+const SFX = {
+  click: () => { try { tone(900, ac().currentTime, .05, 'square', .03); } catch {} },
+  tick: () => { try { tone(1200, ac().currentTime, .05, 'square', .04); } catch {} },
+  launch: () => { try { const t = ac().currentTime; noise(t, 1.4, 400, .5, 'lowpass'); tone(80, t, 1.2, 'sawtooth', .08, 300); } catch {} },
+  boom: () => { try { const t = ac().currentTime; noise(t, 1.2, 180, .9, 'lowpass'); tone(120, t, .6, 'sine', .5, 30); noise(t, .3, 2500, .3); } catch {} },
+  cash: () => { try { const t = ac().currentTime; [0, 4, 7, 12, 16].forEach((s, i) => tone(784 * 2 ** (s / 12), t + i * .06, .25, 'square', .05)); [1319, 1568].forEach((f, i) => tone(f, t + .35 + i * .08, .25, 'triangle', .07)); } catch {} },
+  cluck: () => { try { const t = ac().currentTime; tone(700, t, .08, 'square', .05, 1100); tone(900, t + .1, .12, 'square', .05, 500); } catch {} },
+};
+// motor do foguete + batimento cardíaco que aceleram com o multiplicador (tensão)
+const Tension = {
+  on: false, engine: null, eg: null, lastBeat: 0,
+  start() {
+    try {
+      const a = ac(); this.eg = a.createGain(); this.eg.gain.value = .0001; this.eg.connect(a.destination);
+      this.engine = a.createOscillator(); this.engine.type = 'sawtooth'; this.engine.frequency.value = 70;
+      const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600;
+      this.engine.connect(f).connect(this.eg); this.engine.start();
+      this.eg.gain.exponentialRampToValueAtTime(.05, a.currentTime + .4); this.on = true;
+    } catch {}
+  },
+  update(m) {
+    if (!this.on) return;
+    const a = ac(), t = a.currentTime, k = Math.log(m);
+    this.engine.frequency.setTargetAtTime(70 + k * 90, t, .1);
+    // batida do coração: começa 60 bpm e vai até ~180
+    const gap = Math.max(330, 1000 - k * 380);
+    if (performance.now() - this.lastBeat > gap) {
+      this.lastBeat = performance.now();
+      tone(58, t, .12, 'sine', .35); tone(52, t + .14, .14, 'sine', .25);
+    }
+  },
+  stop() { if (!this.on) return; try { const t = ac().currentTime; this.eg.gain.setTargetAtTime(.0001, t, .08); this.engine.stop(t + .5); } catch {} this.on = false; },
+};
+// música de espera: groove animado (só entre os voos; no voo fica o motor + coração)
+const Music = {
+  on: false, out: null, timer: null, next: 0, step: 0,
+  CH: [[45, [60, 64, 69]], [41, [60, 65, 69]], [43, [59, 62, 67]], [40, [59, 64, 67]]],
+  start() {
+    if (this.on || !musicOn) return;
+    try {
+      const a = ac(); this.out = a.createGain(); this.out.gain.value = 0; this.out.connect(a.destination);
+      this.out.gain.linearRampToValueAtTime(.07, a.currentTime + .8);
+      this.on = true; this.step = 0; this.next = a.currentTime + .05; this.timer = setInterval(() => this.tick(), 25);
+    } catch {}
+  },
+  stop() { if (!this.on) return; clearInterval(this.timer); const o = this.out; try { o.gain.setTargetAtTime(0, ac().currentTime, .12); } catch {} setTimeout(() => o.disconnect(), 600); this.on = false; },
+  tick() {
+    const a = ac(), d = 60 / 118 / 4, m = n => 440 * 2 ** ((n - 69) / 12);
+    while (this.next < a.currentTime + .12) {
+      const s = this.step, i = s % 16, [root, ch] = this.CH[(s >> 4) % 4], t = this.next, o = this.out;
+      if (i % 4 === 0) tone(130, t, .14, 'sine', .9, 45, o);
+      if (i % 4 === 2) noise(t, .04, 7000, .15, 'highpass', o);
+      if ([0, 3, 6, 8, 11, 14].includes(i)) tone(m(root), t, d * 2, 'triangle', .5, null, o);
+      if (i % 2 === 0) tone(m(ch[(i / 2) % 3] + 12), t, d * 1.4, 'sine', .22, null, o);
+      this.next += d; this.step++;
+    }
+  },
+};
+document.addEventListener('pointerdown', () => { try { ac().resume(); } catch {} if (state === 'wait') Music.start(); }, { once: true });
+document.addEventListener('visibilitychange', () => { if (actx) document.hidden ? actx.suspend() : actx.resume(); });
+
+// ---------- SALDO (o do site quando aberto dentro dele) ----------
+const START = 20;
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('crash.saldo') || START; } catch {}
+const save = () => {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('crash.saldo', balance); } catch {}
+};
+const msg = t => { $('#msg').textContent = t; };
+
+// ---------- ESTADO ----------
+let betIdx = 1, autoIdx = 3, autoOn = true;
+let state = 'wait', waitStart = 0, flyStart = 0, crashAt = 1, curMult = 1;
+let myBet = null;   // aposta no voo atual: { amount, cashed, cashAt }
+let queued = null;  // aposta pro próximo voo: valor
+let history = [], myRows = [];
+try { history = JSON.parse(localStorage.getItem('crash.hist')) || []; } catch {}
+
+function updHud() {
+  fit($('#bal'), money(balance), 5.4, 32);
+  fit($('#amt'), money(BET_STEPS[betIdx]), 6.4, 30);
+  fit($('#auto'), autoOn ? AUTO_STEPS[autoIdx].toFixed(2) + 'x' : 'OFF', 6.4, 30);
+  document.querySelectorAll('#betChips button').forEach(b => b.classList.toggle('on', +b.dataset.v === BET_STEPS[betIdx]));
+  document.querySelectorAll('#autoChips button').forEach(b => b.classList.toggle('on', autoOn && +b.dataset.v === AUTO_STEPS[autoIdx]));
+  const bb = $('#betBtn'), lbl = $('#betLbl');
+  bb.classList.toggle('queued', !!queued); bb.classList.toggle('active', !!myBet && !myBet.cashed && state === 'fly');
+  lbl.textContent = queued ? `CANCELAR\n${money(queued)}` : myBet && !myBet.cashed && state === 'fly' ? 'EM VOO' : '';
+  lbl.style.whiteSpace = 'pre-line';
+  const live = state === 'fly' && myBet && !myBet.cashed;
+  $('#cashBtn').classList.toggle('live', live); $('#cashBtn').disabled = !live;
+  fit($('#cashVal'), live ? money(r2(myBet.amount * curMult)) : (state === 'fly' ? curMult.toFixed(2) + 'x' : '—'), 6.6, 26);
+}
+
+function renderHistory() {
+  $('#last').innerHTML = history.slice(0, 12).map(c => `<span class="${c < 2 ? 'lo' : c < 10 ? 'hi' : 'mega'}">${c.toFixed(2)}x</span>`).join('');
+}
+function addRow(r) {
+  myRows.unshift(r); myRows = myRows.slice(0, 6);
+  $('#rows').innerHTML = myRows.map((x, i) => `<div class="r ${i === 0 ? 'new' : ''}"><span>Você · ${x.hora}</span><span>${money(x.amount)}</span><span>${x.cash ? x.cash.toFixed(2) + 'x' : '-'}</span><span class="${x.profit > 0 ? 'ok' : 'no'}">${x.profit > 0 ? '+' + money(x.profit) : '-' + money(x.amount)}</span></div>`).join('');
+}
+
+// ---------- CURVA / CENA ----------
+const cv = $('#cv'), cx = cv.getContext('2d');
+let W = 0, H = 0, trail = [];
+function sizeCv() { const r = cv.getBoundingClientRect(); W = cv.width = r.width * devicePixelRatio; H = cv.height = r.height * devicePixelRatio; }
+sizeCv(); addEventListener('resize', sizeCv);
+// escala dinâmica: o gráfico sempre cabe (zoom out conforme sobe)
+function toXY(tms, m) {
+  const tMax = Math.max(8000, tms * 1.15), mMax = Math.max(2, m * 1.2);
+  const px = W * .08 + (tms / tMax) * W * .78, py = H * .88 - ((m - 1) / (mMax - 1)) * H * .72;
+  return [px, py];
+}
+function drawCurve(tms, m) {
+  cx.clearRect(0, 0, W, H);
+  // grade
+  cx.strokeStyle = '#ffffff14'; cx.lineWidth = 1 * devicePixelRatio;
+  for (let i = 1; i < 5; i++) { cx.beginPath(); cx.moveTo(0, H * i / 5); cx.lineTo(W, H * i / 5); cx.stroke(); }
+  if (state === 'wait') return null;
+  const pts = []; const steps = 60;
+  for (let k = 0; k <= steps; k++) { const t = tms * k / steps; pts.push(toXY(t, multAt(t))); }
+  // área embaixo
+  const grad = cx.createLinearGradient(0, 0, 0, H); grad.addColorStop(0, state === 'crash' ? '#ff000055' : '#ff8a1f55'); grad.addColorStop(1, '#ff8a1f00');
+  cx.beginPath(); cx.moveTo(pts[0][0], H * .88); pts.forEach(p => cx.lineTo(p[0], p[1])); cx.lineTo(pts.at(-1)[0], H * .88); cx.closePath(); cx.fillStyle = grad; cx.fill();
+  // linha brilhante
+  cx.shadowColor = state === 'crash' ? '#ff0000' : '#ffb000'; cx.shadowBlur = 18 * devicePixelRatio;
+  cx.strokeStyle = state === 'crash' ? '#ff3b3b' : '#ffd23f'; cx.lineWidth = 5 * devicePixelRatio; cx.lineCap = 'round';
+  cx.beginPath(); pts.forEach((p, i) => i ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1])); cx.stroke(); cx.shadowBlur = 0;
+  // marcos 1.5x, 2x, 5x, 10x...
+  cx.font = `800 ${11 * devicePixelRatio}px system-ui`; cx.fillStyle = '#fff'; cx.textAlign = 'center';
+  for (const mk of [1.5, 2, 3, 5, 10, 25, 50, 100]) {
+    if (mk > m) break; const [x, y] = toXY(timeFor(mk), mk);
+    cx.beginPath(); cx.arc(x, y, 5 * devicePixelRatio, 0, 7); cx.fillStyle = '#fff'; cx.fill();
+    cx.fillText(mk + 'x', x, y + 18 * devicePixelRatio);
+  }
+  // rastro de fogo/fumaça atrás da galinha
+  const tip = pts.at(-1);
+  if (state === 'fly') trail.push({ x: tip[0], y: tip[1], life: 1, s: (4 + Math.random() * 6) * devicePixelRatio });
+  for (let i = trail.length - 1; i >= 0; i--) {
+    const p = trail[i]; p.life -= .03; p.x -= 1.5 * devicePixelRatio; p.y += .6 * devicePixelRatio; p.s *= 1.04;
+    if (p.life <= 0) { trail.splice(i, 1); continue; }
+    cx.fillStyle = p.life > .7 ? `rgba(255,${180 + p.life * 70 | 0},60,${p.life})` : `rgba(200,190,180,${p.life * .5})`;
+    cx.beginPath(); cx.arc(p.x, p.y, p.s, 0, 7); cx.fill();
+  }
+  return tip;
+}
+
+// ---------- LOOP ----------
+let scareUntil = 0, lastFrame = performance.now();
+function frame(now) {
+  const dt = now - lastFrame; lastFrame = now;
+  // animação da galinha
+  anim.t += dt;
+  if (anim.t >= anim.ms) {
+    anim.t = 0; anim.i++;
+    if (anim.i >= anim.seq.length) { if (anim.loop) anim.i = 0; else anim.i = anim.seq.length - 1; }
+    $('#henImg').src = SRC(anim.k, anim.seq[anim.i]);
+  }
+  const hen = $('#hen'), sc = $('#scene').getBoundingClientRect(), k = sc.width / (W / devicePixelRatio || 1);
+  if (state === 'wait') {
+    const left = WAIT_MS - (now - waitStart);
+    $('#countTxt').textContent = `Próximo voo em ${Math.max(0, Math.ceil(left / 1000))}s`;
+    $('#countBar').style.setProperty('--p', Math.max(0, left / WAIT_MS * 100) + '%');
+    if (left <= 900 && anim.k === 'idle') setAnim('run', [0, 1, 2, 3], 110);
+    if (left <= 0) takeOff();
+    drawCurve(0, 1);
+    hen.style.transform = `translate(${sc.width * .06}px,${sc.height * .5}px)`;
+  } else if (state === 'fly') {
+    const t = now - flyStart; curMult = multAt(t);
+    if (curMult >= crashAt) { curMult = crashAt; crash(); }
+    else {
+      $('#mult').textContent = curMult.toFixed(2) + 'x';
+      $('#mult').classList.toggle('hot', curMult >= 2);
+      // auto cashout
+      if (myBet && !myBet.cashed && autoOn && curMult >= myBet.auto) cashOut(myBet.auto);
+      // tensão: tremida, vinheta vermelha e linhas de velocidade crescem com o multiplicador
+      const tens = Math.min(1, Math.log(curMult) / Math.log(20));
+      const st = $('#stage'); st.style.setProperty('--sa', (0.5 + tens * 3) + 'px'); st.style.setProperty('--sd', (0.14 - tens * 0.08) + 's');
+      st.classList.toggle('shake', curMult >= 1.5);
+      $('#scene').style.setProperty('--vg', (tens * 14) + 'cqw'); $('#scene').style.setProperty('--sp', Math.min(1, tens * 1.6));
+      Tension.update(curMult);
+      // de vez em quando a galinha "se assusta" (aleatório, não indica nada sobre a queda)
+      if (now > scareUntil && Math.random() < dt / 4000 && curMult > 1.3) { scareUntil = now + 900; setAnim('scare', [0, 1, 2, 3], 110, false); SFX.cluck(); setTimeout(() => state === 'fly' && setAnim('fly', [0, 1, 2, 3], 90), 900); }
+      if (Math.random() < dt / 6000 && curMult > 3 && now > scareUntil) { scareUntil = now + 800; setAnim('spin', [0, 1, 2, 3], 120, false); setTimeout(() => state === 'fly' && setAnim('fly', [0, 1, 2, 3], 90), 800); }
+      updHud();
+    }
+    const tip = drawCurve(t, curMult);
+    if (tip) { const x = Math.min(tip[0] / devicePixelRatio, sc.width - hen.offsetWidth * .3), y = Math.max(tip[1] / devicePixelRatio, hen.offsetHeight * .45); hen.style.transform = `translate(${x - hen.offsetWidth * .62}px,${y - hen.offsetHeight * .72}px) rotate(${-8 - Math.min(18, curMult * 2)}deg)`; }
+  } else {
+    drawCurve(timeFor(crashAt), crashAt);
+  }
+  requestAnimationFrame(frame);
+}
+
+function startWait() {
+  state = 'wait'; waitStart = performance.now(); crashAt = drawCrash(); curMult = 1; trail = [];
+  $('#stage').classList.remove('shake', 'flying');
+  $('#mult').className = 'abs mult'; $('#mult').textContent = ''; $('#sub').textContent = '';
+  $('#count').style.display = '';
+  setAnim('idle', [0, 1, 2, 3, 4, 3, 2, 1], 150);
+  if (queued) { myBet = { amount: queued, cashed: false, auto: AUTO_STEPS[autoIdx] }; queued = null; }
+  else myBet = null;
+  if (myBet) msg(`Aposta de ${money(myBet.amount)} confirmada! Prepare-se…`);
+  Music.start(); updHud();
+}
+
+function takeOff() {
+  state = 'fly'; flyStart = performance.now();
+  if (myBet) myBet.auto = autoOn ? AUTO_STEPS[autoIdx] : Infinity;
+  $('#count').style.display = 'none'; $('#stage').classList.add('flying');
+  setAnim('launch', [0, 1, 2, 3, 4], 90, false);
+  setTimeout(() => state === 'fly' && setAnim('fly', [0, 1, 2, 3], 90), 480);
+  Music.stop(); SFX.launch(); Tension.start();
+  msg(myBet ? 'VOANDO! Saque antes que ela caia!' : 'Faça sua aposta para o próximo voo');
+  updHud();
+}
+
+function cashOut(at) {
+  if (!myBet || myBet.cashed || state !== 'fly') return;
+  const m = at ?? curMult, pay = r2(myBet.amount * m);
+  myBet.cashed = true; myBet.cashAt = m;
+  balance = r2(balance + pay); save();
+  addRow({ amount: myBet.amount, cash: m, profit: r2(pay - myBet.amount), hora: new Date().toTimeString().slice(0, 5) });
+  SFX.cash(); coins(pay >= myBet.amount * 5 ? 40 : 18);
+  const wp = $('#winpop'); wp.textContent = `+${money(pay)}`; wp.classList.remove('show'); wp.offsetHeight; wp.classList.add('show');
+  flash('goldflash');
+  setAnim('win', [0, 1, 2, 1], 140, false); setTimeout(() => state === 'fly' && setAnim('fly', [0, 1, 2, 3], 90), 900);
+  msg(`🤑 Sacou em ${m.toFixed(2)}x! Ganhou ${money(pay)}`);
+  updHud();
+}
+
+function crash() {
+  state = 'crash'; Tension.stop();
+  $('#stage').classList.remove('shake'); $('#stage').classList.add('bigshake'); setTimeout(() => $('#stage').classList.remove('bigshake'), 500);
+  $('#mult').textContent = crashAt.toFixed(2) + 'x'; $('#mult').className = 'abs mult crashed';
+  $('#sub').textContent = '💥 A GALINHA CAIU!';
+  SFX.boom(); flash('redflash');
+  const hen = $('#hen'), r = hen.getBoundingClientRect(), s = $('#scene').getBoundingClientRect();
+  const b = document.createElement('div'); b.className = 'boom'; b.style.left = (r.left - s.left + r.width * .6) + 'px'; b.style.top = (r.top - s.top + r.height * .5) + 'px';
+  $('#scene').appendChild(b); setTimeout(() => b.remove(), 800);
+  feathers(r.left - s.left + r.width / 2, r.top - s.top + r.height / 2);
+  setAnim('fall', [0, 1, 2, 3], 150, false);
+  if (myBet && !myBet.cashed) {
+    addRow({ amount: myBet.amount, cash: 0, profit: -myBet.amount, hora: new Date().toTimeString().slice(0, 5) });
+    msg(['Caiu! Na próxima você saca antes 🐔', 'Uuuh, foi por pouco!', 'A galinha é braba… tenta de novo!'][Math.random() * 3 | 0]);
+  } else if (myBet) msg(`Você saiu a tempo em ${myBet.cashAt.toFixed(2)}x 😎`);
+  history.unshift(crashAt); history = history.slice(0, 30);
+  try { localStorage.setItem('crash.hist', JSON.stringify(history)); } catch {}
+  renderHistory(); myBet && (myBet.done = true); updHud();
+  setTimeout(startWait, 2600);
+}
+
+function flash(id) { const f = $('#' + id); f.classList.remove('on'); f.offsetHeight; f.classList.add('on'); }
+function coins(n) {
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('i'); c.className = 'coin';
+    c.style.left = 45 + Math.random() * 10 + 'vw';
+    c.style.setProperty('--dx', (Math.random() * 60 - 30) + 'vw'); c.style.setProperty('--up', -(10 + Math.random() * 25) + 'vh'); c.style.setProperty('--r', (Math.random() * 720) + 'deg');
+    c.style.animationDelay = Math.random() * .3 + 's';
+    document.body.appendChild(c); setTimeout(() => c.remove(), 1900);
+  }
+}
+function feathers(x, y) {
+  for (let i = 0; i < 12; i++) {
+    const f = document.createElement('div'); f.className = 'feather';
+    f.innerHTML = '<svg viewBox="0 0 20 60"><path d="M10 0 C20 20 18 45 10 60 C2 45 0 20 10 0Z" fill="#222"/><path d="M10 4 V58" stroke="#fff6" stroke-width="1.2"/><g fill="#fff"><circle cx="7" cy="18" r="1.3"/><circle cx="13" cy="26" r="1.3"/><circle cx="8" cy="34" r="1.3"/><circle cx="12" cy="42" r="1.2"/></g></svg>';
+    f.style.left = x + 'px'; f.style.top = y + 'px';
+    f.style.setProperty('--dx', (Math.random() * 60 - 30) + 'cqw'); f.style.setProperty('--r', (Math.random() * 540 - 270) + 'deg');
+    f.style.animationDelay = Math.random() * .2 + 's';
+    $('#scene').appendChild(f); setTimeout(() => f.remove(), 2500);
+  }
+}
+
+// ---------- AÇÕES ----------
+function placeBet() {
+  SFX.click();
+  if (queued) { balance = r2(balance + queued); queued = null; save(); msg('Aposta cancelada'); updHud(); return; }
+  if (state === 'fly' && myBet && !myBet.cashed) return;
+  const v = BET_STEPS[betIdx];
+  if (balance < v) {
+    if (host && balance < BET_STEPS[0]) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (!host && balance < BET_STEPS[0]) { balance = START; save(); msg('Créditos recarregados: ' + START); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    updHud(); return;
+  }
+  balance = r2(balance - v); save();
+  if (state === 'wait') { myBet = { amount: v, cashed: false, auto: AUTO_STEPS[autoIdx] }; msg(`Aposta de ${money(v)} feita! Aguarde a decolagem`); }
+  else { queued = v; msg(`Aposta de ${money(v)} vale para o próximo voo`); }
+  updHud();
+}
+$('#betBtn').onclick = placeBet;
+$('#cashBtn').onclick = () => cashOut();
+$('#aUp').onclick = () => { betIdx = Math.min(BET_STEPS.length - 1, betIdx + 1); SFX.click(); updHud(); };
+$('#aDown').onclick = () => { betIdx = Math.max(0, betIdx - 1); SFX.click(); updHud(); };
+$('#cUp').onclick = () => { autoOn = true; autoIdx = Math.min(AUTO_STEPS.length - 1, autoIdx + 1); SFX.click(); updHud(); };
+$('#cDown').onclick = () => { autoOn = true; autoIdx = Math.max(0, autoIdx - 1); SFX.click(); updHud(); };
+$('#betChips').innerHTML = BET_CHIPS.map(v => `<button data-v="${v}">${v}</button>`).join('');
+$('#autoChips').innerHTML = AUTO_CHIPS.map(v => `<button data-v="${v}">${v}x</button>`).join('');
+$('#betChips').onclick = e => { const b = e.target.closest('button'); if (!b) return; betIdx = BET_STEPS.indexOf(+b.dataset.v); SFX.click(); updHud(); };
+$('#autoChips').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const i = AUTO_STEPS.indexOf(+b.dataset.v);
+  if (autoOn && i === autoIdx) autoOn = false; else { autoOn = true; autoIdx = i; }
+  SFX.click(); updHud();
+};
+$('#info').onclick = () => { SFX.click(); $('#dlg').showModal(); };
+$('#musicBtn').textContent = musicOn ? '🎵' : '🔇';
+$('#musicBtn').onclick = e => { e.stopPropagation(); musicOn = !musicOn; $('#musicBtn').textContent = musicOn ? '🎵' : '🔇'; try { localStorage.setItem('crash.music', musicOn ? 'on' : 'off'); } catch {} musicOn && state === 'wait' ? Music.start() : Music.stop(); };
+document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); state === 'fly' && myBet && !myBet.cashed ? cashOut() : placeBet(); } });
+
+renderHistory(); startWait(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

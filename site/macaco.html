@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Macaco Pelado</title>
+<link rel="preload" as="image" href="assets/macaco/bg_top.webp">
+<style>
+/* Tela montada sobre a arte (assets/macaco/bg_top.webp, 1536x1024): posições em % da imagem,
+   textos em cqw (1cqw = 1% da largura do palco) pra tudo escalar junto */
+:root{--gold:#ffd23f}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/macaco/bg_top.webp) center/cover;filter:blur(24px) brightness(.5);z-index:-1}
+body{background:#1a2a10;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+.stage{position:relative;width:min(100vw,100dvh * 1536 / 1024);aspect-ratio:1536/1024;background:url(assets/macaco/bg_top.webp) 0 0/100% 100%;container-type:inline-size}
+.abs{position:absolute}
+/* macaco deitado animado no topo (6 quadros, vai e volta), por cima do desenhado na arte */
+.logo{left:14.97%;top:-5.08%;width:42.97%;aspect-ratio:1198/741;pointer-events:none;filter:drop-shadow(0 .6cqw 1cqw #0008)}
+.logo img{width:100%;height:100%;display:block}
+.lie{left:52.08%;top:0.39%;width:27.34%;height:21.09%;pointer-events:none}
+/* um quadro por vez: o JS troca o src (assets/macaco/deitado_0..5.webp) */
+.lie img{width:100%;height:100%;display:block}
+/* macaco dançando: popup em ganho pequeno (7 primeiros quadros) e tela de ganho grande (8 quadros) */
+/* dança: um quadro por vez (assets/macaco/danca_0..7.webp), o JS troca o src */
+.dance{pointer-events:none}
+.dance img{width:100%;height:100%;object-fit:contain;display:block}
+.pop{left:.5%;top:38%;width:17%;aspect-ratio:255/297;display:none;z-index:3;filter:drop-shadow(0 .6cqw 1cqw #000a)}
+.pop.show{display:block;animation:popIn .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes popIn{from{transform:translateY(40%) scale(.3);opacity:0}}
+.overlay .dance{width:min(260px,34vh);aspect-ratio:255/297}
+/* áreas clicáveis por cima dos botões desenhados na arte */
+.hit{position:absolute;border-radius:1.2cqw;transition:background .15s,box-shadow .2s}
+.hit:active{background:#fff3}
+.hit.on{box-shadow:0 0 0 .35cqw var(--gold),0 0 2.4cqw var(--gold);animation:pulse .7s ease-in-out infinite alternate}
+#menu{left:1.43%;top:87.4%;width:6.77%;height:10.25%;border-radius:50%}
+#betDown{left:10.42%;top:90.33%;width:4.43%;height:6.54%}
+#betUp{left:26.69%;top:90.33%;width:4.56%;height:6.54%}
+#turbo{left:63.28%;top:87.21%;width:10.81%;height:10.64%}
+#auto{left:74.87%;top:87.21%;width:9.24%;height:10.64%}
+#spin{left:84.96%;top:78.13%;width:13.35%;height:20.7%;border-radius:50%}
+#spin.busy{animation:spin 1s linear infinite;background:radial-gradient(circle,#fff2 40%,transparent 70%)}
+#spin:disabled{cursor:default}
+#sfx{left:1.2%;top:1.6%;width:4.2%;aspect-ratio:1;border-radius:50%;background:#3a2410cc;border:.2cqw solid #c8903a;font-size:2cqw;display:grid;place-items:center}
+/* valores */
+.val{position:absolute;display:grid;place-items:center;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+#bet{left:15.36%;top:91.21%;width:10.81%;height:4.98%;font-size:2.3cqw;text-shadow:0 .2cqw 0 #000}
+#win{left:36.85%;top:90.82%;width:21.35%;height:5.37%;font-size:3.4cqw;color:var(--gold);text-shadow:0 .25cqw 0 #5a2a00,0 0 1.2cqw #ffb30088}
+.saldo{left:6.2%;top:1.6%;padding:.5cqw 1.4cqw;border-radius:1cqw;background:linear-gradient(#8a5a2a,#5a3514);border:.25cqw solid #d9a24a;box-shadow:0 .5cqw 1cqw #0008;text-align:center;line-height:1.05}
+.saldo small{display:block;font-size:1.1cqw;color:#ffe6a8;font-weight:800;letter-spacing:.15cqw}
+.saldo b{font-size:2.1cqw;font-variant-numeric:tabular-nums}
+/* grade 5x3 */
+.grid{left:17.97%;top:25.2%;width:63.8%;height:55.66%;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(3,1fr);overflow:hidden}
+.cell{--d:0;position:relative;padding:.3cqw;transform:translateY(calc(var(--d) * -100%))}
+.cell img{width:100%;height:100%;object-fit:cover;border-radius:.6cqw;pointer-events:none;display:block}
+.cell.go{transition:transform .42s cubic-bezier(.3,1.3,.6,1) var(--delay,0s)}
+.cell.out{transition:transform .26s ease-in var(--delay,0s);transform:translateY(300%)}
+.turbo .cell.go{transition-duration:.18s}.turbo .cell.out{transition-duration:.1s}
+.cell.dim img{filter:brightness(.4) saturate(.6)}
+.cell.win{z-index:1}
+.cell.win img{animation:pulse .32s ease-in-out infinite alternate;box-shadow:0 0 0 .3cqw var(--gold),0 0 1.8cqw var(--gold)}
+.cell.grow img{animation:grow .45s cubic-bezier(.2,1.6,.4,1)}
+.cell.scat img{animation:pulse .25s ease-in-out infinite alternate;box-shadow:0 0 0 .3cqw #ff7ad9,0 0 2cqw #ff7ad9}
+.colglow{position:absolute;top:0;height:100%;width:20%;border-radius:1cqw;box-shadow:inset 0 0 0 .35cqw var(--gold),0 0 3cqw #ffd23faa;pointer-events:none;animation:fade .3s}
+.lines{left:17.97%;top:25.2%;width:63.8%;height:55.66%;pointer-events:none;overflow:visible;z-index:2}
+.lines polyline{fill:none;stroke:#fff27a;stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 .8px #ffb300);stroke-dasharray:200;animation:draw .45s ease-out forwards}
+.stepwin{left:17.97%;top:44%;width:63.8%;text-align:center;font:900 6cqw system-ui;color:#fff;text-shadow:0 0 1.5cqw var(--gold),0 .4cqw 0 #4a2a00;pointer-events:none;opacity:0;z-index:3}
+.stepwin.show{animation:rise 1.1s ease-out}
+#msg{left:17.97%;top:81.6%;width:63.8%;height:3.6%;display:grid;place-items:center;font:800 1.7cqw system-ui;color:#fff4c8;text-shadow:0 0 1cqw #000,0 .2cqw 0 #000;pointer-events:none}
+/* bônus: placa e placar */
+.bonusSign{left:.78%;top:27.34%;width:13.67%;height:13.67%;border-radius:1.2cqw;pointer-events:none}
+.bonusSign.on{box-shadow:0 0 0 .4cqw #ff7ad9,0 0 4cqw #ff7ad9;animation:pulse .35s ease-in-out infinite alternate}
+.tier.row{left:88.22%;width:9.77%;height:5.27%;border-radius:.8cqw;pointer-events:none;transition:box-shadow .08s,background .08s}
+.tier.lit{background:#fff4;box-shadow:0 0 0 .3cqw #fff,0 0 2.4cqw var(--gold)}
+.tier.won{background:#ffd23f55;box-shadow:0 0 0 .35cqw var(--gold),0 0 4cqw var(--gold);animation:pulse .3s ease-in-out infinite alternate}
+.flash{position:fixed;inset:0;pointer-events:none;background:#fff8d8;opacity:0;z-index:5}
+.flash.on{animation:flash .5s ease-out}
+/* prêmio grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:radial-gradient(circle,#2e7a2ecc,#0a1a06f2);z-index:10;text-align:center;padding:16px}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .dance{filter:drop-shadow(0 0 24px #ffd23f99);animation:bob 1.2s ease-in-out infinite}
+.overlay h2{font:900 clamp(30px,8vw,54px)/1.05 system-ui;background:linear-gradient(#fffbe0,var(--gold) 50%,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #4a2a00);animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{font-size:clamp(34px,10vw,60px);font-weight:900;color:#fff;text-shadow:0 0 20px var(--gold);font-variant-numeric:tabular-nums}
+dialog{margin:auto;max-width:min(94vw,440px);max-height:90dvh;border:3px solid #d9a24a;border-radius:16px;background:#3a2410;color:#fff;padding:16px}
+dialog::backdrop{background:#000a}
+dialog h3{text-align:center;margin-bottom:10px;color:var(--gold)}
+.pay{display:grid;grid-template-columns:48px 1fr;gap:6px 10px;align-items:center;font-size:13px}
+.pay img{width:48px;height:47px;border-radius:6px}
+dialog p{font-size:12px;line-height:1.5;margin-top:10px;color:#f0dcb8}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--gold);color:#3a2000;font-weight:900}
+@keyframes flash{from{opacity:.7}to{opacity:0}}
+@keyframes pulse{to{transform:scale(1.05)}}
+@keyframes grow{from{transform:scale(.3);filter:brightness(3)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes rise{0%{opacity:0;transform:translateY(20%) scale(.6)}20%{opacity:1;transform:scale(1.1)}80%{opacity:1}to{opacity:0;transform:translateY(-60%)}}
+@keyframes draw{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fade{from{opacity:0}}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-3deg)}}
+/* ---- celular em pé: arte vertical (assets/macaco/bg_v_clean.webp, 941x1672) ---- */
+.v{display:none}
+.jp{border-radius:1.4cqw;pointer-events:none;transition:box-shadow .08s,background .08s;top:36.18%;height:4.67%}
+.jp b{position:absolute;left:0;right:0;bottom:10%;text-align:center;font:900 2.9cqw system-ui;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 .3cqw 0 #000}
+@media (orientation:portrait){
+  body::before{background-image:url(assets/macaco/bg_v_clean.webp)}
+  .stage{width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background-image:url(assets/macaco/bg_v_clean.webp)}
+  .h{display:none!important}.v{display:block}
+  .grid,.lines{left:5.74%;top:42.58%;width:88.63%;height:31.22%}
+  .stepwin{left:5.74%;top:53%;width:88.63%;font-size:9cqw}
+  #msg{left:5.74%;top:74.6%;width:88.63%;height:1.9%;font-size:3cqw}
+  #menu{left:2.98%;top:1.32%;width:10.63%;height:5.98%}
+  #betDown{left:4.25%;top:83.61%;width:6.8%;height:4.31%}
+  #betUp{left:28.91%;top:83.61%;width:7.23%;height:4.31%}
+  #spin{left:38.47%;top:77.15%;width:23.17%;height:13.16%}
+  #turbo{left:64.4%;top:83.01%;width:15.09%;height:5.5%}
+  #auto{left:81.19%;top:83.01%;width:15.09%;height:5.5%}
+  #bet{left:13.39%;top:85.05%;width:13.82%;height:2.63%;font-size:3.9cqw}
+  #win{left:36.13%;top:93.66%;width:27.63%;height:3.53%;font-size:6.4cqw}
+  #sfx{left:88.2%;top:93%;width:7.86%;height:4.37%;background:none;border:0;font-size:0}
+  #sfx.off{background:#0008}
+  #info2{left:4.04%;top:93.3%;width:7.86%;height:4.31%;border-radius:50%}
+  #plus{left:88.84%;top:1.56%;width:7.01%;height:3.83%;border-radius:50%}
+  .logo{left:6.38%;top:9.45%;width:87.14%;aspect-ratio:1198/640}
+  .logo img{content:url(assets/macaco/logo_v.webp)}
+  .lie{left:20.19%;top:1.2%;width:59.51%;height:17.22%}
+  .pop{left:62%;top:57%;width:34%}
+  #bal2{left:71.2%;top:2.27%;width:16.58%;height:2.27%;font-size:3.9cqw}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<div class="flash" id="flash"></div>
+<main class="stage" id="stage">
+  <h1 hidden>Macaco Pelado</h1>
+  <div class="abs saldo h"><small>SALDO</small><b id="bal">0,00</b></div>
+  <div class="val v" id="bal2">R$ 0,00</div>
+  <button class="abs" id="sfx" aria-label="Efeitos sonoros">🔊</button>
+  <div class="abs bonusSign h" id="bonusSign" aria-hidden="true"></div>
+  <div class="abs tier row h" data-k="4" style="top:29.98%"></div>
+  <div class="abs tier row h" data-k="3" style="top:35.84%"></div>
+  <div class="abs tier row h" data-k="2" style="top:41.89%"></div>
+  <div class="abs tier row h" data-k="1" style="top:47.75%"></div>
+  <div class="abs tier row h" data-k="0" style="top:53.61%"></div>
+  <div class="abs tier jp v" data-k="4" style="left:6.59%;width:22.95%"><b data-m="4"></b></div>
+  <div class="abs tier jp v" data-k="3" style="left:30.82%;width:20.83%"><b data-m="3"></b></div>
+  <div class="abs tier jp v" data-k="2" style="left:52.92%;width:19.98%"><b data-m="2"></b></div>
+  <div class="abs tier jp v" data-k="1" style="left:74.18%;width:19.77%"><b data-m="1"></b></div>
+  <div class="abs logo" aria-hidden="true"><img src="assets/macaco/logo.webp" alt=""></div>
+  <div class="abs lie" aria-hidden="true"><img id="lieImg" src="assets/macaco/deitado_0.webp" alt=""></div>
+  <div class="abs dance pop" id="pop" aria-hidden="true"><img alt=""></div>
+  <div class="abs grid" id="grid"></div>
+  <svg class="abs lines" id="lines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+  <div class="abs stepwin" id="stepwin"></div>
+  <div class="abs" id="msg" aria-live="polite"></div>
+  <div class="val" id="bet">R$ 1,00</div>
+  <div class="val" id="win" aria-live="polite">R$ 0,00</div>
+  <button class="hit" id="menu" aria-label="Tabela de pagamentos"></button>
+  <button class="hit" id="betDown" aria-label="Diminuir aposta"></button>
+  <button class="hit" id="betUp" aria-label="Aumentar aposta"></button>
+  <button class="hit" id="turbo" aria-label="Modo turbo"></button>
+  <button class="hit" id="auto" aria-label="Giro automático"></button>
+  <button class="hit" id="spin" aria-label="Girar (espaço)"></button>
+  <button class="hit v" id="info2" aria-label="Regras"></button>
+  <button class="hit v" id="plus" aria-label="Depositar"></button>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="dance" id="ovDance" role="img" aria-label="Macaco dançando"><img alt=""></div>
+  <h2 id="ovTitle">GRANDE GANHO!</h2>
+  <div class="amt" id="ovAmt">R$ 0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>10 linhas, contando da esquerda.<br><br>
+  <b>🕶 WILD que expande:</b> quando o macaco de óculos cai, ele cobre a coluna inteira e substitui qualquer símbolo (menos o macaco pelado).<br><br>
+  <b>🍃 Bônus do Macaco Pelado:</b> 3 ou mais em qualquer lugar acendem o placar: 10x, 50x (MINI), 100x (MINOR), 500x (MAJOR) ou 1000x (GRAND) a aposta.<br><br>
+  <b>⚡ Turbo:</b> animações mais rápidas.<br>
+  Prêmio máximo: 2.000x a aposta. RTP teórico: ~97%. Créditos fictícios, jogo para diversão.</p>
+  <button onclick="payDlg.close()">Fechar</button>
+</dialog>
+
+<script src="macaco.js"></script>
+<script>
+const { SYMBOLS, COLS, ROWS, WILD, SCATTER, LINES, BONUS, MAX_WIN, playRound } = MP;
+const $ = s => document.querySelector(s);
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => 'R$ ' + x.toFixed(2).replace('.', ',');
+const BETS = [0.5, 1, 2, 5, 10, 20, 50];
+const imgOf = sym => `<img src="assets/macaco/${SYMBOLS[sym].id}.webp" alt="${SYMBOLS[sym].id}" draggable="false">`;
+
+let turbo = false;
+const sleep = ms => new Promise(r => setTimeout(r, turbo ? ms / 2.5 : ms));
+
+// ---------- SOM (Web Audio, sintetizado) ----------
+let actx, sfxOn = true;
+const ac = () => (actx ??= new (window.AudioContext || window.webkitAudioContext)());
+function tone(f, t, d, type = 'triangle', vol = .07, f2) {
+  const a = ac(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d);
+}
+function play(k, n = 0) {
+  if (!sfxOn) return;
+  try {
+    const t = ac().currentTime;
+    if (k === 'click') tone(900, t, .05, 'square', .03);
+    else if (k === 'drop') tone(220, t, .09, 'triangle', .08, 110);                 // coquinho caindo
+    else if (k === 'wild') { tone(300, t, .12, 'square', .05, 900); tone(600, t + .1, .25, 'triangle', .06, 1200); }
+    else if (k === 'win') [0, 4, 7, 12].forEach((s, i) => tone(523 * 2 ** ((s + n) / 12), t + i * .06, .18, 'triangle', .07));
+    else if (k === 'uh') [0, 5, 0].forEach((s, i) => tone(330 * 2 ** (s / 12), t + i * .12, .12, 'square', .04)); // "uh uh ah"
+    else if (k === 'tick') tone(1200, t, .03, 'square', .03);
+    else if (k === 'big') [0, 4, 7, 12, 16, 19, 24].forEach((s, i) => tone(392 * 2 ** (s / 12), t + i * .08, .3, 'square', .05));
+  } catch {}
+}
+
+// ---------- SALDO (o do site quando aberto dentro dele) ----------
+const START = 20;
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START, betIdx = 1, spinning = false, auto = false;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('macaco.saldo') || START; } catch {}
+// prêmio já salvo no saldo mas ainda não mostrado (fechar no meio da animação não perde o prêmio)
+let pending = 0;
+const save = () => {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('macaco.saldo', balance); } catch {}
+};
+
+// ---------- TELA ----------
+const gridEl = $('#grid');
+const cells = Array.from({ length: COLS * ROWS }, () => gridEl.appendChild(Object.assign(document.createElement('div'), { className: 'cell' })));
+const setCell = (i, sym) => { cells[i].innerHTML = imgOf(sym); };
+const msg = t => { $('#msg').textContent = t; };
+const brlK = x => brl(x).replace(/\B(?=(\d{3})+,)/g, '.'); // R$ 1.000,00
+const updHud = () => {
+  const shown = r2(balance - pending);
+  $('#bal').textContent = brl(shown).slice(3); $('#bal2').textContent = brlK(shown); $('#bet').textContent = brl(BETS[betIdx]);
+  // valores do placar em pé = multiplicador x aposta
+  document.querySelectorAll('.jp b').forEach(b => { b.textContent = brlK(BONUS[b.dataset.m].mult * BETS[betIdx]); });
+};
+const setWin = x => { $('#win').textContent = brl(x); };
+function flash() { const f = $('#flash'); f.classList.remove('on'); f.offsetHeight; f.classList.add('on'); }
+function countUp(el, to, ms = 900) {
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / ms); el.textContent = brl(to * (1 - (1 - k) ** 3)); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+function stepWin(txt) { const e = $('#stepwin'); e.textContent = txt; e.classList.remove('show'); e.offsetHeight; e.classList.add('show'); }
+function clearFx() {
+  cells.forEach(c => c.classList.remove('win', 'dim', 'scat', 'grow'));
+  document.querySelectorAll('.colglow').forEach(e => e.remove());
+  $('#lines').innerHTML = '';
+  document.querySelectorAll('.tier').forEach(r => r.classList.remove('lit', 'won'));
+  $('#bonusSign').classList.remove('on');
+}
+
+// colunas saem por baixo e a grade nova cai de cima, uma coluna por vez
+async function dropIn(grid) {
+  cells.forEach((c, i) => { c.className = 'cell out'; c.style.setProperty('--delay', (i % COLS) * 60 + 'ms'); });
+  await sleep(260 + 4 * 60);
+  cells.forEach((c, i) => {
+    c.className = 'cell'; c.style.setProperty('--d', 3); setCell(i, grid[i]);
+    c.style.setProperty('--delay', (i % COLS) * 110 + (ROWS - 1 - (i / COLS | 0)) * 35 + 'ms');
+  });
+  gridEl.offsetHeight;
+  cells.forEach(c => { c.classList.add('go'); c.style.setProperty('--d', 0); });
+  for (let c = 0; c < COLS; c++) setTimeout(() => play('drop'), (turbo ? 44 : 110) * c + 200);
+  await sleep(420 + 4 * 110 + 100);
+  cells.forEach(c => c.classList.remove('go'));
+}
+
+async function expandWilds(r) {
+  if (!r.cols.length) return;
+  play('wild'); flash();
+  for (const c of r.cols) {
+    const g = document.createElement('div');
+    g.className = 'colglow'; g.style.left = c * 20 + '%';
+    gridEl.appendChild(g);
+    for (let row = 0; row < ROWS; row++) {
+      const i = row * COLS + c;
+      if (r.raw[i] !== r.grid[i]) { setCell(i, WILD); cells[i].classList.add('grow'); }
+    }
+  }
+  await sleep(700);
+}
+
+function drawLines(wins) {
+  const pt = i => `${(i % COLS) * 20 + 10},${(i / COLS | 0) * 33.33 + 16.67}`;
+  $('#lines').innerHTML = wins.map(w => `<polyline points="${LINES[w.line].map(pt).join(' ')}"/>`).join('');
+}
+
+async function bonusRound(r, bet) {
+  r.raw.forEach((s, i) => s === SCATTER && cells[i].classList.add('scat'));
+  $('#bonusSign').classList.add('on');
+  play('uh'); msg('🍃 BÔNUS DO MACACO PELADO! 🍃');
+  await sleep(1300);
+  // o placar sobe e desce piscando e desacelera até o multiplicador sorteado
+  const rows = [...document.querySelectorAll('.tier')].filter(x => x.offsetParent); // marcadores do layout atual
+  const seq = [0, 1, 2, 3, 4, 3, 2, 1];
+  for (let k = 0; ; k++) {
+    const pos = seq[k % seq.length];
+    rows.forEach(x => x.classList.toggle('lit', +x.dataset.k === pos));
+    play('tick');
+    await sleep(k < 16 ? 70 : 70 + (k - 16) * 45);
+    if (k >= 16 && pos === r.bonus) break;
+  }
+  rows.forEach(x => x.classList.remove('lit'));
+  rows.find(x => +x.dataset.k === r.bonus)?.classList.add('won'); // 10x não tem caixa no layout em pé
+  play('big'); flash(); hype(2500);
+  stepWin(`BÔNUS ${BONUS[r.bonus].mult}x`);
+  await sleep(1200);
+}
+
+// macaco deitado: vai e volta pelos 6 quadros (0..5..0); comemorando, troca mais rápido
+const LIE = Array.from({ length: 6 }, (_, i) => `assets/macaco/deitado_${i}.webp`);
+LIE.forEach(src => { new Image().src = src; }); // pré-carrega pra não piscar
+let lieStep = 0, lieFast = 0;
+(function lieTick() {
+  const seq = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1];
+  $('#lieImg').src = LIE[seq[lieStep++ % seq.length]];
+  setTimeout(lieTick, Date.now() < lieFast ? 70 : 160);
+})();
+function hype(ms) { lieFast = Date.now() + ms; }
+
+// dança: troca o quadro da imagem um após o outro
+const DANCE = Array.from({ length: 8 }, (_, i) => `assets/macaco/danca_${i}.webp`);
+DANCE.forEach(src => { new Image().src = src; });
+function playDance(img, seq, ms, loop) {
+  clearInterval(img.timer);
+  let k = 0; img.src = DANCE[seq[0]];
+  img.timer = setInterval(() => {
+    k++;
+    if (k >= seq.length) { if (!loop) return clearInterval(img.timer); k = 0; }
+    img.src = DANCE[seq[k]];
+  }, ms);
+}
+
+function dancePop() {
+  hype(turbo ? 1200 : 2200);
+  const p = $('#pop'), img = p.querySelector('img');
+  p.classList.remove('show'); p.offsetHeight; p.classList.add('show');
+  playDance(img, [0, 1, 2, 3, 4, 5, 6], turbo ? 90 : 130, true);   // ganho pequeno: dança em loop
+  clearTimeout(p.timer); p.timer = setTimeout(() => { p.classList.remove('show'); clearInterval(img.timer); }, turbo ? 1200 : 2200);
+}
+
+function bigWin(total, bet) {
+  const ov = $('#overlay');
+  ov.classList.remove('show'); ov.offsetHeight; // reinicia a dança
+  hype(4500);
+  play('big');
+  $('#ovTitle').textContent = total >= bet * MAX_WIN ? 'PRÊMIO MÁXIMO!' : total >= bet * 100 ? 'MACACO MILIONÁRIO!' : total >= bet * 50 ? 'MEGA BANANADA!' : 'GRANDE GANHO!';
+  ov.classList.add('show');
+  playDance($('#ovDance img'), [0, 1, 2, 3, 4, 5, 6, 7], 200, false); // termina no monte de bananas
+  countUp($('#ovAmt'), total, 2000);
+  clearTimeout(ov.timer);
+  ov.timer = setTimeout(() => ov.classList.remove('show'), 4500);
+}
+
+// ---------- RODADA ----------
+async function spin() {
+  if (spinning) return;
+  const bet = BETS[betIdx];
+  if (balance - pending < bet) {
+    auto = false; $('#auto').classList.remove('on');
+    if (balance < BETS[0] && host) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (balance < BETS[0]) { balance = START; save(); updHud(); msg('Créditos recarregados: ' + brl(START)); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').classList.add('busy'); $('#spin').disabled = true;
+  play('click'); msg(''); setWin(0); clearFx();
+  const r = playRound(bet);
+  balance = r2(balance - bet + r.total); pending = r.total; save(); updHud();
+
+  await dropIn(r.raw);
+  await expandWilds(r);
+  if (r.wins.length) {
+    const hit = new Set(r.wins.flatMap(w => w.cells));
+    cells.forEach((c, i) => c.classList.add(hit.has(i) ? 'win' : 'dim'));
+    drawLines(r.wins);
+    play('win', Math.min(r.wins.length, 6));
+    countUp($('#win'), r.lineTotal, 700);
+    stepWin('+ ' + brl(r.lineTotal));
+    await sleep(1200);
+  }
+  if (r.bonus !== null) {
+    cells.forEach(c => c.classList.remove('win', 'dim')); $('#lines').innerHTML = '';
+    await bonusRound(r, bet);
+  }
+
+  pending = 0; updHud(); setWin(r.total);
+  const big = r.total >= bet * 20;
+  if (big) bigWin(r.total, bet);
+  else if (r.total > 0) { msg(`Você ganhou ${brl(r.total)}! 🍌`); dancePop(); }
+  else msg(['Quase! 🐒', 'Descascando a sorte…', 'Mais uma banana!', 'Uh uh ah ah!'][Math.random() * 4 | 0]);
+  if (r.capped) msg(`Prêmio máximo de ${MAX_WIN}x atingido!`);
+
+  spinning = false; $('#spin').classList.remove('busy'); $('#spin').disabled = false;
+  if (auto) setTimeout(spin, (big ? 4800 : r.total ? 1400 : 450) / (turbo ? 2.5 : 1));
+}
+
+// ---------- INICIALIZAÇÃO ----------
+{
+  const g = Array.from({ length: COLS * ROWS }, MP.drawSymbol);
+  cells.forEach((c, i) => setCell(i, g[i]));
+}
+updHud();
+function renderPay() {
+  const lb = BETS[betIdx] / LINES.length;
+  $('#payTable').innerHTML = SYMBOLS.map((s, i) => `${imgOf(i)}<span>${
+    i === SCATTER ? '<b>Macaco pelado</b>: 3+ em qualquer lugar = bônus de 10x a 1000x'
+    : (i === WILD ? '<b>WILD</b> (expande a coluna) · ' : '') + s.pays.map((p, k) => `${k + 3}x: <b>${brl(p * lb)}</b>`).join(' · ')}</span>`).join('');
+}
+$('#spin').onclick = spin;
+$('#betUp').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); updHud(); };
+$('#betDown').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); updHud(); };
+$('#auto').onclick = () => { auto = !auto; $('#auto').classList.toggle('on', auto); play('click'); if (auto) spin(); };
+$('#turbo').onclick = () => { turbo = !turbo; $('#turbo').classList.toggle('on', turbo); document.body.classList.toggle('turbo', turbo); play('click'); };
+$('#sfx').onclick = () => { sfxOn = !sfxOn; $('#sfx').textContent = sfxOn ? '🔊' : '🔇'; };
+$('#menu').onclick = $('#info2').onclick = () => { renderPay(); play('click'); $('#payDlg').showModal(); };
+$('#plus').onclick = () => { play('click'); if (host) { host.closeGame(); host.openModal('modal-deposit'); } else msg('Depósito disponível no site'); };
+$('#sfx').addEventListener('click', () => $('#sfx').classList.toggle('off', !sfxOn));
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !$('#payDlg').open) { e.preventDefault(); spin(); } });
+</script>
+</body>
+</html>

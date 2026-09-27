@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bichos da Sorte</title>
+<style>
+:root{--y:#ffd54a;--g:#2fe07a;--r:#ff5a6e;--card:#fff7e6;--ink:#2a1a0a}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+html,body{height:100%}
+body{background:radial-gradient(ellipse at 50% -20%,#1f6a4a 0%,#0e3a2a 40%,#071a12 100%);color:#fff;font-family:system-ui,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent;overflow:hidden}
+.app{height:100dvh;max-width:560px;margin:0 auto;display:flex;flex-direction:column;container-type:inline-size;background:linear-gradient(#0b3a22,#072a18 40%,#06200f)}
+/* topo e barra de baixo: arte recortada do mockup (assets/bichos/top.webp 1122x250, bar.webp 1122x170) */
+.top{position:relative;flex-shrink:0;aspect-ratio:1122/250;background:url(assets/bichos/top.webp) 0 0/100% 100%}
+.top #bal{position:absolute;left:11.4%;top:37%;width:15.4%;height:24%;display:grid;place-items:center;overflow:hidden;white-space:nowrap;font:900 var(--bf,5cqw) system-ui;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 .4cqw 0 #000}
+.top #info{position:absolute;left:88.4%;top:25.6%;width:9.4%;aspect-ratio:1;border-radius:50%}
+.top #info:active{background:#fff3}
+.last{position:absolute;left:18.4%;top:81.6%;width:25.4%;height:15.6%;display:flex;align-items:center;gap:1.2cqw;overflow-x:auto;scrollbar-width:none;font-size:2.6cqw}
+.last::-webkit-scrollbar{display:none}
+.last .lbl{display:none}
+.last span{white-space:nowrap;color:#dfeee4;font-weight:700;font-variant-numeric:tabular-nums}
+.last span+span::before{content:"·";margin-right:1.2cqw;color:#7fbf95}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:0 12px 6px;scrollbar-width:none;flex-shrink:0}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:1.6cqw 3.6cqw;border-radius:6cqw;background:#062014;border:.35cqw solid #2fa060;font-weight:800;font-size:3.6cqw;white-space:nowrap;box-shadow:inset 0 0 1.5cqw #000a}
+.tabs button.on{background:linear-gradient(#7dff8a,#1fc24a);color:#053;border-color:#d8ffd0;box-shadow:0 0 3cqw #3dff6a99}
+.tabs button.on::before{content:"🐾 "}
+.desc{padding:0 12px 6px;font-size:3.4cqw;color:#fff;text-align:center;flex-shrink:0;font-weight:600}
+.desc b{color:var(--y);font-weight:900}
+.picker{flex:1;overflow-y:auto;overflow-x:hidden;margin:0 2.4cqw;padding:2cqw;min-height:0;border-radius:3cqw;border:.4cqw solid #2e7a3e;background:#0a2e1a;box-shadow:inset 0 0 3cqw #000a;scrollbar-color:#3dcc5a #0a2e1a}
+.animals{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,minmax(24cqw,1fr));gap:2cqw;min-height:100%}
+.a{position:relative;min-width:0;border-radius:2.4cqw;background:linear-gradient(#fffaea,#fbefcb);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:1cqw .5cqw 1.4cqw;border:.5cqw solid #e0b95a;box-shadow:0 .8cqw 0 #b88a2a,0 1.2cqw 2cqw #0007;transition:transform .15s}
+.a:active{transform:scale(.94)}
+.a .e{position:relative;flex:1;min-height:0;width:100%;display:grid;place-items:center;font-size:12cqw;line-height:1}
+.a .e img{position:absolute;inset:0;margin:auto;max-width:90%;max-height:100%;object-fit:contain}
+.a .n{font-size:2.9cqw;font-weight:900;color:#2a1a0a;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a .d{font-size:2.1cqw;color:#6a5a3a;font-weight:600;letter-spacing:.2cqw}
+.a .g{position:absolute;z-index:1;top:1cqw;left:1cqw;min-width:5cqw;height:5cqw;padding:0 .8cqw;border-radius:1.2cqw;background:linear-gradient(#2a8a3e,#135a24);color:#fff;font:900 3cqw/5cqw system-ui;text-align:center;box-shadow:0 .3cqw 0 #0a3a14}
+.a.on{background:linear-gradient(#fff6b0,var(--y));border-color:#fff;box-shadow:0 0 0 .8cqw var(--g),0 0 4cqw var(--g);transform:scale(1.04);z-index:1}
+.a .ord{position:absolute;top:-1.4cqw;right:-1.4cqw;width:5.4cqw;height:5.4cqw;border-radius:50%;background:var(--g);color:#032;font-size:3.2cqw;font-weight:900;display:none;place-items:center;box-shadow:0 .4cqw .8cqw #0008}
+.a.on .ord{display:grid}
+.numpad{display:none;flex-direction:column;align-items:center;gap:12px;padding-top:8px}
+.numpad.show{display:flex}
+.digits{display:flex;gap:8px}
+.digits span{width:56px;height:70px;border-radius:12px;background:var(--card);color:var(--ink);font:900 40px/70px system-ui;text-align:center;box-shadow:0 4px 0 #c9a86a,0 6px 12px #0006}
+.digits span.cur{box-shadow:0 0 0 3px var(--g),0 4px 0 #c9a86a}
+.numpad .hint{font-size:13px;color:#cfeedd;min-height:18px}
+.keys{display:grid;grid-template-columns:repeat(3,72px);gap:8px}
+.keys button{height:52px;border-radius:12px;background:#0007;border:1px solid #ffffff2a;font:800 22px system-ui}
+.keys button:active{background:#2fe07a44}
+.bar{position:relative;flex-shrink:0;aspect-ratio:1122/170;background:url(assets/bichos/bar.webp) 0 0/100% 100%;margin-bottom:env(safe-area-inset-bottom)}
+.bar .hitb{position:absolute;border-radius:50%}
+.bar .hitb:active{background:#fff3}
+#down{left:5.3%;top:24.7%;width:7.3%;aspect-ratio:1}
+#up{left:27.8%;top:24.7%;width:7.3%;aspect-ratio:1}
+#amt{position:absolute;left:14.6%;top:40%;width:11.6%;height:30%;display:grid;place-items:center;overflow:hidden;white-space:nowrap;font:900 var(--f,5cqw) system-ui;font-variant-numeric:tabular-nums;color:#fff}
+#pot{position:absolute;left:46.8%;top:36%;width:13.6%;height:34%;display:grid;place-items:center;overflow:hidden;white-space:nowrap;font:900 var(--f,5.6cqw) system-ui;font-variant-numeric:tabular-nums;color:var(--y);text-shadow:0 .4cqw 0 #5a3a00}
+#go{position:absolute;left:65.5%;top:19%;width:31.5%;height:62%;border-radius:12cqw}
+#go:active{background:#fff3}
+#go:disabled{filter:grayscale(.6) brightness(.7);background:#0005}
+#msg{text-align:center;font-size:3.2cqw;padding-top:1cqw;font-weight:700;color:#ffe9a0;min-height:18px;padding:0 12px 2px;flex-shrink:0}
+/* sorteio */
+.sheet{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;background:radial-gradient(ellipse at 50% 30%,#1f6a4af2,#030e09f7)}
+.sheet.show{display:flex;animation:fade .25s}
+.sheet h2{font:900 24px system-ui;color:var(--y);text-shadow:0 0 12px #ffd54a88;letter-spacing:1px}
+.rows{display:flex;flex-direction:column;gap:8px;width:min(100%,380px)}
+.row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:14px;background:#0008;border:1px solid #ffffff1a;opacity:.35;transition:opacity .2s,box-shadow .2s}
+.row.live{opacity:1}
+.row.hit{box-shadow:0 0 0 2px var(--g),0 0 18px var(--g);background:#0b3a22cc}
+.row .pos{width:30px;font-weight:900;color:var(--y);text-align:center}
+.row .ds{display:flex;gap:4px}
+.row .ds i{width:34px;height:44px;border-radius:8px;background:var(--card);color:var(--ink);font:900 28px/44px system-ui;font-style:normal;text-align:center;box-shadow:0 3px 0 #c9a86a}
+.row .ds i.spin{animation:roll .08s linear infinite;color:#8a6a3a}
+.row .ds i.hitd{background:linear-gradient(#fff6b0,var(--y))}
+.flip{flex:1;height:48px;perspective:400px}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.open .in{transform:rotateY(180deg)}
+.flip .f,.flip .b{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;gap:6px}
+.flip .f{background:repeating-linear-gradient(45deg,#16804a 0 8px,#0f6a3c 8px 16px);border:2px solid var(--y);font-weight:900;color:var(--y)}
+.flip .b{transform:rotateY(180deg);background:linear-gradient(#fffdf5,var(--card));color:var(--ink);font-weight:900;font-size:14px}
+.flip .b .e{font-size:26px}
+.flip .b .e img{width:34px}
+.res{min-height:60px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.res .big{font:900 30px system-ui;color:#fff;text-shadow:0 0 16px var(--g)}
+.res .sub{font-size:14px;color:#cfeedd}
+.win-anim{width:min(170px,40vw);aspect-ratio:1;background:url(sprites/capy-win.webp) 0 0/1200% 100% no-repeat;display:none}
+.win-anim.show{display:block;animation:winIn 1s steps(12,jump-none) forwards,winLoop .6s steps(6,jump-none) 1s infinite alternate}
+.mico{position:absolute;top:0;right:4%;width:min(120px,26vw);aspect-ratio:214/224;background:url(assets/bichos/mico_idle.webp) 0 0/1200% 100% no-repeat;transform-origin:50% 0;animation:micoIdle 1.8s steps(12,jump-none) infinite alternate,swing 2.4s ease-in-out infinite alternate;pointer-events:none}
+.mico.win{background-image:url(assets/bichos/mico_win.webp);background-size:500% 100%;animation:micoWin .6s steps(5,jump-none) infinite alternate,swing .6s ease-in-out infinite alternate}
+.sheet .again{margin-top:4px;padding:12px 26px;border-radius:24px;background:linear-gradient(#5ff0a0,#16a355);color:#032;font-weight:900;visibility:hidden}
+.sheet .again.show{visibility:visible;animation:fade .3s}
+dialog{margin:auto;max-width:min(92vw,400px);border:2px solid var(--y);border-radius:16px;background:#0e3a2a;color:#fff;padding:16px}
+dialog::backdrop{background:#000a}
+dialog h3{text-align:center;color:var(--y);margin-bottom:8px}
+dialog table{width:100%;border-collapse:collapse;font-size:13px}
+dialog td{padding:4px 2px;border-bottom:1px solid #ffffff1a}
+dialog td:last-child{text-align:right;color:var(--y);font-weight:800}
+dialog p{font-size:12px;color:#cfeedd;margin-top:8px;line-height:1.5}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#3a2000;font-weight:900}
+@keyframes roll{50%{transform:translateY(-3px)}}
+@keyframes fade{from{opacity:0}}
+@keyframes winIn{from{background-position-x:0}to{background-position-x:100%}}
+@keyframes micoIdle{to{background-position-x:100%}}
+@keyframes micoWin{to{background-position-x:100%}}
+@keyframes swing{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+@keyframes winLoop{from{background-position-x:54.5455%}to{background-position-x:100%}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <b id="bal">0.00</b>
+    <button id="info" aria-label="Regras e pagamentos"></button>
+    <div class="last" id="last"></div>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Tipo de aposta"></nav>
+  <div class="desc" id="desc"></div>
+  <div class="picker">
+    <div class="animals" id="animals"></div>
+    <div class="numpad" id="numpad">
+      <div class="digits" id="digits"></div>
+      <div class="hint" id="hint"></div>
+      <div class="keys" id="keys"></div>
+    </div>
+  </div>
+  <div id="msg" aria-live="polite"></div>
+  <div class="bar">
+    <button class="hitb" id="down" aria-label="Diminuir aposta"></button>
+    <b id="amt">1.00</b>
+    <button class="hitb" id="up" aria-label="Aumentar aposta"></button>
+    <b id="pot">0.00</b>
+    <button id="go" aria-label="Sortear"></button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" aria-live="polite">
+  <div class="mico" id="mico" aria-hidden="true"></div>
+  <h2>🎉 SORTEIO 🎉</h2>
+  <div class="rows" id="rows"></div>
+  <div class="res" id="res"><div class="win-anim" id="winAnim"></div></div>
+  <button class="again" id="again">Jogar de novo</button>
+</div>
+
+<dialog id="dlg">
+  <h3>Como jogar</h3>
+  <table id="payTable"></table>
+  <p>São sorteados 5 prêmios na hora, cada um com 4 números (milhar). O bicho é definido pela dezena final: Avestruz 01–04, Águia 05–08… Vaca 97–00. Dezena, centena e milhar valem só no 1º prêmio.<br><br>Todas as apostas devolvem em média 96%.</p>
+  <button onclick="dlg.close()">Fechar</button>
+</dialog>
+
+<script src="bichos.js"></script>
+<script>
+const { ANIMALS, BETS, PRIZES, play: playBet, validate } = BX;
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const r2 = x => Math.round(x * 100) / 100;
+const money = x => x.toFixed(2);
+const AMOUNTS = [0.5, 1, 2, 5, 10, 20, 50];
+const face = a => a.img ? `<img src="${a.img}" alt="">` : a.emoji;
+
+// ---------- SOM ----------
+let actx;
+const ac = () => (actx ??= new (window.AudioContext || window.webkitAudioContext)());
+function tone(f, t, d, type = 'triangle', vol = .06) {
+  try {
+    const a = ac(), o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, a.currentTime + t);
+    g.gain.setValueAtTime(vol, a.currentTime + t); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + t + d);
+    o.connect(g).connect(a.destination); o.start(a.currentTime + t); o.stop(a.currentTime + t + d);
+  } catch {}
+}
+const SFX = {
+  click: () => tone(900, 0, .05, 'square', .03),
+  tick: () => tone(500 + Math.random() * 300, 0, .03, 'square', .015),
+  stop: () => tone(300, 0, .08, 'triangle', .08),
+  flip: () => { tone(660, 0, .12); tone(990, .06, .14); },
+  hit: () => [0, 4, 7, 12].forEach((s, i) => tone(523 * 2 ** (s / 12), i * .07, .2)),
+  win: () => [0, 4, 7, 12, 16, 19, 24].forEach((s, i) => tone(392 * 2 ** (s / 12), i * .09, .3, 'square', .05)),
+};
+
+// ---------- SALDO (o do site quando aberto dentro dele) ----------
+const START = 20;
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('bichos.saldo') || START; } catch {}
+// prêmio já salvo no saldo mas ainda não mostrado (fechar no meio da animação não perde o prêmio)
+let pending = 0;
+const save = () => {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('bichos.saldo', balance); } catch {}
+};
+
+// ---------- ESTADO DA APOSTA ----------
+let type = 'grupo', picked = [], number = '', amtIdx = 1, busy = false;
+let history = [];
+try { history = JSON.parse(localStorage.getItem('bichos.hist')) || []; } catch {}
+
+const maxAmt = () => BETS[type].max ?? Infinity;
+const amount = () => AMOUNTS[amtIdx];
+const msg = t => { $('#msg').textContent = t; };
+
+function render() {
+  const t = BETS[type];
+  const bt = money(r2(balance - pending));
+  $('#bal').textContent = bt;
+  // cabe na caixa: fonte menor quanto mais dígitos (17.00 → 5cqw, 1250.00 → 3.9cqw)
+  $('#bal').style.setProperty('--bf', Math.min(5, 27 / bt.length) + 'cqw');
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === type));
+  $('#desc').innerHTML = `<b>${t.nome}</b>: ganha se ${t.desc} · paga <b>${t.paga}x</b>${t.max ? ` · máx. ${money(t.max)}` : ''}`;
+  $('#animals').style.display = t.pick ? '' : 'none';
+  $('#numpad').classList.toggle('show', !t.pick);
+  document.querySelectorAll('.a').forEach(el => {
+    const k = picked.indexOf(+el.dataset.g);
+    el.classList.toggle('on', k >= 0);
+    el.querySelector('.ord').textContent = k + 1;
+  });
+  if (!t.pick) {
+    $('#digits').innerHTML = Array.from({ length: t.digits }, (_, i) => `<span class="${i === number.length ? 'cur' : ''}">${number[i] ?? ''}</span>`).join('');
+    const g = number.length >= 2 ? BX.grupoDe(+number.slice(-2)) : 0;
+    $('#hint').textContent = g ? `termina em ${number.slice(-2)} = ${ANIMALS[g - 1].emoji} ${ANIMALS[g - 1].nome}` : '';
+  }
+  // textos que encolhem pra caber na caixa da arte
+  const fit = (el, txt, max, k) => { el.textContent = txt; el.style.setProperty('--f', Math.min(max, k / txt.length) + 'cqw'); };
+  fit($('#amt'), money(amount()), 5, 20);
+  fit($('#pot'), money(r2(amount() * t.paga)), 5.6, 24);
+}
+
+function setType(t) {
+  type = t; picked = []; number = '';
+  while (amtIdx > 0 && amount() > maxAmt()) amtIdx--;
+  msg(''); SFX.click(); render();
+  document.querySelector(`#tabs button[data-t="${t}"]`).scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+}
+
+function pickAnimal(g) {
+  if (busy) return;
+  const need = BETS[type].pick, k = picked.indexOf(g);
+  if (k >= 0) picked.splice(k, 1);
+  else { if (picked.length === need) picked.shift(); picked.push(g); }
+  msg(''); SFX.click(); render();
+}
+
+function key(k) {
+  if (busy) return;
+  const n = BETS[type].digits;
+  if (k === '⌫') number = number.slice(0, -1);
+  else if (k === '🎲') number = Array.from({ length: n }, () => Math.random() * 10 | 0).join('');
+  else if (number.length < n) number += k;
+  msg(''); SFX.click(); render();
+}
+
+function renderHistory() {
+  $('#last').innerHTML = '<span class="lbl">Últimos:</span>' + (history.length
+    ? history.map(p => `<span>${ANIMALS[p.grupo - 1].emoji} ${p.milhar}</span>`).join('')
+    : '<span>nenhum ainda</span>');
+}
+
+// ---------- SORTEIO ----------
+async function sortear() {
+  if (busy) return;
+  const bet = { type, animals: picked.slice(), number, amount: amount() };
+  const erro = validate(bet);
+  if (erro) { msg(erro); SFX.stop(); return; }
+  if (balance < bet.amount) {
+    if (host && balance < AMOUNTS[0]) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  busy = true; $('#go').disabled = true; msg('');
+  balance = r2(balance - bet.amount); save(); render();
+  const r = playBet(bet);
+  balance = r2(balance + r.payout); pending = r.payout; save();
+  await showDraw(bet, r);
+  pending = 0; // o resultado apareceu na tela: mostra o saldo com o prêmio
+  history = [r.prizes[0], ...history].slice(0, 12);
+  try { localStorage.setItem('bichos.hist', JSON.stringify(history)); } catch {}
+  renderHistory(); render();
+  await new Promise(res => { $('#again').onclick = () => { SFX.click(); $('#sheet').classList.remove('show'); res(); }; });
+  busy = false; $('#go').disabled = false;
+}
+
+// o que acendeu na tela: prêmios que contam pra aposta
+function hitsOf(bet, prizes) {
+  const t = bet.type;
+  if (t === 'grupo') return prizes.map((p, i) => i === 0 && p.grupo === bet.animals[0]);
+  if (t === 'grupo15' || t === 'duque' || t === 'terno') return prizes.map(p => bet.animals.includes(p.grupo));
+  return prizes.map((p, i) => i === 0 && p.milhar.endsWith(bet.number));
+}
+
+async function showDraw(bet, r) {
+  const sheet = $('#sheet'), rows = $('#rows');
+  rows.innerHTML = r.prizes.map((_, i) => `
+    <div class="row" data-i="${i}"><div class="pos">${i + 1}º</div>
+      <div class="ds"><i>?</i><i>?</i><i>?</i><i>?</i></div>
+      <div class="flip"><div class="in"><div class="f">?</div><div class="b"></div></div></div></div>`).join('');
+  $('#res').innerHTML = '<div class="win-anim" id="winAnim"></div>';
+  $('#again').classList.remove('show');
+  $('#mico').classList.remove('win');
+  sheet.classList.add('show');
+  const hits = hitsOf(bet, r.prizes);
+
+  // do 5º pro 1º: a emoção fica pro final
+  for (let i = PRIZES - 1; i >= 0; i--) {
+    const row = rows.querySelector(`[data-i="${i}"]`), ds = [...row.querySelectorAll('.ds i')], p = r.prizes[i];
+    row.classList.add('live');
+    ds.forEach(d => d.classList.add('spin'));
+    const timer = setInterval(() => { ds.forEach(d => d.classList.contains('spin') && (d.textContent = Math.random() * 10 | 0)); SFX.tick(); }, 70);
+    await sleep(i === 0 ? 900 : 450);
+    for (let k = 0; k < 4; k++) {
+      await sleep(i === 0 ? 380 : 170);
+      ds[k].classList.remove('spin'); ds[k].textContent = p.milhar[k]; SFX.stop();
+    }
+    clearInterval(timer);
+    const a = ANIMALS[p.grupo - 1];
+    row.querySelector('.b').innerHTML = `<span class="e">${face(a)}</span>${a.nome}`;
+    row.querySelector('.flip').classList.add('open'); SFX.flip();
+    if (hits[i]) {
+      row.classList.add('hit'); SFX.hit();
+      if (!BETS[bet.type].pick) ds.slice(4 - bet.number.length).forEach(d => d.classList.add('hitd'));
+    }
+    await sleep(i === 0 ? 700 : 350);
+  }
+
+  if (r.payout > 0) {
+    SFX.win(); $('#mico').classList.add('win');
+    $('#res').innerHTML = `<div class="win-anim show"></div><div class="big">+ ${money(r.payout)}</div><div class="sub">${BETS[bet.type].nome} pagou ${BETS[bet.type].paga}x 🎉</div>`;
+  } else {
+    const perto = hits.some(Boolean) ? 'Quase! Faltou pouco.' : 'Não foi dessa vez.';
+    $('#res').innerHTML = `<div class="sub" style="font-size:18px;font-weight:800;color:#ffe9a0">${perto}</div><div class="sub">O 1º prêmio foi ${ANIMALS[r.prizes[0].grupo - 1].nome}</div>`;
+  }
+  $('#again').classList.add('show');
+}
+
+// ---------- INICIALIZAÇÃO ----------
+$('#tabs').innerHTML = Object.entries(BETS).map(([k, t]) => `<button data-t="${k}">${t.nome}</button>`).join('');
+$('#tabs').onclick = e => { const b = e.target.closest('button'); if (b && !busy) setType(b.dataset.t); };
+$('#animals').innerHTML = ANIMALS.map(a => `
+  <button class="a" data-g="${a.grupo}" aria-label="${a.nome}, grupo ${a.grupo}">
+    <span class="g">${a.grupo}</span><span class="ord"></span>
+    <span class="e">${face(a)}</span><span class="n">${a.nome}</span><span class="d">${a.dezenas.join(' ')}</span>
+  </button>`).join('');
+$('#animals').onclick = e => { const b = e.target.closest('.a'); if (b) pickAnimal(+b.dataset.g); };
+$('#keys').innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '🎲', '0', '⌫'].map(k => `<button data-k="${k}" aria-label="${k === '⌫' ? 'Apagar' : k === '🎲' ? 'Número aleatório' : k}">${k}</button>`).join('');
+$('#keys').onclick = e => { const b = e.target.closest('button'); if (b) key(b.dataset.k); };
+$('#up').onclick = () => { if (busy) return; if (AMOUNTS[amtIdx + 1] <= maxAmt()) amtIdx++; else msg(`${BETS[type].nome}: aposta máxima de ${money(maxAmt())}`); SFX.click(); render(); };
+$('#down').onclick = () => { if (busy) return; amtIdx = Math.max(0, amtIdx - 1); SFX.click(); render(); };
+$('#go').onclick = sortear;
+$('#info').onclick = () => {
+  $('#payTable').innerHTML = Object.values(BETS).map(t => `<tr><td><b>${t.nome}</b><br><small>${t.desc}</small></td><td>${t.paga}x</td></tr>`).join('');
+  SFX.click(); $('#dlg').showModal();
+};
+document.addEventListener('keydown', e => {
+  if ($('#dlg').open) return;
+  if (/^\d$/.test(e.key) && !BETS[type].pick) key(e.key);
+  else if (e.key === 'Backspace' && !BETS[type].pick) key('⌫');
+  else if (e.key === 'Enter' && !$('#sheet').classList.contains('show')) sortear();
+});
+renderHistory(); render();
+</script>
+</body>
+</html>

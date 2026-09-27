@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capivara da Sorte</title>
+<style>
+:root{--fw:min(100vw - 16px,480px,(100dvh - 215px) * .7635);--cell:calc(var(--fw) * .1351);--gold:#f5c542;--lime:#c8f56a}
+*{box-sizing:border-box;margin:0}
+body{height:100dvh;overflow:hidden;background:radial-gradient(ellipse at 50% -10%,#3f9a5f 0%,#155232 40%,#06180e 100%) fixed;color:#f4fbe6;font-family:system-ui,sans-serif;display:flex;justify-content:center;align-items:flex-start;user-select:none;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.08;background:radial-gradient(ellipse 14px 30px at 50% 50%,#8fdc6a 60%,transparent 62%) 0 0/48px 64px,radial-gradient(ellipse 10px 24px at 50% 50%,#8fdc6a 60%,transparent 62%) 24px 32px/48px 64px}
+.firefly{position:fixed;width:6px;height:6px;border-radius:50%;background:#eaff8a;box-shadow:0 0 10px 4px #d4ff5a88;pointer-events:none;animation:fly 9s ease-in-out infinite,blink 2.2s ease-in-out infinite}
+.game{width:100%;max-width:440px;padding:6px 16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.mascot{animation:bob 2.8s ease-in-out infinite;filter:drop-shadow(0 6px 8px #000a)}
+.capy-anim{position:absolute;z-index:1;left:-.59%;top:-3.2%;width:95.21%;aspect-ratio:1;background:url(sprites/capy-logo.png) 0 0/1200% 100% no-repeat;animation:capy 3s infinite;pointer-events:none}
+@keyframes capy{0%{background-position-x:0;animation-timing-function:steps(12,jump-none)}55%{background-position-x:100%;animation-timing-function:step-end}56%,100%{background-position-x:0}}
+.frame{width:var(--fw);aspect-ratio:1330/1742;background:url(board.png) bottom/100% auto no-repeat;position:relative;filter:drop-shadow(0 12px 24px #000a)}
+.reels{position:absolute;left:15.86%;top:62.51%;width:68.2%;display:grid;grid-template-columns:repeat(3,1fr);column-gap:2.4%}
+.reel{height:calc(var(--cell)*3);overflow:hidden;border-radius:8px}
+.reel.spinning .strip{filter:blur(1.5px) brightness(1.1)}
+.cell{height:var(--cell);display:grid;place-items:center;padding:4%;transition:opacity .3s}
+.cell svg{width:100%;height:100%;filter:drop-shadow(0 3px 2px #0009)}
+.cell.win{background:radial-gradient(circle,#d4ff5a55,transparent 70%)}
+.cell.win svg{animation:pulse .5s ease-in-out infinite alternate}
+.cell.dim{opacity:.3}
+.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.lines polyline{fill:none;stroke:#e6ff8a;stroke-width:5;stroke-linecap:round;filter:drop-shadow(0 0 5px #9dff3a);stroke-dasharray:400;animation:draw .5s ease-out forwards}
+.hud{display:flex;gap:8px;width:100%}
+.box{flex:1;background:#0008;border:1px solid #c8f56a55;border-radius:10px;padding:3px 10px;text-align:center}
+.box small{display:block;font-size:11px;color:var(--lime);letter-spacing:1.5px}
+.box b{font-size:17px;font-variant-numeric:tabular-nums}
+#msg{min-height:20px;font-size:14px;font-weight:700;color:#eaff9a;text-shadow:0 0 8px #6fdc2a;text-align:center}
+.controls{display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px}
+.bet{display:flex;align-items:center;gap:6px}
+.bet b{min-width:48px;text-align:center;font-size:16px}
+.bet small{display:block;font-size:10px;color:var(--lime);font-weight:400}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+.btn{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7ee07a,#2f8a3e 50%,#12451f);border:2px solid #d9a066;box-shadow:0 3px 0 #0b2e1a;font-size:17px;font-weight:900;display:grid;place-items:center}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #0b2e1a}
+.btn.on{box-shadow:0 0 12px #d4ff5a,0 3px 0 #0b2e1a;background:radial-gradient(circle at 35% 30%,#f0ff9a,#a6d93a 50%,#4d7a12)}
+.btn.off{opacity:.45}
+.spin{width:74px;height:74px;border-radius:50%;border:4px solid #fff3b0;background:radial-gradient(circle at 35% 30%,#ffe6a8,#ff9a1f 45%,#c65a08);box-shadow:0 6px 0 #6b3000,0 10px 24px #000a,0 0 30px #ffb30055;display:grid;place-items:center;flex-shrink:0}
+.spin:active{transform:translateY(4px);box-shadow:0 2px 0 #6b3000}
+.spin svg{width:40px}
+.corner{position:absolute;top:8px;display:flex;gap:6px;z-index:2}.corner.l{left:12px}.corner.r{right:12px}
+.corner .btn{width:34px;height:34px;font-size:15px}
+.spin.busy svg{animation:rot .6s linear infinite}
+.spin:disabled{filter:saturate(.6)}
+.side{display:flex;gap:8px}
+.foot{font-size:10px;opacity:.55;text-align:center}
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle,#2f8a3ecc,#06180eee);z-index:10;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay>:not(.drop){position:relative;z-index:1}
+.overlay h2{font:900 clamp(32px,10vw,54px)/1.05 Georgia,serif;background:linear-gradient(#fbffd8,#d4f06a 45%,#e0a92a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #0b2e1a);animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{font-size:clamp(36px,12vw,60px);font-weight:900;color:#fff;text-shadow:0 0 20px #9dff3a;font-variant-numeric:tabular-nums}
+.win-anim{width:min(300px,70vw,42dvh);aspect-ratio:1;background:url(sprites/capy-win.webp) 0 0/1200% 100% no-repeat}
+.overlay.show .win-anim{animation:winIn 1s steps(12,jump-none) forwards,winLoop .6s steps(6,jump-none) 1s infinite alternate}
+@keyframes winIn{from{background-position-x:0}to{background-position-x:100%}}
+@keyframes winLoop{from{background-position-x:54.5455%}to{background-position-x:100%}}
+.drop{position:absolute;top:-60px;width:42px;animation:fall linear forwards}
+dialog{margin:auto;max-width:360px;width:calc(100% - 32px);border:3px solid #d9a066;border-radius:18px;background:linear-gradient(#1f5a36,#0c2416);color:#f4fbe6;padding:16px}
+dialog::backdrop{background:#000b}
+dialog h3{text-align:center;color:var(--lime);margin-bottom:10px}
+.pay{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:6px 10px}
+.pay svg{width:48px;height:48px}
+dialog p{font-size:13px;opacity:.85;margin-top:10px;line-height:1.4}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--lime);color:#0b2e1a;font-weight:900}
+.cell.empty{opacity:.4}.cell.empty::after{content:"";width:38%;aspect-ratio:1;border:2px dashed #c8f56a66;border-radius:50%}
+.cell.locked{background:radial-gradient(circle,#ffd54a40,transparent 70%)}
+.frame.feature{animation:glowF .7s ease-in-out infinite alternate}
+@keyframes glowF{to{filter:drop-shadow(0 0 18px #d4ff5a) drop-shadow(0 12px 24px #000a)}}
+#banner{position:absolute;left:15.86%;top:62.51%;width:68.2%;height:30.94%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#06180ed9;border-radius:22px;z-index:3;text-align:center;padding:12px}
+#banner.show{display:flex;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+#banner .bm{width:42%;animation:bob .5s ease-in-out infinite}
+#banner b{font:900 clamp(20px,6.5vw,30px)/1.1 Georgia,serif;background:linear-gradient(#fbffd8,#d4f06a 45%,#e0a92a);-webkit-background-clip:text;background-clip:text;color:transparent}
+#banner span{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px}
+#banner span svg{width:46px;height:46px}
+@keyframes bob{50%{transform:translateY(-5px) rotate(2deg)}}
+@keyframes swing{50%{rotate:5deg}}
+@keyframes pulse{to{transform:scale(1.12)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes draw{from{stroke-dashoffset:400}to{stroke-dashoffset:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes fly{25%{translate:30px -40px}50%{translate:-20px -70px}75%{translate:-40px -20px}}
+@keyframes blink{50%{opacity:.15}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<!-- gradientes compartilhados por toda a arte -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".45" stop-color="#f5c542"/><stop offset="1" stop-color="#b8860b"/></linearGradient>
+  <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a5a"/><stop offset=".5" stop-color="#d62828"/><stop offset="1" stop-color="#7a0a10"/></linearGradient>
+  <linearGradient id="gBeak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff176"/><stop offset=".5" stop-color="#ffb300"/><stop offset="1" stop-color="#f4511e"/></linearGradient>
+  <linearGradient id="gLeaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b6f06a"/><stop offset=".5" stop-color="#43a047"/><stop offset="1" stop-color="#1b5e20"/></linearGradient>
+  <linearGradient id="gBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3f0ff"/><stop offset=".45" stop-color="#29a3ff"/><stop offset="1" stop-color="#0d3a8c"/></linearGradient>
+  <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0f7"/><stop offset=".6" stop-color="#ff8cc6"/><stop offset="1" stop-color="#d63384"/></linearGradient>
+  <radialGradient id="gOrange" cx=".38" cy=".35" r=".7"><stop offset="0" stop-color="#ffd27a"/><stop offset=".5" stop-color="#ff9a1f"/><stop offset="1" stop-color="#d9620a"/></radialGradient>
+  <radialGradient id="gFur" cx=".5" cy=".35" r=".75"><stop offset="0" stop-color="#d9a36a"/><stop offset=".6" stop-color="#a86c35"/><stop offset="1" stop-color="#6e4220"/></radialGradient>
+</defs></svg>
+
+<main class="game">
+  <div class="corner l">
+    <button class="btn" id="sfx" aria-label="Efeitos sonoros">🔊</button>
+    <button class="btn" id="music" aria-label="Música">🎵</button>
+  </div>
+  <div class="corner r"><button class="btn" id="info" aria-label="Tabela de pagamentos">i</button></div>
+  <h1 hidden>Capivara da Sorte</h1>
+
+  <div class="frame">
+    <div class="capy-anim" role="img" aria-label="Capivara da Sorte"></div>
+    <div class="reels" id="reels">
+      <div class="reel"><div class="strip"></div></div>
+      <div class="reel"><div class="strip"></div></div>
+      <div class="reel"><div class="strip"></div></div>
+      <svg class="lines" id="lines" viewBox="0 0 300 300" preserveAspectRatio="none"></svg>
+    </div>
+    <div id="banner" aria-live="assertive"></div>
+  </div>
+
+  <div class="hud">
+    <div class="box"><small>SALDO</small><b id="bal">0.00</b></div>
+    <div class="box"><small>GANHO</small><b id="win">0.00</b></div>
+  </div>
+  <div id="msg" aria-live="polite">Boa sorte!</div>
+
+  <div class="controls">
+    <div class="bet">
+      <button class="btn" id="betDown" aria-label="Diminuir aposta">−</button>
+      <b><small>APOSTA</small><span id="bet">1.00</span></b>
+      <button class="btn" id="betUp" aria-label="Aumentar aposta">+</button>
+    </div>
+    <button class="spin" id="spin" aria-label="Girar (espaço)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#5a2400" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>
+    </button>
+    <div class="side">
+      <button class="btn" id="auto" aria-label="Giro automático" style="font-size:10px">AUTO</button>
+    </div>
+  </div>
+  <p class="foot">Créditos fictícios · sem dinheiro real · jogo para diversão</p>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="win-anim" role="img" aria-label="Capivara comemorando"></div>
+  <h2 id="ovTitle">GRANDE GANHO!</h2>
+  <div class="amt" id="ovAmt">0.00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>5 linhas: 3 horizontais + 2 diagonais. 3 símbolos iguais numa linha pagam. A <b>Capivara</b> é coringa e substitui qualquer símbolo. Tela cheia com o mesmo símbolo = <b>x10</b> no ganho!<br><br><b>🦫 Bônus Capivara da Sorte:</b> a qualquer giro a capivara pode acordar! Um símbolo é escolhido e só ele e a capivara caem. As casas preenchidas ficam travadas e as vazias giram de novo, grátis, até sair prêmio. Encheu a tela = x10!</p>
+  <button onclick="payDlg.close()">Fechar</button>
+</dialog>
+
+<script src="slot.js"></script>
+<script>
+// ---------- ARTE (SVG vetorial, viewBox 100x100) ----------
+const ORANGE = (cx, cy, r) => `
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#gOrange)" stroke="#a64a00" stroke-width="2"/>
+  <ellipse cx="${cx - r * .35}" cy="${cy - r * .35}" rx="${r * .28}" ry="${r * .17}" fill="#fff" opacity=".5" transform="rotate(-35 ${cx - r * .35} ${cy - r * .35})"/>
+  <path d="M${cx + 1} ${cy - r + 1}Q${cx + r * .5} ${cy - r * 1.5} ${cx + r * 1.1} ${cy - r * 1.05}Q${cx + r * .6} ${cy - r * .6} ${cx + 1} ${cy - r + 1}Z" fill="#2f9e44" stroke="#1b5e20" stroke-width="1.5"/>`;
+
+const CAPY_FACE = `
+  <ellipse cx="25" cy="30" rx="8" ry="7" fill="#6e4220"/><ellipse cx="25" cy="31" rx="4" ry="3.5" fill="#3a2210"/>
+  <ellipse cx="75" cy="30" rx="8" ry="7" fill="#6e4220"/><ellipse cx="75" cy="31" rx="4" ry="3.5" fill="#3a2210"/>
+  <path d="M22 44Q22 24 50 24Q78 24 78 44L81 70Q81 92 50 92Q19 92 19 70Z" fill="url(#gFur)" stroke="#3a2210" stroke-width="2.5"/>
+  <path d="M28 70Q28 56 50 56Q72 56 72 70Q72 86 50 86Q28 86 28 70Z" fill="#8a5a30" stroke="#3a2210" stroke-width="1.5"/>
+  <ellipse cx="43" cy="63" rx="3.2" ry="2" fill="#2a1508"/><ellipse cx="57" cy="63" rx="3.2" ry="2" fill="#2a1508"/>
+  <path d="M50 68v5M50 73q-5 4-9 1M50 73q5 4 9 1" stroke="#2a1508" fill="none" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="36" cy="46" r="4.2" fill="#1a0e05"/><circle cx="37.3" cy="44.8" r="1.4" fill="#fff"/>
+  <circle cx="64" cy="46" r="4.2" fill="#1a0e05"/><circle cx="65.3" cy="44.8" r="1.4" fill="#fff"/>
+  <path d="M31 43q5-3 10 0M59 43q5-3 10 0" stroke="#6e4220" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="29" cy="57" rx="5" ry="3" fill="#ff8a80" opacity=".5"/><ellipse cx="71" cy="57" rx="5" ry="3" fill="#ff8a80" opacity=".5"/>
+  ${ORANGE(50, 18, 11)}`;
+
+const ART = {
+  capivara: CAPY_FACE + `
+    <rect x="20" y="80" width="60" height="17" rx="8.5" fill="url(#gLeaf)" stroke="url(#gGold)" stroke-width="2.5"/>
+    <text x="50" y="93" text-anchor="middle" font-size="12" font-weight="900" fill="#fff8c0" font-family="sans-serif" stroke="#1b5e20" stroke-width=".6">WILD</text>`,
+  tucano: `
+    <path d="M6 92H94" stroke="#6b4423" stroke-width="6" stroke-linecap="round"/>
+    <path d="M28 88Q16 60 26 40Q36 24 52 34Q64 50 58 88Z" fill="#1a1a1a" stroke="#000" stroke-width="1.5"/>
+    <path d="M34 34Q46 30 52 40Q54 56 44 62Q32 60 32 46Z" fill="#fff5d0"/>
+    <ellipse cx="46" cy="64" rx="8" ry="4" fill="#d62828"/>
+    <circle cx="42" cy="40" r="6.5" fill="#6ec1e4"/><circle cx="42.5" cy="40" r="3.2" fill="#111"/><circle cx="43.6" cy="38.8" r="1.1" fill="#fff"/>
+    <path d="M50 32Q80 22 96 40Q88 54 52 50Q48 42 50 32Z" fill="url(#gBeak)" stroke="#7a3a00" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M52 41Q76 40 94 43" stroke="#7a3a00" stroke-width="1.5" fill="none"/>
+    <path d="M88 34Q97 40 94 46Q89 44 86 38Z" fill="#d62828"/>`,
+  flor: `
+    <ellipse cx="50" cy="76" rx="44" ry="15" fill="url(#gLeaf)" stroke="#1b5e20" stroke-width="2"/>
+    <path d="M50 76L70 64" stroke="#1b5e20" stroke-width="2"/>
+    <g fill="url(#gPink)" stroke="#b02a6a" stroke-width="1.5">
+      ${[-70, -35, 35, 70].map(a => `<ellipse cx="50" cy="40" rx="9" ry="22" transform="rotate(${a} 50 64)"/>`).join('')}
+      <ellipse cx="50" cy="38" rx="10" ry="24"/>
+    </g>
+    <circle cx="50" cy="60" r="7" fill="url(#gGold)" stroke="#b8860b"/>`,
+  cogumelo: `
+    <path d="M14 90Q24 80 30 90M70 90Q78 78 88 90" stroke="#43a047" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M38 54Q35 84 42 90L58 90Q65 84 62 54Z" fill="#fff3dc" stroke="#8a6a4a" stroke-width="2"/>
+    <path d="M8 58Q10 14 50 12Q90 14 92 58Q50 68 8 58Z" fill="url(#gRed)" stroke="#5a0000" stroke-width="2.5"/>
+    <g fill="#fff"><circle cx="30" cy="36" r="6"/><circle cx="54" cy="26" r="5"/><circle cx="72" cy="42" r="6.5"/><circle cx="46" cy="48" r="4"/><circle cx="20" cy="52" r="3"/></g>
+    <circle cx="45" cy="73" r="2" fill="#2a1508"/><circle cx="55" cy="73" r="2" fill="#2a1508"/><path d="M46 79q4 3 8 0" stroke="#2a1508" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+  borboleta: `
+    ${[0, 1].map(m => `<g ${m ? 'transform="translate(100 0) scale(-1 1)"' : ''}>
+      <path d="M50 50Q26 4 8 24Q2 48 50 54Z" fill="url(#gBlue)" stroke="#0a2540" stroke-width="2.5"/>
+      <path d="M50 54Q14 58 20 80Q34 92 50 58Z" fill="url(#gBlue)" stroke="#0a2540" stroke-width="2.5"/>
+      <circle cx="17" cy="28" r="2.5" fill="#fff"/><circle cx="12" cy="36" r="2" fill="#fff"/><circle cx="25" cy="80" r="2" fill="#fff"/>
+      <path d="M49 28Q44 14 36 10" stroke="#2a1a10" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="36" cy="10" r="2.3" fill="#2a1a10"/></g>`).join('')}
+    <ellipse cx="50" cy="54" rx="4" ry="20" fill="#2a1a10"/>`,
+  laranja: ORANGE(50, 57, 34),
+  folha: `
+    <path d="M50 92Q8 72 16 30Q38 6 84 12Q94 58 50 92Z" fill="url(#gLeaf)" stroke="#1b5e20" stroke-width="2.5"/>
+    <path d="M50 92Q52 50 80 16M51 64L28 48M56 48L34 30M52 76L74 62M62 36L80 34" stroke="#1b5e20" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="34" cy="62" rx="5" ry="6" fill="#e0f7ff" opacity=".8"/><circle cx="32.5" cy="60" r="1.6" fill="#fff"/>`,
+};
+const NAMES = { capivara: 'Capivara (coringa)', tucano: 'Tucano', flor: 'Vitória-régia', cogumelo: 'Cogumelo', borboleta: 'Borboleta', laranja: 'Laranja', folha: 'Folha' };
+
+// ---------- SOM (Web Audio, tudo sintetizado) ----------
+let ac, master, sfxOn = true, musicOn = true, musicTimer;
+function audio() {
+  if (!ac) { ac = new AudioContext(); master = ac.createGain(); master.gain.value = .5; master.connect(ac.destination); }
+  if (ac.state === 'suspended') ac.resume();
+  return ac;
+}
+function tone(freq, t0, dur, { type = 'sine', vol = .3, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t0);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t0 + dur);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .005);
+  g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + .05);
+}
+// marimba: fundamental + parcial 4x curto = som de madeira
+const marimba = (f, t, vol = .2, dur = .45) => { tone(f, t, dur, { vol }); tone(f * 4, t, .06, { vol: vol * .25 }); };
+const now = () => audio().currentTime;
+const PENTA = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5, 1567.98]; // dó pentatônica
+const SFX = {
+  click() { marimba(1046.5, now(), .08, .08); },
+  tick() { tone(700 + Math.random() * 300, now(), .03, { type: 'triangle', vol: .035 }); },
+  stop() { const t = now(); marimba(196, t, .35, .25); tone(900, t, .04, { type: 'triangle', vol: .05 }); },
+  coin() { const t = now(); marimba(1567.98, t, .06, .1); marimba(2093, t + .05, .05, .12); },
+  chirp(t = now()) { tone(2200, t, .09, { vol: .08, slide: 3600 }); tone(2600, t + .12, .09, { vol: .07, slide: 4000 }); },
+  win(n) { const t = now(); for (let i = 0; i < 4 + n * 2; i++) marimba(PENTA[i % PENTA.length], t + i * .08, .18, .3); this.chirp(t + .5); },
+  big() {
+    const t = now();
+    [0, .4, .9, 1.5].forEach(d => this.chirp(t + d));
+    PENTA.concat(PENTA.slice().reverse(), PENTA).forEach((f, i) => marimba(f, t + .1 + i * .07, .16, .35));
+    [130.81, 196, 261.63].forEach((f, i) => tone(f, t + i * .6, 1.2, { type: 'triangle', vol: .15 }));
+  },
+};
+SFX.feature = function () {
+  const t = now();
+  tone(65.41, t, 1.2, { type: 'triangle', vol: .22, slide: 130.81 });
+  PENTA.forEach((f, i) => marimba(f / 2, t + i * .05, .15, .3));
+  PENTA.forEach((f, i) => marimba(f, t + .5 + i * .05, .15, .3));
+  [.2, .6, 1, 1.3].forEach(d => this.chirp(t + d));
+};
+const play = (k, ...a) => sfxOn && SFX[k](...a);
+
+// música de fundo: marimba tranquila, baixo e chocalho — clima de floresta
+const MEL = [783.99, 0, 659.25, 783.99, 880, 0, 783.99, 659.25, 587.33, 0, 523.25, 587.33, 659.25, 0, 0, 0,
+             659.25, 783.99, 880, 1046.5, 880, 0, 783.99, 659.25, 587.33, 659.25, 523.25, 0, 587.33, 0, 0, 0];
+const BASS = [130.81, 130.81, 110, 110, 87.31, 87.31, 98, 98];
+function startMusic() {
+  if (musicTimer) return;
+  let step = 0;
+  musicTimer = setInterval(() => {
+    const t = now(), n = MEL[step % MEL.length];
+    if (n) marimba(n, t, .06, .5);
+    if (step % 4 === 0) tone(BASS[(step / 4 | 0) % BASS.length], t, .7, { vol: .13 });
+    if (step % 2) tone(6000 + Math.random() * 2000, t, .02, { type: 'square', vol: .006 });
+    if (step % 64 === 40) SFX.chirp(t);
+    step++;
+  }, 240);
+}
+const stopMusic = () => { clearInterval(musicTimer); musicTimer = null; };
+
+// ---------- JOGO ----------
+const $ = s => document.querySelector(s);
+const BETS = [0.5, 1, 2, 5, 10, 20, 50];
+const reels = [...document.querySelectorAll('.reel')];
+const money = v => v.toFixed(2);
+const r2 = v => Math.round(v * 100) / 100;
+let betIdx = 1, spinning = false, auto = false, grid = spinGrid();
+const START = 20; // saldo inicial e recarga (só quando aberto fora do site)
+// aberto dentro do site (iframe, mesma origem): usa o saldo do site em vez do próprio
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('capivara.saldo') || START; } catch {}
+// prêmio já salvo no saldo mas ainda não mostrado (fechar no meio da animação não perde o prêmio)
+let pending = 0;
+const save = () => {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('capivara.saldo', balance); } catch {}
+};
+
+const svgOf = id => `<svg viewBox="0 0 100 100">${ART[id]}</svg>`;
+const cellHtml = i => i === EMPTY ? '<div class="cell empty"></div>' : `<div class="cell">${svgOf(SYMBOLS[i].id)}</div>`;
+const setCell = (i, s) => cellEl(i).outerHTML = cellHtml(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const col = (g, c) => [0, 1, 2].map(r => g[r * 3 + c]);
+const cellEl = i => reels[i % 3].firstElementChild.children[i / 3 | 0];
+
+function updHud() {
+  $('#bal').textContent = money(r2(balance - pending));
+  $('#bet').textContent = money(BETS[betIdx]);
+}
+const msg = t => $('#msg').textContent = t;
+
+function countUp(el, to, ms = 800) {
+  const t0 = performance.now();
+  let lastCoin = 0;
+  (function step(t) {
+    const k = Math.min(1, (t - t0) / ms);
+    el.textContent = money(to * k);
+    if (t - lastCoin > 90 && k < 1) { play('coin'); lastCoin = t; }
+    if (k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function spinReel(c, next, fill = drawSymbol) {
+  const reel = reels[c], strip = reel.firstElementChild, n = 14 + c * 6, dur = 900 + c * 380;
+  const final = col(next, c), filler = Array.from({ length: n }, fill);
+  // tira: [resultado, símbolos aleatórios, grade anterior] -> anima até o resultado
+  strip.innerHTML = [...final, ...filler, ...col(grid, c)].map(cellHtml).join('');
+  strip.style.transition = 'none';
+  strip.style.transform = `translateY(calc(var(--cell) * ${-(n + 3)}))`;
+  strip.offsetHeight; // força reflow antes da transição
+  reel.classList.add('spinning');
+  strip.style.transition = `transform ${dur}ms cubic-bezier(.25,.1,.3,1.04)`;
+  strip.style.transform = 'translateY(0)';
+  return new Promise(res => setTimeout(() => {
+    reel.classList.remove('spinning');
+    strip.style.transition = 'none';
+    strip.innerHTML = final.map(cellHtml).join('');
+    play('stop'); res();
+  }, dur));
+}
+
+function clearWin() {
+  $('#lines').innerHTML = '';
+  $('#win').textContent = '0.00';
+  for (let i = 0; i < 9; i++) cellEl(i).classList.remove('win', 'dim', 'locked');
+}
+
+const markLocked = g => g.forEach((s, i) => cellEl(i).classList.toggle('locked', s !== EMPTY));
+
+async function featureIntro(sym) {
+  play('feature');
+  $('.frame').classList.add('feature');
+  const b = $('#banner');
+  b.innerHTML = `<svg class="bm" viewBox="0 0 100 100">${CAPY_FACE}</svg><b>CAPIVARA DA SORTE!</b><span>Só ${svgOf(SYMBOLS[sym].id)} e capivaras!</span>`;
+  b.classList.add('show');
+  msg(`🦫 Bônus! Giros grátis até ganhar`);
+  await sleep(1900);
+  b.classList.remove('show');
+}
+
+// re-gira só as casas vazias; as preenchidas ficam travadas
+async function respin(prev, next, sym) {
+  const cells = prev.map((s, i) => s === EMPTY ? i : -1).filter(i => i >= 0), pool = [sym, WILD, EMPTY];
+  for (let k = 0; k < 10; k++) {
+    cells.forEach(i => setCell(i, pool[Math.random() * 3 | 0]));
+    play('tick'); await sleep(80);
+  }
+  cells.forEach(i => setCell(i, next[i]));
+  markLocked(next);
+  play('stop');
+}
+
+function showWin(res, bet) {
+  const hit = new Set(res.wins.flatMap(w => w.cells));
+  for (let i = 0; i < 9; i++) cellEl(i).classList.add(hit.has(i) ? 'win' : 'dim');
+  const pt = i => `${(i % 3) * 100 + 50},${(i / 3 | 0) * 100 + 50}`;
+  $('#lines').innerHTML = res.wins.map(w => `<polyline points="${w.cells.map(pt).join(' ')}"/>`).join('');
+  pending = 0;
+  countUp($('#win'), res.total);
+  setTimeout(updHud, 800);
+  winOverlay(res, res.fullScreen || res.total >= bet * 10);
+}
+
+// todo ganho mostra a animação; ganho grande tem chuva de símbolos e fica mais tempo
+function winOverlay(res, big) {
+  if (big) play('big'); else play('win', res.wins.length);
+  $('#ovTitle').textContent = res.fullScreen ? 'CAPIVARA DA SORTE x10!' : res.total >= BETS[betIdx] * 50 ? 'MEGA GANHO!' : big ? 'GRANDE GANHO!' : 'VOCÊ GANHOU!';
+  msg(`${$('#ovTitle').textContent} ${money(res.total)}`);
+  const ov = $('#overlay');
+  ov.classList.remove('show'); ov.offsetHeight; // reinicia a animação
+  ov.querySelectorAll('.drop').forEach(e => e.remove());
+  for (let i = 0; i < (big ? 40 : 0); i++) {
+    const s = document.createElement('div');
+    s.className = 'drop';
+    s.innerHTML = svgOf(['laranja', 'folha', 'borboleta', 'laranja'][i % 4]);
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.animationDuration = 1.8 + Math.random() * 1.8 + 's';
+    s.style.animationDelay = Math.random() * 1.5 + 's';
+    ov.appendChild(s);
+  }
+  ov.classList.add('show');
+  countUp($('#ovAmt'), res.total, big ? 2000 : 900);
+  clearTimeout(ov.timer);
+  ov.timer = setTimeout(() => ov.classList.remove('show'), big ? 4500 : 2400);
+}
+
+async function spin() {
+  if (spinning) return;
+  const bet = BETS[betIdx];
+  if (balance < bet) {
+    auto = false; $('#auto').classList.remove('on');
+    if (balance < BETS[0] && host) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (balance < BETS[0]) { balance = START; save(); updHud(); msg('Créditos recarregados: ' + START); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').classList.add('busy'); $('#spin').disabled = true;
+  play('click'); clearWin(); msg('Boa sorte!');
+  balance = r2(balance - bet); save(); updHud();
+
+  const res = playRound(bet), sym = res.feature, steps = res.steps;
+  balance = r2(balance + res.total); pending = res.total; save();
+  if (sym !== null) await featureIntro(sym);
+  const fill = sym === null ? drawSymbol : () => [sym, WILD, EMPTY][Math.random() * 3 | 0];
+  const ticker = setInterval(() => play('tick'), 75);
+  await Promise.all(reels.map((_, c) => spinReel(c, steps[0], fill)));
+  clearInterval(ticker);
+  grid = steps[0];
+  if (sym !== null) {
+    markLocked(grid);
+    for (const g of steps.slice(1)) { await sleep(400); await respin(grid, g, sym); grid = g; }
+    await sleep(300);
+    $('.frame').classList.remove('feature');
+  }
+
+  if (res.total > 0) showWin(res, bet);
+  else msg(['Quase!', 'Relaxa, igual capivara 😌', 'A capivara tá chegando…', 'Gira mais uma!'][Math.random() * 4 | 0]);
+
+  spinning = false; $('#spin').classList.remove('busy'); $('#spin').disabled = false;
+  if (auto) setTimeout(spin, res.total ? (res.fullScreen || res.total >= bet * 10 ? 4800 : 2700) : 450);
+}
+
+// ---------- INICIALIZAÇÃO ----------
+for (let i = 0; i < 14; i++) {
+  const f = document.createElement('div');
+  f.className = 'firefly';
+  f.style.left = Math.random() * 100 + 'vw';
+  f.style.top = Math.random() * 100 + 'vh';
+  f.style.animationDelay = `${-Math.random() * 9}s,${-Math.random() * 2.2}s`;
+  document.body.appendChild(f);
+}
+reels.forEach((r, c) => r.firstElementChild.innerHTML = col(grid, c).map(cellHtml).join(''));
+updHud();
+
+$('#spin').onclick = spin;
+$('#betUp').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); updHud(); };
+$('#betDown').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); updHud(); };
+$('#auto').onclick = () => { auto = !auto; $('#auto').classList.toggle('on', auto); play('click'); if (auto) spin(); };
+$('#sfx').onclick = () => { sfxOn = !sfxOn; $('#sfx').classList.toggle('off', !sfxOn); play('click'); };
+$('#music').onclick = () => { musicOn = !musicOn; $('#music').classList.toggle('off', !musicOn); musicOn ? startMusic() : stopMusic(); };
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+$('#info').onclick = () => {
+  const lb = BETS[betIdx] / LINES.length;
+  $('#payTable').innerHTML = SYMBOLS.map(s => `${svgOf(s.id)}<span>${NAMES[s.id]}</span><b>${money(lb * s.pay)}</b>`).join('');
+  payDlg.showModal();
+};
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !payDlg.open) { e.preventDefault(); spin(); } });
+// navegadores só liberam áudio após interação: música começa no primeiro toque
+document.addEventListener('pointerdown', () => { audio(); if (musicOn) startMusic(); }, { once: true });
+</script>
+</body>
+</html>

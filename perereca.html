@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Perereca Suicida</title>
+<link rel="preload" as="image" href="assets/perereca/bg.webp">
+<style>
+/* Tela sobre a arte (assets/perereca/bg.webp 1024x1536, gerada por tools/perereca_assets.py):
+   posições em % da imagem, textos em cqw. --cell = altura de uma linha dos rolos (163px da arte) */
+:root{--y:#ffd54a;--pink:#ff4fa3}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#12061a;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/perereca/bg.webp) center/cover;filter:blur(24px) brightness(.4);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 1024 / 1536);aspect-ratio:1024/1536;background:url(assets/perereca/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden;--cell:15.95cqw}
+.abs{position:absolute}
+.crop{position:absolute;background:url(assets/perereca/bg.webp) 0 0/100% 100%;pointer-events:none}
+/* logo pulsando: recorte da própria arte (x 150–830, y 15–345) */
+.logo{left:14.65%;top:.98%;width:66.4%;height:21.48%;overflow:hidden;animation:logo 2.6s ease-in-out infinite;-webkit-mask:linear-gradient(90deg,#0000,#000 6%,#000 94%,#0000),linear-gradient(#0000,#000 6%,#000 94%,#0000);-webkit-mask-composite:source-in;mask:linear-gradient(90deg,#0000,#000 6%,#000 94%,#0000),linear-gradient(#0000,#000 6%,#000 94%,#0000);mask-composite:intersect}
+.logo .crop{left:-22.06%;top:-4.55%;width:150.6%;height:465.5%}
+@keyframes logo{50%{transform:scale(1.04) rotate(-1deg)}}
+/* perereca grande: recorte (x 60–912, y 360–706) por cima da pintada; respira e pula quando ganha */
+.big{left:5.86%;top:23.44%;width:83.2%;height:22.53%;transform-origin:50% 100%;animation:breathe 2.8s ease-in-out infinite;pointer-events:none;z-index:1}
+.big.hop{animation:hop .9s ease-in-out 2}
+/* camadas da perereca (todas do tamanho da .big): pernas atrás, corpo, pálpebras. Pivôs = juntas na arte */
+.part{position:absolute;inset:0;background:0 0/100% 100% no-repeat}
+.part.body{background-image:url(assets/perereca/big_body.webp)}
+.part.lb{background-image:url(assets/perereca/leg_back.webp);transform-origin:27% 66.5%;animation:kick 3.6s ease-in-out infinite}
+.part.lf1{background-image:url(assets/perereca/leg_front1.webp);transform-origin:35.2% 83.2%;animation:tap 1.8s ease-in-out infinite}
+.part.lf2{background-image:url(assets/perereca/leg_front2.webp);transform-origin:59.3% 83.2%;animation:tap 1.8s ease-in-out .9s infinite}
+.big.hop .part.lb{animation-duration:1.2s}
+/* rebolada: bumbum + perna de trás balançam juntos, em rajadas */
+.rump{position:absolute;inset:0;transform-origin:46.4% 76.6%;animation:twerk 3.6s ease-in-out infinite}
+.part.rb{background-image:url(assets/perereca/rump.webp)}
+.big.hop .rump{animation-duration:1.2s}
+@keyframes twerk{0%,45%,100%{transform:none}50%,60%,70%,80%{transform:rotate(-5deg) translateY(-2%)}55%,65%,75%,85%{transform:rotate(4deg) translateY(1%)}90%{transform:none}}
+/* chute (5–30% do ciclo) e rebolada (45–90%) nunca juntos: juntos, a coxa descola do quadril */
+@keyframes kick{0%,5%,30%,100%{transform:none}12%{transform:rotate(9deg)}19%{transform:rotate(-2deg)}25%{transform:rotate(5deg)}}
+@keyframes tap{0%,60%,100%{transform:none}72%{transform:translateY(-4%) rotate(-5deg)}84%{transform:none}}
+/* piscada: pálpebra rosa desce sobre cada olho (posições em % da .big, olhos em x610–700/y390–480 e x758–846/y492–586 da arte) */
+.lid{position:absolute;border-radius:50%;overflow:hidden}
+.lid::before{content:"";position:absolute;inset:-4%;border-radius:50%;background:radial-gradient(ellipse at 50% 20%,#ff9ccb,#ec4f96 60%,#b0246a);box-shadow:inset 0 -.5cqw 0 #7a1046;transform-origin:50% 0;transform:scaleY(0);animation:blink 4.2s ease-in-out infinite}
+.lid.l1{left:64.55%;top:8.67%;width:10.56%;height:26%}
+.lid.l2{left:81.92%;top:38.15%;width:10.33%;height:27.17%}
+.lid.l2::before{animation-delay:.08s}
+@keyframes blink{0%,90%,100%{transform:scaleY(0)}94%,95%{transform:scaleY(1)}}
+@keyframes breathe{50%{transform:scale(1.015,1.035)}}
+@keyframes hop{0%,100%{transform:none}30%{transform:translateY(-14%) scale(.97,1.06) rotate(-2deg)}55%{transform:translateY(0) scale(1.06,.94)}75%{transform:translateY(-4%)}}
+/* rolos: cada coluna tem uma largura na arte */
+.reel{position:absolute;top:46.09%;height:calc(var(--cell)*3);overflow:hidden}
+.reel.spinning .strip{filter:blur(2px) brightness(1.15)}
+.cell{position:relative;height:var(--cell);display:grid;place-items:center;padding:6%;transition:opacity .3s}
+.cell img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 .5cqw .6cqw #000a)}
+.cell.tile::before{content:"";position:absolute;inset:4% 3%;border-radius:1.4cqw;background:radial-gradient(circle at 50% 40%,#ff7cc0,#a3155c 65%,#4a0628);box-shadow:inset 0 0 0 .55cqw #f5c542,inset 0 0 0 .8cqw #7a4a0a,0 0 1.5cqw #0008}
+.cell.tile img{position:relative;width:92%;height:92%}
+.cell.wild b{position:absolute;bottom:9%;left:50%;translate:-50%;padding:.1cqw 1.4cqw;border-radius:1cqw;background:linear-gradient(#ffe36a,#e0a020);color:#5a1a00;font:900 2.8cqw system-ui;box-shadow:0 .3cqw 0 #6a3a00}
+.cell.win{z-index:2}
+.cell.win img{animation:pulse .45s ease-in-out infinite alternate}
+.cell.win.tile::before{box-shadow:inset 0 0 0 .55cqw #fff3b0,0 0 3cqw #ffd54a}
+.cell.dim{opacity:.35}
+.cell .anim{position:absolute;inset:6%;background-repeat:no-repeat;background-position-y:center;z-index:1}
+.lines{position:absolute;left:5.27%;top:46.09%;width:90.53%;height:31.9%;pointer-events:none;z-index:3;overflow:visible}
+.lines polyline{fill:none;stroke:#fff27a;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px #ff4fa3);stroke-dasharray:1400;animation:draw .5s ease-out forwards}
+/* sprites (tiras de quadros): tamanho de cada quadro vem do JS (SPR) */
+.spr{position:absolute;background-repeat:no-repeat;background-size:auto 100%;pointer-events:none}
+.splash{z-index:4}
+/* controles */
+.hit{position:absolute;border-radius:50%;transition:background .15s,transform .1s,box-shadow .2s}
+.hit:active{transform:scale(.93);background:#fff2}
+#info{left:2.15%;top:82.36%;width:7.13%;aspect-ratio:1}
+#down{left:11.91%;top:83.53%;width:5.47%;aspect-ratio:1}
+#up{left:31.25%;top:83.53%;width:5.47%;aspect-ratio:1}
+#bet{left:18.16%;top:85.55%;width:13.28%;height:2.86%;display:grid;place-items:center;font:900 3.6cqw system-ui;color:var(--y);font-variant-numeric:tabular-nums;text-shadow:0 .3cqw 0 #000}
+#turbo{left:63.48%;top:82.36%;width:20.02%;height:5.21%;border-radius:4cqw}
+#turbo.on{box-shadow:0 0 0 .5cqw var(--y),0 0 4cqw var(--y);background:#ffd54a22}
+#menu{left:86.72%;top:81.71%;width:8.79%;aspect-ratio:1}
+.spin{position:absolute;left:40.23%;top:78.13%;width:19.53%;aspect-ratio:1;border-radius:50%;overflow:hidden;filter:drop-shadow(0 0 2cqw #ff4fa388)}
+.spin .crop{left:-206%;top:-600%;width:512%;height:768%}
+.spin:not(:disabled){animation:spinIdle 2.2s ease-in-out infinite}
+.spin.busy{animation:rot .6s linear infinite}
+.spin:active{transform:scale(.94)}
+@keyframes spinIdle{50%{scale:1.05;filter:drop-shadow(0 0 4cqw #ff4fa3)}}
+.hud{left:14%;right:14%;top:91.6%;height:4%;display:flex;gap:2cqw}
+.hud div{flex:1;display:flex;align-items:center;justify-content:center;gap:1.5cqw;border-radius:3cqw;background:#1a0a22cc;border:.3cqw solid #f5c54299;font:800 2.6cqw system-ui;color:#ffd8ee}
+.hud b{font-size:3.6cqw;color:#fff;font-variant-numeric:tabular-nums}
+#msg{left:0;right:0;top:96.3%;text-align:center;font:800 3.2cqw/1 system-ui;text-shadow:0 0 1.5cqw #000,0 .3cqw 0 #000;color:#fff0f8}
+/* giros grátis */
+.free{left:5.27%;top:46.09%;width:90.53%;height:31.9%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;background:#1a0626e0;border-radius:2cqw;z-index:5;text-align:center}
+.free.show{display:flex;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.free b{font:900 8cqw/1 system-ui;background:linear-gradient(#fff6b0,#ffd54a 45%,#ff7a1a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .6cqw 0 #5a0a3a)}
+.free span{font:800 4.4cqw system-ui}
+.stage.freespin .reel{box-shadow:inset 0 0 3cqw #ffd54a55}
+#freeTag{left:0;right:0;top:44%;text-align:center;font:900 3.6cqw system-ui;color:var(--y);text-shadow:0 0 2cqw #ff4fa3,0 .3cqw 0 #000;display:none;z-index:3}
+.stage.freespin #freeTag{display:block}
+.jumper{position:absolute;z-index:6;pointer-events:none;animation:jumpAcross 1.6s ease-in-out forwards}
+@keyframes jumpAcross{0%{left:-40%;top:62%}45%{top:28%}100%{left:105%;top:58%}}
+/* ganho grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle,#b0207acc,#12061af0);z-index:20;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .spr{position:relative}
+.overlay h2{font:900 clamp(34px,11vw,60px)/1 system-ui;background:linear-gradient(#fffbe0,var(--y) 50%,#ff7a1a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #5a0a3a);animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{font-size:clamp(38px,12vw,64px);font-weight:900;text-shadow:0 0 24px var(--pink);font-variant-numeric:tabular-nums}
+.coin{position:fixed;top:-60px;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6b0,#ffc83a 50%,#c8860a);box-shadow:inset 0 0 0 3px #e0a020;z-index:21;pointer-events:none;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid var(--y);border-radius:16px;background:#2a0a36;color:#fff;padding:16px;font:14px/1.45 system-ui}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--y);text-align:center;margin-bottom:8px}
+.pay{display:grid;grid-template-columns:46px 1fr 1fr 1fr;align-items:center;gap:4px 8px;font-variant-numeric:tabular-nums}
+.pay img{width:46px;height:46px;object-fit:contain}
+.pay small{opacity:.7}
+dialog p{margin-top:10px;opacity:.9}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#3a0a20;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff18;color:#fff;border-radius:12px;padding:10px}
+@keyframes pulse{to{transform:scale(1.1)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes draw{from{stroke-dashoffset:1400}to{stroke-dashoffset:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Perereca Suicida</h1>
+  <div class="abs logo" aria-hidden="true"><div class="crop"></div></div>
+  <div class="abs big" id="big" aria-hidden="true"><div class="rump"><i class="part lb"></i><i class="part rb"></i></div><i class="part lf1"></i><i class="part lf2"></i><i class="part body"></i><i class="lid l1"></i><i class="lid l2"></i></div>
+  <div class="abs" id="freeTag"></div>
+  <div id="reels"></div>
+  <svg class="lines" id="lines" viewBox="54 708 927 490" preserveAspectRatio="none"></svg>
+  <div class="abs free" id="free"></div>
+  <button class="hit" id="info" aria-label="Tabela de pagamentos"></button>
+  <button class="hit" id="down" aria-label="Diminuir aposta"></button>
+  <b class="abs" id="bet">R$ 1,00</b>
+  <button class="hit" id="up" aria-label="Aumentar aposta"></button>
+  <button class="spin" id="spin" aria-label="Girar (espaço)"><div class="crop"></div></button>
+  <button class="hit" id="turbo" aria-label="Turbo"></button>
+  <button class="hit" id="menu" aria-label="Menu"></button>
+  <div class="abs hud"><div>SALDO <b id="bal">0,00</b></div><div>GANHO <b id="win">0,00</b></div></div>
+  <div class="abs" id="msg" aria-live="polite">Boa sorte!</div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="spr" id="ovFrog"></div>
+  <h2 id="ovTitle">GRANDE GANHO!</h2>
+  <div class="amt" id="ovAmt">0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>10 linhas, da esquerda pra direita, a partir do 1º rolo. A <b>Perereca de óculos (WILD)</b> substitui qualquer símbolo, menos a coroa.<br><br>
+  <b>👑 Pulo da Perereca:</b> 3, 4 ou 5 coroas em qualquer lugar dão <b id="fsInfo"></b> giros grátis com todos os ganhos <b id="fsMult"></b>.<br><br>
+  RTP (retorno médio ao jogador): <b id="rtpInfo"></b>. Prêmio máximo por rodada: <b id="maxInfo"></b> a aposta. Sorteio com gerador criptográfico do navegador.</p>
+  <button onclick="payDlg.close()">Fechar</button>
+</dialog>
+<dialog id="menuDlg">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mSfx">🔊 Som: ligado</button>
+    <button id="mMusic">🎵 Música: ligada</button>
+    <button id="mPay">📋 Tabela de pagamentos</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button onclick="menuDlg.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="perereca.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('perereca')</script><!-- admin assiste ao vivo -->
+<script>
+const { SYMBOLS, LINES, COLS, ROWS, WILD, SCATTER, FREE_SPINS, FREE_MULT, MAX_WIN, drawSymbol, playRound } = PS; // RTP: ler PS.RTP (muda ao vivo)
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const BETS = [0.5, 1, 2, 5, 10, 20, 50, 100], START = 20;
+const TILE = new Set(['wild', 'dinheiro', 'coracao', 'estrela']);
+// tiras de animação: [quadros, largura do quadro, altura] (saída do tools/perereca_assets.py)
+const SPR = {"faces":[11,193,200],"jump":[10,307,220],"idle":[10,277,180],"splash":[5,260,180],"coroa_gira":[5,192,180]};
+const IMG = id => `assets/perereca/s_${id}.webp`;
+// colunas dos rolos na arte (x inicial, x final), janela y 708–1198
+const COLX = [[54, 243], [247, 423], [427, 610], [614, 795], [799, 981]];
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('perereca.saldo') || START; } catch {}
+let pending = 0; // prêmio já salvo no saldo mas ainda não mostrado
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('perereca.saldo', balance); } catch {}
+}
+
+// ---------- som (sintetizado) ----------
+let ac, sfxOn = true, musicOn = true, musicTimer;
+try { sfxOn = localStorage.getItem('perereca.sfx') !== 'off'; musicOn = localStorage.getItem('perereca.music') !== 'off'; } catch {}
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+function tone(f, t, d, { type = 'sine', vol = .2, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+const now = () => audio().currentTime;
+const SFX = {
+  click() { tone(900, now(), .06, { type: 'triangle', vol: .08 }); },
+  tick() { tone(500 + Math.random() * 300, now(), .03, { type: 'triangle', vol: .03 }); },
+  stop() { tone(160, now(), .15, { vol: .25 }); },
+  ribbit(t = now()) { tone(180, t, .12, { type: 'sawtooth', vol: .12, slide: 90 }); tone(210, t + .15, .12, { type: 'sawtooth', vol: .1, slide: 100 }); },
+  splash() { const t = now(); for (let i = 0; i < 6; i++) tone(1200 + Math.random() * 1800, t + i * .03, .08, { vol: .05, slide: 400 }); },
+  win(n) { const t = now(); [523, 659, 784, 1047, 1319].slice(0, 2 + n).forEach((f, i) => tone(f, t + i * .09, .25, { type: 'triangle', vol: .15 })); this.ribbit(t + .4); },
+  big() { const t = now(); [523, 659, 784, 1047, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t + i * .11, .35, { type: 'square', vol: .08 })); [0, .6, 1.2].forEach(d => this.ribbit(t + d)); },
+  crown() { const t = now(); [1568, 2093, 2637].forEach((f, i) => tone(f, t + i * .06, .3, { vol: .1 })); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+const MEL = [392, 0, 523, 0, 466, 392, 0, 349, 392, 0, 311, 0, 349, 392, 0, 0];
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  let step = 0;
+  musicTimer = setInterval(() => {
+    const t = now(), n = MEL[step % MEL.length];
+    if (n) tone(n, t, .25, { type: 'triangle', vol: .05 });
+    if (step % 4 === 0) tone(98, t, .3, { vol: .08 });
+    if (step % 32 === 20) SFX.ribbit(t);
+    step++;
+  }, 200);
+}
+const stopMusic = () => { clearInterval(musicTimer); musicTimer = null; };
+
+// ---------- sprites ----------
+function sprite(el, name, ms, loop = true) {
+  const [n, w, h] = SPR[name];
+  Object.assign(el.style, { backgroundImage: `url(assets/perereca/${name}.webp)`, backgroundSize: `${n * 100}% 100%`, aspectRatio: `${w} / ${h}` });
+  el.animate([{ backgroundPositionX: '0%' }, { backgroundPositionX: '100%' }], { duration: ms, easing: `steps(${n}, jump-none)`, iterations: loop ? Infinity : 1, fill: 'forwards' });
+  return el;
+}
+
+// ---------- rolos ----------
+const reels = COLX.map(([x0, x1]) => {
+  const r = document.createElement('div');
+  r.className = 'reel';
+  Object.assign(r.style, { left: x0 / 10.24 + '%', width: (x1 - x0) / 10.24 + '%' });
+  r.innerHTML = '<div class="strip"></div>';
+  $('#reels').append(r);
+  return r;
+});
+const cellHtml = s => {
+  const id = SYMBOLS[s].id;
+  return `<div class="cell${TILE.has(id) ? ' tile' : ''}${s === WILD ? ' wild' : ''}" data-s="${s}"><img src="${IMG(id)}" alt="${id}">${s === WILD ? '<b>WILD</b>' : ''}</div>`;
+};
+const col = (g, c) => [0, 1, 2].map(r => g[r * COLS + c]);
+const cellEl = i => reels[i % COLS].firstElementChild.children[(i / COLS) | 0];
+let grid = Array.from({ length: 15 }, drawSymbol);
+reels.forEach((r, c) => r.firstElementChild.innerHTML = col(grid, c).map(cellHtml).join(''));
+
+let turbo = false;
+function spinReel(c, next) {
+  const reel = reels[c], strip = reel.firstElementChild;
+  const n = (turbo ? 6 : 12) + c * (turbo ? 2 : 4), dur = (turbo ? 380 : 800) + c * (turbo ? 110 : 260);
+  const final = col(next, c), filler = Array.from({ length: n }, drawSymbol);
+  strip.innerHTML = [...final, ...filler, ...col(grid, c)].map(cellHtml).join('');
+  strip.style.transition = 'none';
+  strip.style.transform = `translateY(calc(var(--cell) * ${-(n + 3)}))`;
+  strip.offsetHeight;
+  reel.classList.add('spinning');
+  strip.style.transition = `transform ${dur}ms cubic-bezier(.25,.1,.3,1.06)`;
+  strip.style.transform = 'translateY(0)';
+  return new Promise(res => setTimeout(() => {
+    reel.classList.remove('spinning');
+    strip.style.transition = 'none';
+    strip.innerHTML = final.map(cellHtml).join('');
+    play('stop');
+    // coroa ou wild caindo: respingo d'água em cima
+    final.forEach((s, r) => { if (s === WILD || s === SCATTER) splashAt(r * COLS + c); });
+    res();
+  }, dur));
+}
+function splashAt(i) {
+  const cell = cellEl(i), s = document.createElement('div');
+  s.className = 'spr splash';
+  Object.assign(s.style, { left: '-10%', width: '120%', bottom: '-5%' });
+  cell.append(sprite(s, 'splash', 450, false));
+  setTimeout(() => s.remove(), 500);
+  play('splash');
+}
+
+function clearWin() {
+  $('#lines').innerHTML = '';
+  for (let i = 0; i < 15; i++) { const c = cellEl(i); c.classList.remove('win', 'dim'); c.querySelector('.anim')?.remove(); }
+}
+function showWins(wins) {
+  const hit = new Set(wins.flatMap(w => w.cells));
+  for (let i = 0; i < 15; i++) {
+    const c = cellEl(i);
+    c.classList.add(hit.has(i) ? 'win' : 'dim');
+    // wild que paga troca de cara sem parar
+    if (hit.has(i) && +c.dataset.s === WILD) { const a = document.createElement('div'); a.className = 'spr anim'; c.querySelector('img').style.opacity = 0; c.append(sprite(a, 'faces', 1100)); }
+  }
+  const pt = i => { const [x0, x1] = COLX[i % COLS]; return `${(x0 + x1) / 2},${708 + ((i / COLS) | 0) * 163.3 + 81.7}`; };
+  $('#lines').innerHTML = wins.map(w => `<polyline points="${LINES[w.line].map(pt).join(' ')}"/>`).join('');
+}
+function crownsSpin(cells) {
+  cells.forEach(i => {
+    const c = cellEl(i), a = document.createElement('div');
+    a.className = 'spr anim'; c.querySelector('img').style.opacity = 0; c.classList.add('win');
+    c.append(sprite(a, 'coroa_gira', 600));
+  });
+  play('crown');
+}
+
+// ---------- HUD ----------
+let betIdx = 1, spinning = false;
+const msg = t => $('#msg').textContent = t;
+function hud() {
+  $('#bal').textContent = brl(r2(balance - pending));
+  $('#bet').textContent = 'R$ ' + brl(BETS[betIdx]);
+}
+function countUp(el, to, ms = 800) {
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / ms); el.textContent = brl(to * k); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+function coins(n) {
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div'); c.className = 'coin';
+    c.style.left = Math.random() * 100 + 'vw'; c.style.animationDuration = 1.6 + Math.random() * 1.8 + 's'; c.style.animationDelay = Math.random() * 1.2 + 's';
+    document.body.append(c); setTimeout(() => c.remove(), 4800);
+  }
+}
+function bigWin(total, bet, title) {
+  const ov = $('#overlay');
+  $('#ovTitle').textContent = title || (total >= bet * 50 ? 'MEGA GANHO!' : 'GRANDE GANHO!');
+  const f = $('#ovFrog'); f.getAnimations().forEach(a => a.cancel()); f.style.width = 'min(320px,70vw)';
+  sprite(f, 'idle', 1400);
+  ov.classList.add('show'); countUp($('#ovAmt'), total, 1800); coins(40); play('big');
+  clearTimeout(ov.t); ov.t = setTimeout(() => ov.classList.remove('show'), 4200);
+}
+function jumpAcross() {
+  const j = document.createElement('div'); j.className = 'spr jumper'; j.style.width = '45%';
+  stage.append(sprite(j, 'jump', 900)); setTimeout(() => j.remove(), 1700);
+  play('ribbit');
+}
+
+// ---------- rodada ----------
+async function showSpin(s, bet, mult) {
+  clearWin();
+  const ticker = setInterval(() => play('tick'), 80);
+  await Promise.all(reels.map((_, c) => spinReel(c, s.grid)));
+  clearInterval(ticker);
+  grid = s.grid;
+  if (s.win > 0) {
+    showWins(s.wins); play('win', Math.min(3, s.wins.length));
+    $('#big').classList.remove('hop'); $('#big').offsetHeight; $('#big').classList.add('hop');
+    msg(`${mult > 1 ? `x${mult} · ` : ''}Ganhou R$ ${brl(s.win)} em ${s.wins.length} linha${s.wins.length > 1 ? 's' : ''}`);
+    await sleep(turbo ? 700 : 1300);
+  }
+}
+async function spin() {
+  if (spinning) return;
+  const bet = BETS[betIdx];
+  if (balance < bet) {
+    if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (!host && balance < BETS[0]) { balance = START; save(); hud(); msg('Créditos recarregados: R$ ' + brl(START)); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').disabled = true; $('#spin').classList.add('busy');
+  play('click'); msg('Boa sorte!'); $('#win').textContent = '0,00';
+  balance = r2(balance - bet); save(); hud();
+
+  const res = playRound(bet);
+  balance = r2(balance + res.total); pending = res.total; save(); reportarRodada('perereca', bet, res.total); // o prêmio já vai pro saldo; a tela só anima
+  await showSpin(res.base, bet, 1);
+  let shown = res.base.win;
+  if (res.free.length) {
+    crownsSpin(res.base.scatters); msg(`👑 ${res.base.scatters.length} coroas!`);
+    await sleep(1200);
+    jumpAcross();
+    const fr = $('#free');
+    fr.innerHTML = `<b>PULO DA PERERECA!</b><span>${res.free.length} giros grátis · ganhos x${FREE_MULT}</span>`;
+    fr.classList.add('show'); await sleep(2000); fr.classList.remove('show');
+    stage.classList.add('freespin');
+    for (let k = 0; k < res.free.length; k++) {
+      $('#freeTag').textContent = `GIRO GRÁTIS ${k + 1}/${res.free.length} · x${FREE_MULT} · R$ ${brl(shown - res.base.win)}`;
+      await showSpin(res.free[k], bet, FREE_MULT);
+      shown += res.free[k].win;
+      await sleep(turbo ? 150 : 350);
+    }
+    stage.classList.remove('freespin');
+  }
+  pending = 0; hud();
+  countUp($('#win'), res.total);
+  if (res.free.length) bigWin(res.total, bet, res.total ? 'PULO DA PERERECA!' : 'FIM DOS GIROS');
+  else if (res.total >= bet * 15) bigWin(res.total, bet);
+  if (res.total > 0) msg(`${res.capped ? `Prêmio máximo (${MAX_WIN}x)! ` : ''}Total: R$ ${brl(res.total)}`);
+  else msg(['Quase!', 'A perereca tá de olho…', 'Ribbit! Gira de novo', 'Nada dessa vez'][Math.random() * 4 | 0]);
+  spinning = false; $('#spin').disabled = false; $('#spin').classList.remove('busy');
+}
+
+// ---------- botões ----------
+$('#spin').onclick = spin;
+$('#up').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); hud(); };
+$('#down').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); hud(); };
+$('#turbo').onclick = () => { turbo = !turbo; $('#turbo').classList.toggle('on', turbo); play('click'); msg(turbo ? '⚡ Turbo ligado' : 'Turbo desligado'); };
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+function renderPay() {
+  const lb = BETS[betIdx] / LINES.length;
+  $('#payTable').innerHTML = '<span></span><small>3</small><small>4</small><small>5</small>' + SYMBOLS.map((s, i) =>
+    `<img src="${IMG(s.id)}" alt="${s.id}">` + (i === SCATTER ? `<span style="grid-column:span 3">3+ = giros grátis</span>` : s.pays.map(p => `<b>${brl(lb * p)}</b>`).join(''))).join('');
+  $('#fsInfo').textContent = Object.values(FREE_SPINS).join(', ');
+  $('#fsMult').textContent = 'x' + FREE_MULT;
+  $('#rtpInfo').textContent = (PS.RTP * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+  $('#maxInfo').textContent = MAX_WIN + 'x';
+}
+function openPay() { renderPay(); payDlg.showModal(); }
+$('#info').onclick = openPay;
+const menuTxt = () => { $('#mSfx').textContent = `🔊 Som: ${sfxOn ? 'ligado' : 'desligado'}`; $('#mMusic').textContent = `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`; };
+$('#menu').onclick = () => { menuTxt(); menuDlg.showModal(); };
+$('#mSfx').onclick = () => { sfxOn = !sfxOn; try { localStorage.setItem('perereca.sfx', sfxOn ? 'on' : 'off'); } catch {} menuTxt(); };
+$('#mMusic').onclick = () => { musicOn = !musicOn; try { localStorage.setItem('perereca.music', musicOn ? 'on' : 'off'); } catch {} musicOn ? startMusic() : stopMusic(); menuTxt(); };
+$('#mPay').onclick = () => { menuDlg.close(); openPay(); };
+$('#mExit').onclick = () => { if (spinning) return; host ? host.closeGame() : (location.href = 'index.html'); };
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !payDlg.open && !menuDlg.open) { e.preventDefault(); spin(); } });
+document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
+hud();
+// RTP mudou no painel: aplica entre giros e redesenha a tabela
+rtpAoVivo('perereca', PS, { ocupado: () => spinning, depois: renderPay });
+</script>
+</body>
+</html>

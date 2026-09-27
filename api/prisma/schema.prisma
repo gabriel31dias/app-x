@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// ponytail: SQLite por enquanto; pra Postgres troque o provider e o adapter em prisma.service.ts
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id              String    @id @default(cuid())
+  nome            String
+  cpf             String    @unique // só dígitos
+  email           String    @unique // minúsculo
+  celular         String // só dígitos
+  nascimento      DateTime
+  senhaHash       String
+  avatarUrl       String? // null = foto padrão
+  xp              Int       @default(0)
+  // sobe no logout/troca de senha: invalida todos os tokens emitidos antes
+  tokenVersion    Int       @default(0)
+  termosAceitosEm DateTime
+  ultimoLoginEm   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// RTP escolhido no painel admin, um por jogo (vale pra todos os jogadores). Sem linha = RTP de fábrica do motor.
+model GameRtp {
+  jogo          String   @id
+  rtp           Float
+  atualizadoPor String // e-mail do admin
+  atualizadoEm  DateTime @updatedAt
+}
+
+// RTP específico por jogador e jogo. Se existir, sobrescreve GameRtp; se não existir, vale o global.
+model JogadorRtp {
+  email         String
+  jogo          String
+  rtp           Float
+  atualizadoPor String // e-mail do admin
+  atualizadoEm  DateTime @updatedAt
+
+  @@id([email, jogo])
+  @@index([jogo])
+}
+
+// histórico de toda mudança de RTP (nunca é apagado)
+model RtpAlteracao {
+  id   Int      @id @default(autoincrement())
+  jogo String
+  de   Float?
+  para Float
+  por  String
+  em   DateTime @default(now())
+}
+
+// histórico de mudanças de RTP específico por jogador
+model JogadorRtpAlteracao {
+  id      Int      @id @default(autoincrement())
+  email   String
+  jogo    String
+  de      Float?
+  para    Float?
+  por     String
+  em      DateTime @default(now())
+}
+
+// depósito PIX = "venda" no painel admin. Gravado ao criar o PIX e atualizado a cada consulta de status.
+model Deposito {
+  id              String    @id // id da transação na BullsCash
+  valorCentavos   Int
+  liquidoCentavos Int?
+  status          String // pendente | pago | falhou
+  statusBruto     String // como veio da BullsCash
+  nome            String
+  documento       String
+  celular         String
+  email           String?
+  criadoEm        DateTime  @default(now())
+  pagoEm          DateTime?
+
+  @@index([criadoEm])
+}
+
+// rodada informada pelo próprio jogo (navegador): serve pro painel até o sorteio ir pro servidor
+model Rodada {
+  id             Int      @id @default(autoincrement())
+  chave          String   @unique // gerada pelo jogo: reenvio não conta duas vezes
+  jogo           String
+  apostaCentavos Int
+  premioCentavos Int
+  jogador        String? // e-mail da conta local do site, se logado
+  criadoEm       DateTime @default(now())
+
+  @@index([criadoEm])
+}
+
+// último saldo informado pelo site pra cada conta (o saldo de verdade ainda mora no aparelho do jogador)
+model Jogador {
+  email         String   @id // minúsculo
+  nome          String
+  saldoCentavos Int
+  criadoEm      DateTime @default(now())
+  atualizadoEm  DateTime @updatedAt
+}
+
+// configurações gerais do painel (uma linha só, id = 1)
+model Configuracao {
+  id            Int       @id @default(1)
+  autoBalanco   Boolean   @default(false) // casa negativa na janela → todos os jogos no RTP mínimo até voltar a positivo
+  janelaHoras   Int       @default(24)
+  metaHoraAtiva Boolean   @default(false) // lucro da última hora abaixo da meta também baixa o RTP
+  metaHoraCentavos Int    @default(0)
+  saqueExigeDeposito Boolean @default(false) // só saca quem já tem depósito pago no CPF da conta
+  saqueMinimoCentavos Int    @default(1000) // R$ 10
+  bonusDiarioAtivo Boolean @default(false) // bônus diário liberado no perfil
+  bonusDiarioCentavos Int @default(500)
+  balancoAtivo  Boolean   @default(false) // RTPs estão baixados agora
+  motivoBalanco String? // por que baixou: "janela" | "hora" | "janela+hora"
+  rtpsAntes     String? // JSON { jogo: rtp | null } pra restaurar; null = estava no de fábrica
+  ativadoEm     DateTime?
+  atualizadoPor String?
+  atualizadoEm  DateTime  @updatedAt
+}
+
+// saque pedido pelo jogador; por enquanto o PIX é feito na mão pelo admin, que aprova ou cancela aqui
+model Saque {
+  id              String    @id @default(cuid())
+  email           String // conta do site (minúsculo)
+  nome            String
+  cpf             String // só dígitos
+  chavePix        String // por enquanto sempre o CPF da própria conta
+  valorCentavos   Int
+  status          String    @default("pendente") // pendente | aprovado | cancelado
+  motivo          String? // por que foi cancelado
+  saldoInformado  Int? // saldo (centavos) que o aparelho tinha logo antes do pedido
+  decididoPor     String?
+  decididoEm      DateTime?
+  estornadoEm     DateTime? // cancelado e o valor já voltou pro saldo do jogador (só uma vez)
+  criadoEm        DateTime  @default(now())
+
+  @@index([status, criadoEm])
+  @@index([email])
+}
+
+// bônus diário resgatado: um por conta por dia (dia no fuso de Brasília)
+model BonusResgate {
+  id            Int      @id @default(autoincrement())
+  jogador       String // e-mail da conta do site (minúsculo)
+  dia           String // AAAA-MM-DD em America/Sao_Paulo
+  valorCentavos Int
+  criadoEm      DateTime @default(now())
+
+  @@unique([jogador, dia])
+}

@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Jogo da Velha Aposta</title>
+<link rel="preload" as="image" href="assets/velha/bg.webp">
+<style>
+/* Tela sobre a arte (assets/velha/bg.webp, 941x1672, gerada por tools/velha_assets.py):
+   posições em px da arte convertidas pra % no JS (PX), textos em cqw */
+:root{--y:#ffd23f;--g:#3bff7a;--r:#ff4a4a}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/velha/bg.webp) center/cover;filter:blur(24px) brightness(.4);z-index:-1}
+body{background:#1a0a06;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/velha/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden}
+.abs{position:absolute}
+.hit{position:absolute;border-radius:2.5cqw;transition:background .15s,transform .1s}
+.hit:active{background:#fff3;transform:scale(.96)}
+.txt{position:absolute;display:flex;align-items:center;white-space:nowrap;overflow:hidden;font-weight:900;text-shadow:0 .3cqw 0 #000}
+#p1name,#p2name{font-size:3.9cqw}
+#p1bal,#p2sub{font-size:4.6cqw;color:var(--y);font-variant-numeric:tabular-nums}
+#p2sub{font-size:3.6cqw}
+#bot{border-radius:50%;display:grid;place-items:center;font-size:8cqw;background:radial-gradient(circle at 40% 35%,#5a1a1a,#1a0404);box-shadow:0 0 0 .5cqw #ff4a4a,0 0 3cqw #ff4a4a88}
+/* casas: peça recortada da arte, entra com zoom; linha vencedora pisca */
+.cell{position:absolute;display:grid;place-items:center;border-radius:1.5cqw}
+.cell img{width:100%;height:100%;object-fit:contain;animation:put .25s cubic-bezier(.2,1.6,.4,1)}
+.cell.can{cursor:pointer}
+.cell.can:hover{background:#ffffff12}
+.cell.win{animation:win .5s ease-in-out infinite alternate;z-index:1}
+.cell.win.X{box-shadow:inset 0 0 0 .6cqw #ff6a6a,0 0 4cqw #ff3b3b}
+.cell.win.O{box-shadow:inset 0 0 0 .6cqw #6ab0ff,0 0 4cqw #3b8bff}
+@keyframes put{from{transform:scale(.2);opacity:0}}
+@keyframes win{to{transform:scale(1.06)}}
+.board.think{cursor:wait}
+#status{justify-content:center;gap:2.4cqw;font-size:4.8cqw;color:var(--y)}
+#status img{height:70%}
+#timer{padding:0 3cqw;overflow:visible;gap:2cqw;font-size:4.2cqw}
+#timer i{flex:1;height:1.8cqw;border-radius:1cqw;background:#fff2;overflow:hidden}
+#timer i::after{content:"";display:block;height:100%;width:var(--p,100%);background:linear-gradient(90deg,var(--y),#ff9a1f);transition:width .25s linear}
+#timer.low{color:var(--r)}
+#amt{justify-content:center;font-size:6.8cqw;font-variant-numeric:tabular-nums}
+.chip{position:absolute;border-radius:1.8cqw;font:900 5cqw system-ui;display:grid;place-items:center;text-shadow:0 .3cqw 0 #000}
+.chip.on{background:linear-gradient(#ffe36a,#f0a020);color:#3a1a00;text-shadow:none;box-shadow:0 0 0 .3cqw #fff3b0,0 0 3cqw #ffc83a88}
+#playSub,#pvpSub{justify-content:center;font-size:4.4cqw;color:var(--y)}
+#pvpSub{font-size:3.3cqw;color:#3a1a00;text-shadow:none}
+.stage.playing #play,.stage.playing .chip,.stage.playing #down,.stage.playing #up{filter:grayscale(1) brightness(.6);pointer-events:none}
+.stage:not(.playing) #quit{filter:grayscale(1) brightness(.6)}
+#msg{left:0;right:0;top:61.2%;text-align:center;font:900 4.4cqw system-ui;text-shadow:0 0 2cqw #000,0 .3cqw 0 #000;pointer-events:none;transition:opacity .3s}
+.pop{position:absolute;left:50%;top:44%;translate:-50% -50%;padding:3cqw 7cqw;border-radius:4cqw;text-align:center;font:900 8cqw/1.1 system-ui;background:#000c;border:.6cqw solid var(--y);pointer-events:none;z-index:5;animation:pop 2.2s ease-out forwards}
+.pop small{display:block;font-size:5cqw;color:var(--y)}
+@keyframes pop{0%{scale:.3;opacity:0}12%{scale:1.1;opacity:1}20%{scale:1}80%{opacity:1}100%{opacity:0}}
+.toast{position:absolute;left:50%;top:50%;translate:-50% -50%;max-width:84%;padding:3cqw 5cqw;border-radius:3cqw;background:#000d;border:.4cqw solid var(--y);font:800 4cqw/1.35 system-ui;text-align:center;z-index:6;animation:fade .25s}
+@keyframes fade{from{opacity:0}}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:80vh;border:3px solid var(--y);border-radius:16px;background:#2a1208;color:#fff;padding:16px;font:15px/1.45 system-ui}
+dialog::backdrop{background:#000a}
+dialog h3{color:var(--y);margin-bottom:8px}
+dialog table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+dialog td{padding:4px 2px;border-bottom:1px solid #fff2}
+dialog .w{color:var(--g)} dialog .l{color:var(--r)}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#3a1a00;font-weight:900}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Jogo da Velha Aposta</h1>
+  <button class="hit" id="menu" aria-label="Voltar ao lobby"></button>
+  <button class="hit" id="cfg" aria-label="Regras"></button>
+  <button class="hit" id="snd" aria-label="Som"></button>
+  <button class="hit" id="full" aria-label="Tela cheia"></button>
+  <b class="txt" id="p1name">Você</b>
+  <b class="txt" id="p1bal">R$ 0,00</b>
+  <button class="hit" id="dep" aria-label="Depositar"></button>
+  <div class="abs" id="bot" aria-hidden="true">🤖</div>
+  <b class="txt" id="p2name">Computador</b>
+  <b class="txt" id="p2sub"></b>
+  <button class="hit" id="p2plus" aria-label="Como jogar"></button>
+  <button class="hit" id="lobby" aria-label="Lobby"></button>
+  <button class="hit" id="chat" aria-label="Chat"></button>
+  <button class="hit" id="hist" aria-label="Histórico"></button>
+  <button class="hit" id="rules" aria-label="Regras"></button>
+  <button class="hit" id="how" aria-label="Como jogar"></button>
+  <div class="board" id="board"></div>
+  <div class="txt" id="status"></div>
+  <div class="txt" id="timer"><span>⏱</span><b id="clock">00:30</b><i id="bar"></i></div>
+  <div class="abs" id="msg" aria-live="polite"></div>
+  <button class="hit" id="down" aria-label="Diminuir aposta"></button>
+  <b class="txt" id="amt">R$ 10,00</b>
+  <button class="hit" id="up" aria-label="Aumentar aposta"></button>
+  <div id="chips"></div>
+  <button class="hit" id="quit" aria-label="Desistir"></button>
+  <button class="hit" id="play" aria-label="Jogar"></button>
+  <b class="txt" id="playSub"></b>
+  <button class="hit" id="pvp" aria-label="Jogar contra outra pessoa"></button>
+  <b class="txt" id="pvpSub">em breve</b>
+</main>
+
+<dialog id="dlgRules">
+  <h3>Como jogar</h3>
+  <p>Você é o <b style="color:#ff6a6a">X</b> e sempre começa. O adversário é o <b>Computador</b> (não é uma pessoa).<br><br>
+  Faça 3 em linha (horizontal, vertical ou diagonal) antes dele. Você tem 30 segundos por jogada; se o tempo acabar, uma casa livre é marcada ao acaso pra você.<br><br>
+  <b>Pagamentos:</b> vitória paga <b class="payW"></b> a aposta · empate devolve <b class="payD"></b> · derrota ou desistência perde a aposta.<br><br>
+  <b>Justiça:</b> o computador joga perfeito, mas tem chance de jogar numa casa sorteada: <b class="erro1"></b> na primeira jogada dele e <b class="erro"></b> nas outras. Essa chance é igual pra todo mundo, em todas as partidas, e não muda com saldo, depósito ou histórico. Jogando perfeito, o retorno médio é <b class="rtp"></b> da aposta; quem erra recebe menos.</p>
+  <button onclick="dlgRules.close()">Fechar</button>
+</dialog>
+<dialog id="dlgHist">
+  <h3>Histórico</h3>
+  <table id="histRows"></table>
+  <button onclick="dlgHist.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="velha.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('velha')</script><!-- admin assiste ao vivo -->
+<script>
+const { ERRO, winner, winLine, free, botMove, payout } = JV;
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => 'R$ ' + x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const pct = x => (x * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+const mult = x => x.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + 'x';
+const START = 100, TURN_S = 30, BETS = [1, 2, 5, 10, 25, 50, 100, 250, 500], CHIPS = [5, 10, 25, 50, 100];
+
+// posições na arte [x, y, largura, altura] em px de 941x1672
+const PX = {
+  menu: [30, 25, 70, 70], cfg: [665, 20, 70, 70], snd: [755, 20, 70, 70], full: [848, 20, 68, 70],
+  p1name: [165, 314, 190, 36], p1bal: [165, 352, 190, 50], dep: [368, 325, 64, 62],
+  bot: [522, 296, 124, 124], p2name: [664, 314, 168, 36], p2sub: [664, 352, 168, 50], p2plus: [836, 325, 64, 62],
+  lobby: [20, 468, 95, 90], chat: [20, 572, 95, 90], hist: [20, 676, 95, 92], rules: [830, 468, 95, 90], how: [830, 572, 95, 90],
+  status: [132, 1096, 356, 72], timer: [512, 1096, 302, 72], down: [187, 1237, 70, 61], amt: [285, 1242, 377, 58], up: [688, 1237, 72, 61],
+  quit: [30, 1430, 220, 180], play: [285, 1430, 380, 180], playSub: [395, 1534, 153, 50], pvp: [695, 1430, 220, 180], pvpSub: [740, 1560, 128, 32],
+};
+const CELLS = [[180, 490, 366, 652], [376, 490, 566, 652], [576, 490, 764, 652],
+               [168, 662, 364, 838], [374, 662, 570, 838], [580, 662, 776, 838],
+               [158, 848, 362, 1030], [370, 848, 574, 1030], [584, 848, 788, 1030]].map(([a, b, c, d]) => [a, b, c - a, d - b]);
+const CHIP_PX = [[165, 1315, 110, 70], [290, 1315, 110, 70], [415, 1315, 110, 70], [540, 1315, 110, 70], [668, 1315, 112, 70]];
+const place = (el, [x, y, w, h]) => Object.assign(el.style, { left: x / 9.41 + '%', top: y / 16.72 + '%', width: w / 9.41 + '%', height: h / 16.72 + '%' });
+for (const id in PX) place($('#' + id), PX[id]);
+
+// ---- saldo: no site (iframe) usa a carteira do pai; sozinho usa créditos fictícios ----
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('velha.saldo') || START; } catch {}
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('velha.saldo', balance); } catch {}
+}
+let history = [];
+try { history = JSON.parse(localStorage.getItem('velha.hist')) || []; } catch {}
+
+// ---- som (bipes simples) ----
+let soundOn = true, ac;
+try { soundOn = localStorage.getItem('velha.som') !== 'off'; } catch {}
+function beep(f, d = .12, type = 'sine', v = .15) {
+  if (!soundOn) return;
+  try {
+    ac ||= new AudioContext();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + d);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
+  } catch {}
+}
+const tune = (notes, type) => notes.forEach((f, i) => setTimeout(() => beep(f, .18, type), i * 120));
+
+// ---- estado da partida ----
+let bet = 10, board = Array(9).fill(''), playing = false, myTurn = false, deadline = 0, tick = null;
+const board$ = $('#board');
+CELLS.forEach((c, i) => {
+  const el = document.createElement('div'); el.className = 'cell'; place(el, c);
+  el.onclick = () => humanMove(i);
+  board$.append(el);
+});
+const chips$ = $('#chips');
+CHIPS.forEach((v, i) => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = v; place(b, CHIP_PX[i]);
+  b.onclick = () => { bet = v; beep(660, .05); hud(); };
+  chips$.append(b);
+});
+
+function msg(t) { $('#msg').textContent = t; }
+function toast(html, ms = 2200) {
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = html; stage.append(t);
+  setTimeout(() => t.remove(), ms);
+}
+function pop(title, sub, color) {
+  const p = document.createElement('div'); p.className = 'pop'; p.style.color = color;
+  p.innerHTML = `${title}<small>${sub}</small>`; stage.append(p); setTimeout(() => p.remove(), 2300);
+}
+
+function hud() {
+  $('#p1bal').textContent = brl(balance);
+  $('#p2sub').textContent = `paga ${mult(JV.VITORIA)}`;
+  $('#amt').textContent = brl(bet);
+  $('#playSub').textContent = brl(bet);
+  [...chips$.children].forEach(b => b.classList.toggle('on', +b.textContent === bet));
+  [...board$.children].forEach((el, i) => el.classList.toggle('can', playing && myTurn && !board[i]));
+  const st = $('#status');
+  if (playing) st.innerHTML = myTurn ? '<img src="assets/velha/x.webp" alt="">SUA VEZ' : '<img src="assets/velha/o.webp" alt="">PENSANDO…';
+  else st.textContent = 'ESCOLHA E JOGUE';
+  stage.classList.toggle('playing', playing);
+  document.querySelectorAll('.txt').forEach(fit);
+}
+// encolhe o texto até caber na caixa da arte
+function fit(el) {
+  el.style.fontSize = '';
+  let f = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth && f > 6) el.style.fontSize = (f -= .5) + 'px';
+}
+addEventListener('resize', () => document.querySelectorAll('.txt').forEach(fit));
+function draw() {
+  [...board$.children].forEach((el, i) => {
+    const has = el.firstChild?.dataset.v;
+    if (board[i] && has !== board[i]) el.innerHTML = `<img data-v="${board[i]}" src="assets/velha/${board[i].toLowerCase()}.webp" alt="${board[i]}">`;
+    if (!board[i]) el.innerHTML = '';
+    el.className = 'cell';
+  });
+}
+
+// ---- relógio da jogada ----
+function startClock() {
+  deadline = Date.now() + TURN_S * 1000;
+  clearInterval(tick); tick = setInterval(clock, 250); clock();
+}
+function clock() {
+  const left = Math.max(0, deadline - Date.now()), s = Math.ceil(left / 1000);
+  $('#clock').textContent = '00:' + String(s).padStart(2, '0');
+  $('#bar').style.setProperty('--p', (left / (TURN_S * 1000)) * 100 + '%');
+  $('#timer').classList.toggle('low', s <= 5);
+  if (playing && myTurn && s <= 5 && left % 1000 > 750) beep(880, .05, 'square', .05);
+  if (playing && myTurn && left === 0) { msg('Tempo esgotado: jogada automática'); const f = free(board); humanMove(f[Math.floor(Math.random() * f.length)]); }
+}
+function stopClock() { clearInterval(tick); $('#clock').textContent = '00:' + TURN_S; $('#bar').style.setProperty('--p', '100%'); $('#timer').classList.remove('low'); }
+
+// ---- partida ----
+function start() {
+  if (playing) return;
+  if (balance < bet) {
+    if (host) { msg('Saldo insuficiente, faça um depósito'); setTimeout(() => host.openModal('modal-deposit'), 900); }
+    else if (balance < BETS[0]) { balance = START; save(); msg('Créditos recarregados: ' + brl(START)); hud(); }
+    else msg('Saldo insuficiente pra essa aposta');
+    return;
+  }
+  balance = r2(balance - bet); save();
+  board = Array(9).fill(''); playing = true; myTurn = true;
+  draw(); msg(''); hud(); startClock(); tune([523, 659, 784]);
+}
+function humanMove(i) {
+  if (!playing || !myTurn || board[i]) return;
+  board[i] = 'X'; beep(520, .1, 'triangle'); draw();
+  if (check()) return;
+  myTurn = false; hud(); stopClock();
+  setTimeout(() => {
+    if (!playing) return;
+    board[botMove(board)] = 'O'; beep(330, .1, 'triangle'); draw();
+    if (check()) return;
+    myTurn = true; hud(); startClock();
+  }, 450 + Math.random() * 450);
+}
+function check() {
+  const w = winner(board);
+  if (!w) return false;
+  finish(w);
+  return true;
+}
+function finish(w, quit = false) {
+  playing = false; myTurn = false; stopClock();
+  const pay = payout(bet, w);
+  balance = r2(balance + pay); save(); reportarRodada('velha', bet, pay);
+  const line = winLine(board);
+  if (line) line.forEach(i => board$.children[i].classList.add('win', w));
+  if (quit) { pop('DESISTIU', `-${brl(bet)}`, '#ff6a6a'); msg('Você desistiu da partida'); tune([300, 220], 'sawtooth'); }
+  else if (w === 'X') { pop('VOCÊ GANHOU!', `+${brl(pay)}`, '#3bff7a'); msg(`Vitória! Recebeu ${brl(pay)}`); tune([523, 659, 784, 1047]); }
+  else if (w === 'draw') { pop('EMPATE', `volta ${brl(pay)}`, '#ffd23f'); msg(`Deu velha! Voltou ${brl(pay)}`); tune([440, 440]); }
+  else { pop('COMPUTADOR GANHOU', `-${brl(bet)}`, '#ff6a6a'); msg('Não foi dessa vez'); tune([392, 330, 262], 'sawtooth'); }
+  history.unshift({ t: Date.now(), bet, r: quit ? 'quit' : w, pay });
+  history = history.slice(0, 30);
+  try { localStorage.setItem('velha.hist', JSON.stringify(history)); } catch {}
+  hud();
+}
+
+// ---- botões ----
+const step = d => { const i = BETS.indexOf(bet), j = i < 0 ? BETS.findIndex(v => v > bet) - (d < 0) : i + d; bet = BETS[Math.max(0, Math.min(BETS.length - 1, j))]; beep(660, .05); hud(); };
+$('#down').onclick = () => step(-1);
+$('#up').onclick = () => step(1);
+$('#play').onclick = start;
+$('#quit').onclick = () => { if (playing) finish('O', true); else toast('Nenhuma partida em andamento'); };
+$('#pvp').onclick = () => toast('Partidas contra outros jogadores<br><b>em breve</b>');
+$('#chat').onclick = () => toast('Chat <b>em breve</b>');
+const leave = () => { if (playing && !confirm('Sair agora conta como desistência. Sair?')) return; if (playing) finish('O', true); host ? host.closeGame() : (location.href = 'index.html'); };
+$('#menu').onclick = leave;
+$('#lobby').onclick = leave;
+$('#dep').onclick = () => host ? host.openModal('modal-deposit') : toast('Depósito disponível no site');
+for (const id of ['cfg', 'rules', 'how', 'p2plus']) $('#' + id).onclick = () => dlgRules.showModal();
+$('#snd').onclick = () => { soundOn = !soundOn; try { localStorage.setItem('velha.som', soundOn ? 'on' : 'off'); } catch {} toast(soundOn ? '🔊 Som ligado' : '🔇 Som desligado', 1200); };
+$('#full').onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => {});
+$('#hist').onclick = () => {
+  const lbl = { X: ['Vitória', 'w'], O: ['Derrota', 'l'], draw: ['Empate', ''], quit: ['Desistiu', 'l'] };
+  $('#histRows').innerHTML = history.length
+    ? history.map(h => `<tr><td>${new Date(h.t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td><td class="${lbl[h.r][1]}">${lbl[h.r][0]}</td><td>${brl(h.bet)}</td><td class="${h.pay ? 'w' : 'l'}">${h.pay ? '+' + brl(h.pay) : '—'}</td></tr>`).join('')
+    : '<tr><td>Nenhuma partida ainda</td></tr>';
+  dlgHist.showModal();
+};
+// textos que dependem do RTP (redesenhados se o RTP mudar com o jogo aberto)
+function rtpTextos() {
+  document.querySelectorAll('.payW').forEach(e => e.textContent = mult(JV.VITORIA));
+  document.querySelectorAll('.payD').forEach(e => e.textContent = mult(JV.EMPATE));
+  document.querySelectorAll('.rtp').forEach(e => e.textContent = pct(JV.RTP));
+  hud();
+}
+document.querySelectorAll('.erro1').forEach(e => e.textContent = pct(ERRO[0]));
+document.querySelectorAll('.erro').forEach(e => e.textContent = pct(ERRO[1]));
+rtpTextos();
+
+hud(); stopClock();
+toast(`Você (X) contra o <b>Computador</b><br>Vitória paga <b>${mult(JV.VITORIA)}</b> · empate devolve <b>${mult(JV.EMPATE)}</b>`, 2800);
+// RTP ao vivo: troca só entre partidas (o pagamento é calculado no fim, então não pode mudar durante)
+rtpAoVivo('velha', JV, { ocupado: () => playing, depois: rtpTextos });
+</script>
+</body>
+</html>

@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ORAMA GAMES - Diversão Premiada Todo Dia</title>
+  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="icon" type="image/png" href="assets/coin_gold.png">
+</head>
+<body>
+
+  <!-- Ambient Jungle Silhouette & Fireflies -->
+  <div class="bg-ambience" id="bg-ambience"></div>
+
+  <!-- Shared SVG Gradients for Art and Icons -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".45" stop-color="#f5c542"/><stop offset="1" stop-color="#b8860b"/></linearGradient>
+      <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a5a"/><stop offset=".5" stop-color="#d62828"/><stop offset="1" stop-color="#7a0a10"/></linearGradient>
+      <linearGradient id="gBeak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff176"/><stop offset=".5" stop-color="#ffb300"/><stop offset="1" stop-color="#f4511e"/></linearGradient>
+      <linearGradient id="gLeaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b6f06a"/><stop offset=".5" stop-color="#43a047"/><stop offset="1" stop-color="#1b5e20"/></linearGradient>
+      <linearGradient id="gBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3f0ff"/><stop offset=".45" stop-color="#29a3ff"/><stop offset="1" stop-color="#0d3a8c"/></linearGradient>
+      <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0f7"/><stop offset=".6" stop-color="#ff8cc6"/><stop offset="1" stop-color="#d63384"/></linearGradient>
+      <radialGradient id="gOrange" cx=".38" cy=".35" r=".7"><stop offset="0" stop-color="#ffd27a"/><stop offset=".5" stop-color="#ff9a1f"/><stop offset="1" stop-color="#d9620a"/></radialGradient>
+      <radialGradient id="gFur" cx=".5" cy=".35" r=".75"><stop offset="0" stop-color="#d9a36a"/><stop offset=".6" stop-color="#a86c35"/><stop offset="1" stop-color="#6e4220"/></radialGradient>
+    </defs>
+  </svg>
+
+  <!-- App Wrapper (Mobile Viewport Framed) -->
+  <div class="app-container">
+
+    <!-- TOP HEADER -->
+    <header class="header">
+      <div class="logo-container" onclick="switchNavTab('inicio')">
+        <img src="assets/logo_orama.png" alt="Orama Games" class="logo-img">
+      </div>
+
+      <div class="header-right">
+        <!-- Balance Capsule -->
+        <div class="balance-pill" onclick="openModal('modal-deposit')">
+          <img src="assets/coin_gold.png" alt="Moeda" class="coin-icon">
+          <span class="balance-amount" id="user-balance">R$ 17,00</span>
+          <div class="btn-add-balance">+</div>
+        </div>
+
+        <!-- User Profile Pill -->
+        <div class="user-profile-badge" onclick="openModal('modal-profile')">
+          <div class="avatar-wrapper">
+            <img src="assets/avatar_padrao.png" alt="Usuário123" class="avatar-img">
+          </div>
+          <div class="user-info">
+            <span class="username js-username">Usuário123</span>
+            <span class="user-level">Nível 5</span>
+          </div>
+        </div>
+
+        <!-- Notifications Bell -->
+        <button class="btn-notification" onclick="openModal('modal-notifications')" aria-label="Notificações">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-badge"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- HERO CAROUSEL BANNER -->
+    <section class="hero-banner-wrapper">
+      <div class="hero-banner-card" onclick="launchGame('capivara')">
+        <div class="hero-cta-hotspot" onclick="launchGame('capivara')"></div>
+      </div>
+      <div class="carousel-dots">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </section>
+
+    <!-- TOP CATEGORIES (6 Cards) -->
+    <nav class="categories-nav">
+      <!-- 1. Todos -->
+      <button class="cat-card active" data-cat="Todos" onclick="filterGames('Todos')">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+        </svg>
+        <span>Todos</span>
+      </button>
+
+      <!-- 2. Slots -->
+      <button class="cat-card" data-cat="Slots" onclick="filterGames('Slots')">
+        <svg viewBox="0 0 24 24">
+          <rect x="2" y="5" width="20" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M7 9v6M12 9v6M17 9v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Slots</span>
+      </button>
+
+      <!-- 3. Crash -->
+      <button class="cat-card" data-cat="Crash" onclick="filterGames('Crash')">
+        <svg viewBox="0 0 24 24">
+          <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+          <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+        </svg>
+        <span>Crash</span>
+      </button>
+
+      <!-- 4. Roleta -->
+      <button class="cat-card" data-cat="Roleta" onclick="filterGames('Roleta')">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+          <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        <span>Roleta</span>
+      </button>
+
+      <!-- 5. Cartas -->
+      <button class="cat-card" data-cat="Cartas" onclick="filterGames('Cartas')">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="5" width="12" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="m9 3 11 3v13" stroke="currentColor" stroke-width="2" fill="none"/>
+        </svg>
+        <span>Cartas</span>
+      </button>
+
+      <!-- 6. Outros -->
+      <button class="cat-card" data-cat="Outros" onclick="filterGames('Outros')">
+        <svg viewBox="0 0 24 24">
+          <rect x="2" y="6" width="20" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M6 12h4M8 10v4M15 11h.01M18 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Outros</span>
+      </button>
+    </nav>
+
+    <!-- SECTION: FEATURED GAMES ("🔥 Jogos em Destaque") -->
+    <section class="section-wrapper">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🔥</span>
+          <span>Jogos em Destaque</span>
+        </div>
+        <a class="section-link" onclick="filterGames('Slots')">
+          <span>Ver todos</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="featured-grid">
+        <!-- 1. Capivara da Sorte -->
+        <div class="game-card" onclick="launchGame('capivara')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_feat_capivara.png" alt="Capivara da Sorte" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'capivara')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Capivara da Sorte</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- 2. Fortuna Tigre -->
+        <div class="game-card" onclick="launchGame('fortuna_tigre')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_feat_tigre.png" alt="Fortuna Tigre" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'fortuna_tigre')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Fortuna Tigre</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- 3. Dragão Dourado -->
+        <div class="game-card" onclick="launchGame('dragao_dourado')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_feat_dragao.png" alt="Dragão Dourado" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'dragao_dourado')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Dragão Dourado</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ALL GAMES ("🎮 Todos os Jogos") -->
+    <section class="section-wrapper" id="sec-all-games">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🎮</span>
+          <span>Todos os Jogos</span>
+        </div>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="filter-chips-bar">
+        <button class="chip active" data-cat="Todos" onclick="filterGames('Todos')">Todos</button>
+        <button class="chip" data-cat="Slots" onclick="filterGames('Slots')">Slots</button>
+        <button class="chip" data-cat="Crash" onclick="filterGames('Crash')">Crash</button>
+        <button class="chip" data-cat="Roleta" onclick="filterGames('Roleta')">Roleta</button>
+        <button class="chip" data-cat="Cartas" onclick="filterGames('Cartas')">Cartas</button>
+        <button class="chip" data-cat="Outros" onclick="filterGames('Outros')">Outros</button>
+        <button class="chip-filter-btn" onclick="openModal('modal-search')" aria-label="Filtros">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 8-Game Grid (2x4) -->
+      <div class="all-games-grid" id="all-games-grid">
+        <!-- Gatinho Flash (novo) -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('gatinho')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_gatinho.png" alt="Gatinho Flash" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'gatinho')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Gatinho Flash</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- Galinha Angola Crash (novo) -->
+        <div class="game-card" data-cat="Crash" onclick="launchGame('galinha')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_crash.png" alt="Galinha Angola Crash" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'galinha')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Galinha Angola</span>
+            <span class="game-category">Crash</span>
+          </div>
+        </div>
+
+        <!-- Papagaio Gay (novo) -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('papagaio')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_papagaio.png" alt="Papagaio Gay" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'papagaio')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Papagaio Gay</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- Truco Aposta (novo) -->
+        <div class="game-card" data-cat="Cartas" onclick="launchGame('truco')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_truco.png" alt="Truco Aposta" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'truco')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Truco Aposta</span>
+            <span class="game-category">Cartas</span>
+          </div>
+        </div>
+
+        <!-- Sinuca Aposta (novo) -->
+        <div class="game-card" data-cat="Outros" onclick="launchGame('sinuca')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_sinuca.png" alt="Sinuca Aposta" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'sinuca')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Sinuca Aposta</span>
+            <span class="game-category">Sinuca</span>
+          </div>
+        </div>
+
+        <!-- Raspadinha Premiada (novo) -->
+        <div class="game-card" data-cat="Outros" onclick="launchGame('raspa')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_raspa.png" alt="Raspadinha Premiada" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'raspa')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Raspadinha Premiada</span>
+            <span class="game-category">Raspadinha</span>
+          </div>
+        </div>
+
+        <!-- Macaco Pelado (novo) -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('macaco')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_macaco.png" alt="Macaco Pelado" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'macaco')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Macaco Pelado</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- Bichos da Sorte (novo) -->
+        <div class="game-card" data-cat="Outros" onclick="launchGame('bichos')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_bichos.png?v=2" alt="Bichos da Sorte" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'bichos')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Bichos da Sorte</span>
+            <span class="game-category">Sorteio</span>
+          </div>
+        </div>
+
+        <!-- 1. Capivara da Sorte -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('capivara')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_capivara.png" alt="Capivara da Sorte" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'capivara_grid')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Capivara da Sorte</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- 2. Tigre Sortudo -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('tigre_sortudo')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_tigre_sortudo.png" alt="Tigre Sortudo" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'tigre_sortudo')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Tigre Sortudo</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- 3. Coelho da Sorte -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('coelho_sorte')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_coelho.png" alt="Coelho da Sorte" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'coelho_sorte')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Coelho da Sorte</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- 4. Dragão Dourado -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('dragao_dourado')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_dragao.png" alt="Dragão Dourado" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'dragao_grid')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Dragão Dourado</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- 5. Mines -->
+        <div class="game-card" data-cat="Outros" onclick="launchGame('mines')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_mines.png" alt="Mines" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'mines')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Mines</span>
+            <span class="game-category">Outros</span>
+          </div>
+        </div>
+
+        <!-- 6. Aviator -->
+        <div class="game-card" data-cat="Crash" onclick="launchGame('aviator')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_aviator.png" alt="Aviator" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'aviator')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Aviator</span>
+            <span class="game-category">Crash</span>
+          </div>
+        </div>
+
+        <!-- 7. Roleta -->
+        <div class="game-card" data-cat="Cassino" onclick="launchGame('roleta')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_roleta.png" alt="Roleta" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'roleta')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Roleta</span>
+            <span class="game-category">Cassino</span>
+          </div>
+        </div>
+
+        <!-- 8. Sweet Bonanza -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('sweet_bonanza')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_sweet_bonanza.png" alt="Sweet Bonanza" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'sweet_bonanza')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Sweet Bonanza</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLOATING DOCK BOTTOM NAVIGATION BAR -->
+    <nav class="bottom-nav-container">
+      <!-- 1. Início -->
+      <button class="nav-tab active" onclick="switchNavTab('inicio', this)">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>
+        </svg>
+        <span>Início</span>
+      </button>
+
+      <!-- 2. Jogos -->
+      <button class="nav-tab" onclick="switchNavTab('jogos', this)">
+        <svg viewBox="0 0 24 24">
+          <rect x="2" y="6" width="20" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M6 12h4M8 10v4M15 11h.01M18 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Jogos</span>
+      </button>
+
+      <!-- 3. Depositar (Center Floating) -->
+      <div class="nav-deposit-wrapper">
+        <button class="btn-deposit-float" onclick="openModal('modal-deposit')" aria-label="Depositar">
+          <img src="assets/btn_deposit_crown.png" alt="Depositar">
+        </button>
+      </div>
+
+      <!-- 4. Ranking -->
+      <button class="nav-tab" onclick="switchNavTab('ranking', this)">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 22V14.5a2.5 2.5 0 0 1 4 0V22M6 4h12a2 2 0 0 1 2 2v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6V6a2 2 0 0 1 2-2z"/>
+        </svg>
+        <span>Ranking</span>
+      </button>
+
+      <!-- 5. Perfil -->
+      <button class="nav-tab" onclick="switchNavTab('perfil', this)">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>Perfil</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ==========================================================================
+       MODALS & GAME POPUPS
+       ========================================================================== -->
+
+  <!-- 1. DEPOSIT (PIX) MODAL -->
+  <div class="modal-overlay" id="modal-deposit" onclick="if(event.target===this) closeModal('modal-deposit')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>⚡</span>
+          <span>Depósito Instantâneo PIX</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-deposit')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="pix-badge">
+          <div class="pix-badge-left">
+            <span>💠</span>
+            <span class="pix-badge-title">PIX 24/7 Automático</span>
+          </div>
+          <span class="pix-bonus-tag">+100% BÔNUS</span>
+        </div>
+
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-dim);">Escolha um valor:</span>
+        <div class="deposit-grid-presets">
+          <button class="btn-preset" onclick="selectDepositPreset(20, this)">R$ 20</button>
+          <button class="btn-preset" onclick="selectDepositPreset(50, this)">R$ 50</button>
+          <button class="btn-preset" onclick="selectDepositPreset(100, this)">R$ 100</button>
+          <button class="btn-preset" onclick="selectDepositPreset(200, this)">R$ 200</button>
+          <button class="btn-preset" onclick="selectDepositPreset(500, this)">R$ 500</button>
+          <button class="btn-preset" onclick="selectDepositPreset(1000, this)">R$ 1.000</button>
+        </div>
+
+        <input type="number" id="deposit-custom-val" class="deposit-custom-input" inputmode="decimal" min="1" step="0.01" placeholder="Outro valor (R$)" oninput="onDepositCustom(this)">
+
+        <div class="pix-qr-box" id="pix-qr-box" hidden>
+          <!-- QR real gerado do "copia e cola" (pix_emv) da BullsCash -->
+          <div class="pix-qr-img" id="pix-qr" aria-label="QR code do PIX">
+            <span class="pix-qr-empty">O QR code aparece aqui depois de gerar o PIX</span>
+          </div>
+          <div class="pix-code-container">
+            <input type="text" id="pix-code-input" readonly class="pix-code-input" value="Clique em gerar PIX para receber o copia e cola">
+            <button class="btn-copy-pix" onclick="copyPixCode()">Copiar</button>
+          </div>
+        </div>
+
+        <p class="deposit-status" id="deposit-status">Apos gerar o PIX, o saldo sera creditado automaticamente quando o pagamento for confirmado.</p>
+
+        <button class="btn-submit-deposit" id="btn-confirm-deposit" onclick="confirmDeposit()" disabled>
+          Escolha um valor
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CAPIVARA DA SORTE FULL PLAYABLE SLOT MODAL -->
+  <div class="modal-overlay" id="modal-slot-capivara" onclick="if(event.target===this) closeModal('modal-slot-capivara')">
+    <div class="modal-card slot-modal-card">
+      <div class="modal-header" style="background: rgba(0,0,0,0.4);">
+        <div class="modal-title">
+          <span>🦫</span>
+          <span>Capivara da Sorte Slot</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-slot-capivara')">&times;</button>
+      </div>
+
+      <div class="slot-game-wrapper">
+        <div class="slot-frame">
+          <div class="slot-capy-anim"></div>
+          <div class="slot-reels">
+            <div class="slot-reel"><div class="strip"></div></div>
+            <div class="slot-reel"><div class="strip"></div></div>
+            <div class="slot-reel"><div class="strip"></div></div>
+            <svg class="slot-lines" id="slot-lines" viewBox="0 0 300 300"></svg>
+          </div>
+        </div>
+
+        <div class="slot-hud">
+          <div class="slot-hud-box">
+            <small>SALDO</small>
+            <b id="slot-bal-val">R$ 17,00</b>
+          </div>
+          <div class="slot-hud-box">
+            <small>GANHO</small>
+            <b id="slot-win-val">R$ 0,00</b>
+          </div>
+        </div>
+
+        <div class="slot-msg" id="slot-msg">Boa sorte!</div>
+
+        <div class="slot-controls">
+          <div class="slot-bet-wrapper">
+            <button class="slot-btn" onclick="changeSlotBet(-1)">-</button>
+            <div>
+              <small>APOSTA</small>
+              <b id="slot-bet-val">R$ 5,00</b>
+            </div>
+            <button class="slot-btn" onclick="changeSlotBet(1)">+</button>
+          </div>
+
+          <button class="slot-btn-spin" id="slot-spin-btn" onclick="spinCapivaraSlot()" aria-label="Girar">
+            <svg viewBox="0 0 24 24">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M22 12.5a10 10 0 0 1-18.8 4.3L2.5 16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. MINES MINI-GAME MODAL -->
+  <div class="modal-overlay" id="modal-game-mines" onclick="if(event.target===this) closeModal('modal-game-mines')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>💣</span>
+          <span>Mines - Campo Minado</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-game-mines')">&times;</button>
+      </div>
+      <div class="modal-body" style="align-items: center;">
+        <div style="display:flex; justify-content:space-between; width:100%; font-weight:700;">
+          <span>Saldo: <b class="sync-balance" style="color:var(--neon-green-bright)">R$ 17,00</b></span>
+          <span>Multiplicador: <b id="mines-cashout-mult" style="color:var(--gold)">1.00x</b></span>
+        </div>
+
+        <div id="mines-board" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; width:100%; max-width:320px; aspect-ratio:1;">
+          <!-- Dynamically populated 5x5 tiles -->
+        </div>
+
+        <div style="width: 100%; display:flex; gap:8px;">
+          <button id="btn-mines-start" class="btn-submit-deposit" onclick="startMinesRound()">Começar Rodada (R$ 5,00)</button>
+          <button id="btn-mines-cashout" class="btn-submit-deposit" style="display:none; background: linear-gradient(180deg, #f5c542, #d9820a);" onclick="cashoutMines()">
+            Sacar <span id="mines-cashout-val">R$ 0,00</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. AVIATOR CRASH GAME MODAL -->
+  <div class="modal-overlay" id="modal-game-aviator" onclick="if(event.target===this) closeModal('modal-game-aviator')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>✈️</span>
+          <span>Aviator Crash</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-game-aviator')">&times;</button>
+      </div>
+      <div class="modal-body" style="align-items: center;">
+        <div style="width:100%; height:180px; background:radial-gradient(circle at 10% 90%, #2e081e 0%, #0c020b 100%); border:1px solid #ff2a7a; border-radius:14px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+          <div id="aviator-mult-display" style="font-size:38px; font-weight:900; color:#ff2a7a; text-shadow:0 0 15px #ff2a7a;">1.00x</div>
+          <div id="aviator-plane" style="position:absolute; bottom:20px; left:20px; font-size:32px; transition: transform 0.1s linear;">✈️</div>
+        </div>
+        <div style="width: 100%;">
+          <button id="btn-aviator-bet" class="btn-submit-deposit" style="background:linear-gradient(180deg, #ff2a7a, #990a42); border-color:#ff7aa8; color:#fff;" onclick="startAviatorFlight()">
+            Apostar R$ 5,00
+          </button>
+          <button id="btn-aviator-cashout" class="btn-submit-deposit" style="display:none; background:linear-gradient(180deg, #14cd5e, #0a823a);" onclick="cashoutAviator()">
+            Sacar Prêmio!
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. ROULETTE MODAL -->
+  <div class="modal-overlay" id="modal-game-roleta" onclick="if(event.target===this) closeModal('modal-game-roleta')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🎡</span>
+          <span>Roleta Europeia</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-game-roleta')">&times;</button>
+      </div>
+      <div class="modal-body" style="align-items: center;">
+        <img id="roulette-wheel-img" src="assets/card_grid_roleta.png" alt="Roleta" style="width:160px; height:160px; border-radius:50%; border:3px solid var(--gold); transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);">
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:100%;">
+          <button class="btn-preset" style="background:#b31414; color:#fff;" onclick="spinRoulette('red')">Vermelho</button>
+          <button class="btn-preset" style="background:#148a30; color:#fff;" onclick="spinRoulette('green')">Verde (0)</button>
+          <button class="btn-preset" style="background:#1a1a1a; color:#fff;" onclick="spinRoulette('black')">Preto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. GENERIC SLOT MODAL (Tigre, Dragão, Coelho, Sweet Bonanza) -->
+  <div class="modal-overlay" id="modal-generic-slot" onclick="if(event.target===this) closeModal('modal-generic-slot')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🎰</span>
+          <span id="generic-slot-title">Jogo Slot</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-generic-slot')">&times;</button>
+      </div>
+      <div class="modal-body" style="align-items: center;">
+        <img id="generic-slot-img" src="assets/card_feat_tigre.png" alt="Slot" style="width:100%; max-width:260px; border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,0.6); transition: all 0.3s ease;">
+        <div style="width:100%; display:flex; justify-content:space-between; font-weight:700;">
+          <span>Saldo: <b class="sync-balance" style="color:var(--neon-green-bright)">R$ 17,00</b></span>
+          <span>Aposta: <b>R$ 5,00</b></span>
+        </div>
+        <button class="btn-submit-deposit" onclick="spinGenericSlot()">Girar Rodada (R$ 5,00)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. PROFILE & VIP LEVEL MODAL -->
+  <div class="modal-overlay" id="modal-profile" onclick="if(event.target===this) closeModal('modal-profile')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>👑</span>
+          <span>Meu Perfil VIP</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-profile')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; align-items:center; gap:14px; background:rgba(20,205,94,0.1); padding:14px; border-radius:14px; border:1px solid rgba(20,205,94,0.3);">
+          <img src="assets/avatar_padrao.png" alt="Avatar" style="width:54px; height:54px; border-radius:50%; border:2px solid var(--neon-green);">
+          <div>
+            <div class="js-username" style="font-size:16px; font-weight:800;">Usuário123</div>
+            <div style="font-size:13px; color:var(--gold); font-weight:700;">VIP Nível 5 ⭐⭐⭐⭐⭐</div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim);">
+            <span>Progresso para o Nível 6</span>
+            <span>3.850 / 5.000 XP</span>
+          </div>
+          <div style="width:100%; height:8px; background:#04120a; border-radius:4px; overflow:hidden; border:1px solid rgba(20,205,94,0.3);">
+            <div style="width:77%; height:100%; background:linear-gradient(90deg, #14cd5e, #f5c542);"></div>
+          </div>
+        </div>
+
+        <button id="btn-claim-daily" class="btn-submit-deposit" style="background:linear-gradient(180deg, #f5c542, #d9820a); border-color:#fff3b0;" onclick="claimDailyBonus()">
+          🎁 Resgatar Bônus Diário (+R$ 5,00)
+        </button>
+
+        <div style="background:#04120a; border-radius:12px; padding:12px; border:1px solid rgba(20,205,94,0.2);">
+          <div style="font-size:13px; font-weight:700; margin-bottom:8px; color:var(--neon-green-bright);">Benefícios Ativos:</div>
+          <ul style="font-size:12px; line-height:1.8; padding-left:18px; color:var(--text-dim);">
+            <li>5% Cashback diário automático</li>
+            <li>Saques instantâneos via PIX prioritário</li>
+            <li>Suporte VIP 24/7 exclusivo</li>
+          </ul>
+        </div>
+
+        <button class="btn-logout" onclick="Auth.logout()">Sair da conta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. TOURNAMENT RANKING MODAL -->
+  <div class="modal-overlay" id="modal-ranking" onclick="if(event.target===this) closeModal('modal-ranking')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🏆</span>
+          <span>Torneio Semanal R$ 50.000</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-ranking')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#04120a; padding:10px 14px; border-radius:10px; border:1px solid rgba(245,197,66,0.4);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">🥇</span>
+              <span style="font-weight:800; font-size:13px;">Marcos_Winner</span>
+            </div>
+            <span style="color:var(--gold); font-weight:800; font-size:13px;">R$ 45.200,00</span>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#04120a; padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">🥈</span>
+              <span style="font-weight:800; font-size:13px;">LucasCapy</span>
+            </div>
+            <span style="color:var(--gold); font-weight:800; font-size:13px;">R$ 38.400,00</span>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#04120a; padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">🥉</span>
+              <span style="font-weight:800; font-size:13px;">BiaSlots</span>
+            </div>
+            <span style="color:var(--gold); font-weight:800; font-size:13px;">R$ 29.100,00</span>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(20,205,94,0.15); padding:10px 14px; border-radius:10px; border:1.5px solid var(--neon-green);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-weight:900; color:var(--neon-green-bright); font-size:14px;">#14</span>
+              <span style="font-weight:800; font-size:13px;"><span class="js-username">Usuário123</span> (Você)</span>
+            </div>
+            <span style="color:var(--neon-green-bright); font-weight:800; font-size:13px;">R$ 2.450,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. NOTIFICATIONS MODAL -->
+  <div class="modal-overlay" id="modal-notifications" onclick="if(event.target===this) closeModal('modal-notifications')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🔔</span>
+          <span>Notificações</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-notifications')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="background:#04120a; padding:12px; border-radius:10px; border:1px solid var(--neon-green);">
+            <div style="font-size:13px; font-weight:800; color:var(--gold);">🎁 Bônus Diário Disponível!</div>
+            <div style="font-size:12px; color:var(--text-dim); margin-top:4px;">Resgate agora seus R$ 5,00 grátis direto no perfil.</div>
+          </div>
+          <div style="background:#04120a; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1);">
+            <div style="font-size:13px; font-weight:800; color:var(--text-white);">🔥 Capivara da Sorte!</div>
+            <div style="font-size:12px; color:var(--text-dim); margin-top:4px;">Você recebeu 10 rodadas grátis hoje.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. SEARCH & SORT MODAL -->
+  <div class="modal-overlay" id="modal-search" onclick="if(event.target===this) closeModal('modal-search')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🔍</span>
+          <span>Pesquisar Jogos</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal('modal-search')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" placeholder="Digite o nome do jogo..." class="deposit-custom-input" oninput="
+          const q = this.value.toLowerCase();
+          document.querySelectorAll('#all-games-grid .game-card').forEach(c => {
+            const title = c.querySelector('.game-title').textContent.toLowerCase();
+            c.style.display = title.includes(q) ? 'flex' : 'none';
+          });
+        ">
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. BIG WIN CELEBRATION OVERLAY -->
+  <div class="win-overlay" id="win-overlay" onclick="this.classList.remove('show')">
+    <div class="win-anim"></div>
+    <h2>GRANDE GANHO!</h2>
+    <div class="amt" id="win-amt-display">R$ 150,00</div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="modal-overlay" id="modal-login" onclick="if(event.target===this) closeModal('modal-login')">
+    <div class="modal-card auth-card">
+      <button class="btn-close-modal auth-close" onclick="closeModal('modal-login')" aria-label="Fechar">&times;</button>
+      <img src="assets/logo_orama.png" alt="Orama Games" class="auth-logo">
+      <h2 class="auth-title">Bem-vindo de volta!</h2>
+      <p class="auth-sub">Entre para jogar e resgatar seus bônus</p>
+
+      <form class="auth-form" id="form-login" novalidate onsubmit="Auth.login(event)">
+        <label class="auth-field">
+          <span>E-mail ou CPF</span>
+          <input name="id" type="text" autocomplete="username" placeholder="seu@email.com ou 000.000.000-00" required>
+          <small class="auth-err"></small>
+        </label>
+        <label class="auth-field">
+          <span>Senha</span>
+          <div class="auth-pass">
+            <input name="senha" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+            <button type="button" class="auth-eye" onclick="Auth.togglePass(this)" aria-label="Mostrar senha">👁</button>
+          </div>
+          <small class="auth-err"></small>
+        </label>
+        <button type="button" class="auth-forgot" onclick="Auth.forgot()">Esqueci minha senha</button>
+        <p class="auth-form-err" id="login-err"></p>
+        <button type="submit" class="btn-submit-deposit">Entrar</button>
+      </form>
+
+      <p class="auth-switch">Não tem conta? <button type="button" onclick="Auth.show('register')">Cadastre-se grátis</button></p>
+    </div>
+  </div>
+
+  <!-- CADASTRO -->
+  <div class="modal-overlay" id="modal-register" onclick="if(event.target===this) closeModal('modal-register')">
+    <div class="modal-card auth-card">
+      <button class="btn-close-modal auth-close" onclick="closeModal('modal-register')" aria-label="Fechar">&times;</button>
+      <img src="assets/logo_orama.png" alt="Orama Games" class="auth-logo">
+      <h2 class="auth-title">Crie sua conta</h2>
+      <p class="auth-sub">Leva menos de 1 minuto</p>
+
+      <form class="auth-form" id="form-register" novalidate onsubmit="Auth.register(event)">
+        <label class="auth-field">
+          <span>Nome completo</span>
+          <input name="nome" type="text" autocomplete="name" placeholder="Como está no seu documento" required>
+          <small class="auth-err"></small>
+        </label>
+        <label class="auth-field">
+          <span>CPF</span>
+          <input name="cpf" type="text" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" oninput="Auth.maskCpf(this)" required>
+          <small class="auth-err"></small>
+        </label>
+        <label class="auth-field">
+          <span>E-mail</span>
+          <input name="email" type="email" autocomplete="email" placeholder="seu@email.com" required>
+          <small class="auth-err"></small>
+        </label>
+        <div class="auth-row">
+          <label class="auth-field">
+            <span>Celular</span>
+            <input name="cel" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" maxlength="15" oninput="Auth.maskCel(this)" required>
+            <small class="auth-err"></small>
+          </label>
+          <label class="auth-field">
+            <span>Nascimento</span>
+            <input name="nasc" type="date" required>
+            <small class="auth-err"></small>
+          </label>
+        </div>
+        <label class="auth-field">
+          <span>Senha</span>
+          <div class="auth-pass">
+            <input name="senha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" oninput="Auth.strength(this)" required>
+            <button type="button" class="auth-eye" onclick="Auth.togglePass(this)" aria-label="Mostrar senha">👁</button>
+          </div>
+          <div class="auth-strength"><i></i></div>
+          <small class="auth-err"></small>
+        </label>
+        <label class="auth-field">
+          <span>Confirmar senha</span>
+          <input name="senha2" type="password" autocomplete="new-password" placeholder="Repita a senha" required>
+          <small class="auth-err"></small>
+        </label>
+        <label class="auth-check">
+          <input name="termos" type="checkbox">
+          <span>Tenho 18 anos ou mais e aceito os <a href="#" onclick="event.preventDefault()">Termos de Uso</a> e a <a href="#" onclick="event.preventDefault()">Política de Privacidade</a></span>
+        </label>
+        <small class="auth-err" id="termos-err"></small>
+        <button type="submit" class="btn-submit-deposit">Criar conta</button>
+      </form>
+
+      <p class="auth-switch">Já tem conta? <button type="button" onclick="Auth.show('login')">Entrar</button></p>
+      <p class="auth-legal">🔞 Proibido para menores de 18 anos · Jogue com responsabilidade</p>
+    </div>
+  </div>
+
+  <!-- Jogo aberto em tela cheia -->
+  <div class="game-overlay" id="game-overlay">
+    <iframe title="Jogo" allow="autoplay"></iframe>
+    <button class="game-back" onclick="closeGame()" aria-label="Voltar para o site">‹ Voltar</button>
+  </div>
+
+  <!-- Música de fundo liga/desliga -->
+  <button class="btn-music" id="btn-music" onclick="event.stopPropagation(); Music.toggle()" aria-label="Ligar/desligar música">🎵</button>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script src="app.js?v=29"></script>
+</body>
+</html>

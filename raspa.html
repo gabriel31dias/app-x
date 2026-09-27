@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Raspadinha Premiada</title>
+<link rel="preload" as="image" href="assets/raspa/bg.webp">
+<style>
+/* Tela sobre a arte (assets/raspa/bg.webp, 941x1672): posições em % da imagem, textos em cqw */
+:root{--gold:#ffd23f}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/raspa/bg.webp) center/cover;filter:blur(24px) brightness(.45);z-index:-1}
+body{background:#1a0a20;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff;touch-action:none}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/raspa/bg.webp) 0 0/100% 100%;container-type:inline-size}
+.abs{position:absolute}
+.hit{position:absolute;border-radius:50%;transition:background .15s}
+.hit:active{background:#fff3}
+#bal{left:13.6%;top:3.8%;width:14.2%;height:2.5%;display:grid;place-items:center;font:900 var(--f,5cqw)/1 system-ui;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+#info{left:87.8%;top:1.32%;width:9.56%;height:5.38%}
+#down{left:7.65%;top:86.84%;width:8.5%;height:4.78%}
+#up{left:37.4%;top:86.84%;width:8.9%;height:4.78%}
+#amt{left:17.9%;top:87.44%;width:18.3%;height:3.35%;display:grid;place-items:center;font:900 var(--f,5cqw) system-ui;font-variant-numeric:tabular-nums}
+#go{left:49.3%;top:83%;width:46.8%;height:8.5%;border-radius:10cqw;overflow:hidden;transition:filter .2s,transform .1s}
+/* recorte da arte do botão dentro dele, pra o pulso aparecer */
+#go i{position:absolute;left:-105.342%;top:-976.471%;width:213.675%;height:1176.47%;background:url(assets/raspa/bg.webp) 0 0/100% 100%;pointer-events:none}
+#go:active{transform:scale(.97)}
+#go.pulse{animation:goPulse 1s ease-in-out infinite}
+#go:disabled{cursor:default}
+#go.all{filter:none}
+/* título animado: recorte da própria arte (x 5–97%, y 8–32.5%) pulsando + brilho passando */
+.logo{left:5%;top:8%;width:92%;height:24.5%;pointer-events:none;animation:logoPulse 2.4s ease-in-out infinite;-webkit-mask:linear-gradient(90deg,#0000,#000 5%,#000 95%,#0000),linear-gradient(#0000,#000 5%,#000 95%,#0000);-webkit-mask-composite:source-in;mask:linear-gradient(90deg,#0000,#000 5%,#000 95%,#0000),linear-gradient(#0000,#000 5%,#000 95%,#0000);mask-composite:intersect}
+.logo i{position:absolute;left:-5.4348%;top:-32.6531%;width:108.696%;height:408.163%;background:url(assets/raspa/bg.webp) 0 0/100% 100%}
+.logo::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,#0000 42%,#fff9 50%,#0000 58%) 150% 0/250% 100% no-repeat;mix-blend-mode:overlay;animation:shine 3s ease-in-out infinite}
+@keyframes logoPulse{50%{transform:scale(1.035)}}
+@keyframes shine{60%,100%{background-position:-50% 0}}
+@media (prefers-reduced-motion:reduce){.logo,.logo::after{animation:none}}
+.logo-glow{left:10%;top:6%;width:80%;height:21%;pointer-events:none;background:radial-gradient(ellipse,#ffd23f40,transparent 70%);animation:glow 2.4s ease-in-out infinite}
+/* grade: cada casa tem o prêmio embaixo e o canvas dourado por cima */
+.grid{left:11.48%;top:33.19%;width:77.05%;height:35.59%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+.cell{position:relative;margin:.8cqw;border-radius:1.6cqw;overflow:hidden;background:radial-gradient(circle,#4a2a10,#22140a 75%)}
+.cell .prize{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw;opacity:0;transition:opacity .2s}
+.cell.ready .prize{opacity:1}
+.cell .prize img{width:62%;height:62%;object-fit:contain;filter:drop-shadow(0 .6cqw .8cqw #000a)}
+.cell .prize b{font:900 4.2cqw system-ui;color:var(--gold);text-shadow:0 .4cqw 0 #4a2000}
+.cell canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.cell.win{box-shadow:0 0 0 .7cqw var(--gold),0 0 4cqw var(--gold);z-index:1}
+.cell.win .prize img{animation:bounce .45s ease-in-out infinite alternate}
+.cell.lose .prize{filter:grayscale(.7) brightness(.55)}
+/* tabela de prêmios: acende a que saiu */
+.pz{top:72.25%;width:16.37%;height:8.19%;border-radius:1.8cqw;pointer-events:none;transition:box-shadow .2s}
+.pz.lit{box-shadow:0 0 0 .6cqw var(--gold),0 0 4cqw var(--gold);animation:bounce .4s ease-in-out infinite alternate}
+#msg{left:5%;top:80.2%;width:90%;height:3%;display:grid;place-items:center;font:800 3.6cqw system-ui;color:#fff3c8;text-shadow:0 0 1.5cqw #b000ff,0 .3cqw 0 #000;pointer-events:none}
+.hint{left:11.48%;top:48%;width:77.05%;text-align:center;font:900 5cqw system-ui;color:#fff;text-shadow:0 0 2cqw #000,0 .4cqw 0 #000;pointer-events:none;animation:bob 1s ease-in-out infinite;display:none}
+.hint.show{display:block}
+/* partículas de raspagem e moedas */
+.dust{position:absolute;width:1.4cqw;height:1.4cqw;border-radius:30%;background:#f6cf5a;pointer-events:none;z-index:4;animation:dust .6s ease-out forwards}
+.coin{position:fixed;top:-60px;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6b0,#ffc83a 50%,#c8860a);box-shadow:inset 0 0 0 3px #e0a020;z-index:30;pointer-events:none;animation:fall linear forwards}
+.coin::after{content:"$";position:absolute;inset:0;display:grid;place-items:center;font:900 22px system-ui;color:#a86a00}
+.flash{position:fixed;inset:0;background:#fff6d0;opacity:0;pointer-events:none;z-index:25}
+.flash.on{animation:flash .6s ease-out}
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle,#6a2aa0cc,#12061cf2);z-index:20;text-align:center;padding:16px}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay img{width:min(200px,45vw);animation:bounce .5s ease-in-out infinite alternate;filter:drop-shadow(0 0 30px #ffd23f)}
+.overlay h2{font:900 clamp(34px,11vw,58px)/1 system-ui;background:linear-gradient(#fffbe0,var(--gold) 50%,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #4a1a60);animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{font-size:clamp(38px,12vw,64px);font-weight:900;text-shadow:0 0 24px var(--gold);font-variant-numeric:tabular-nums}
+dialog{margin:auto;max-width:min(92vw,400px);border:3px solid var(--gold);border-radius:16px;background:#2a1040;color:#fff;padding:16px}
+dialog::backdrop{background:#000a}
+dialog h3{text-align:center;color:var(--gold);margin-bottom:8px}
+dialog p{font-size:13px;line-height:1.55;color:#eadcff}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--gold);color:#3a1a00;font-weight:900}
+#musicBtn{left:2.6%;top:92.8%;width:8%;aspect-ratio:1;border-radius:50%;background:#0008;border:.3cqw solid var(--gold);font-size:4cqw;display:grid;place-items:center}
+@keyframes goPulse{50%{transform:scale(1.05);filter:brightness(1.2) drop-shadow(0 0 3cqw #5f5)}}
+@keyframes glow{50%{opacity:.35}}
+@keyframes bounce{to{transform:translateY(-6%) scale(1.06)}}
+@keyframes bob{50%{transform:translateY(-8%)}}
+@keyframes dust{to{transform:translate(var(--dx),var(--dy)) rotate(200deg);opacity:0}}
+@keyframes fall{to{transform:translateY(calc(100vh + 120px)) rotate(var(--r))}}
+@keyframes flash{from{opacity:.8}to{opacity:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<div class="flash" id="flash"></div>
+<main class="stage" id="stage">
+  <h1 hidden>Raspadinha Premiada</h1>
+  <div class="abs logo" aria-hidden="true"><i></i></div>
+  <div class="abs logo-glow" aria-hidden="true"></div>
+  <b class="abs" id="bal">0.00</b>
+  <button class="hit" id="info" aria-label="Regras"></button>
+  <div class="abs grid" id="grid"></div>
+  <div class="abs hint" id="hint">👆 Raspe com o dedo!</div>
+  <div class="abs pz" data-p="0" style="left:5.1%"></div>
+  <div class="abs pz" data-p="1" style="left:23.4%"></div>
+  <div class="abs pz" data-p="2" style="left:41.8%"></div>
+  <div class="abs pz" data-p="3" style="left:60.3%"></div>
+  <div class="abs pz" data-p="4" style="left:78.5%"></div>
+  <div class="abs" id="msg" aria-live="polite"></div>
+  <button class="hit" id="down" aria-label="Diminuir aposta"></button>
+  <b class="abs" id="amt">1.00</b>
+  <button class="hit" id="up" aria-label="Aumentar aposta"></button>
+  <button class="hit" id="go" aria-label="Raspar"><i></i></button>
+  <button class="abs" id="musicBtn" aria-label="Ligar/desligar música">🎵</button>
+</main>
+
+<div class="overlay" id="overlay">
+  <img id="ovImg" src="assets/raspa/p100.webp" alt="">
+  <h2 id="ovTitle">VOCÊ GANHOU!</h2>
+  <div class="amt" id="ovAmt">R$ 0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="dlg">
+  <h3>Como jogar</h3>
+  <p>Toque em <b>Raspar</b> para comprar a cartela e raspe as 9 casas com o dedo (ou toque em Raspar de novo para revelar tudo).<br><br>
+  Achou <b>3 prêmios iguais</b>? Ganha aquele valor multiplicado pela aposta: R$ 1, 5, 10, 50 ou 100 por real apostado.<br><br>
+  Ganha alguma coisa em 1 de cada <span class="odds">2,7</span> cartelas. RTP: <span class="rtp">96%</span>. Créditos fictícios, jogo para diversão.</p>
+  <button onclick="dlg.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="raspa.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('raspa')</script><!-- admin assiste ao vivo -->
+<script>
+// textos que dependem do RTP (redesenhados se o RTP mudar com o jogo aberto)
+function rtpTextos() {
+  document.querySelectorAll('.rtp').forEach(e => { e.textContent = (RP.RTP * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'; });
+  document.querySelector('.odds').textContent = (RP.TOTAL / RP.ODDS.reduce((a, o) => a + o, 0)).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+}
+rtpTextos();
+</script>
+<script>
+const { PRIZES, play } = RP;
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const r2 = x => Math.round(x * 100) / 100;
+const money = x => x.toFixed(2);
+const brl = x => 'R$ ' + x.toFixed(2).replace('.', ',');
+const BETS = [0.5, 1, 2, 5, 10];
+const LABEL = ['R$ 1', 'R$ 5', 'R$ 10', 'R$ 50', 'R$ 100'];
+const SCRATCH_IMG = Object.assign(new Image(), { src: 'assets/raspa/raspar.webp' });
+PRIZES.forEach(p => { new Image().src = `assets/raspa/${p.id}.webp`; });
+
+// ---------- ÁUDIO ----------
+let actx, musicOn = true;
+try { musicOn = localStorage.getItem('raspa.music') !== 'off'; } catch {}
+const ac = () => (actx ??= new (window.AudioContext || window.webkitAudioContext)());
+function tone(f, t, d, type = 'triangle', vol = .07, dest) {
+  const a = ac(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(dest || a.destination); o.start(t); o.stop(t + d);
+}
+let noiseBuf;
+function noise(t, d, freq, vol, q = 1) {
+  const a = ac();
+  noiseBuf ??= (() => { const b = a.createBuffer(1, a.sampleRate, a.sampleRate), x = b.getChannelData(0); for (let i = 0; i < x.length; i++) x[i] = Math.random() * 2 - 1; return b; })();
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = noiseBuf; s.loop = true; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  s.connect(f).connect(g).connect(a.destination); s.start(t, Math.random()); s.stop(t + d);
+}
+// barulho de raspagem: chiado curto que muda de tom com a velocidade do dedo
+let lastScratch = 0;
+function scratchSound(speed) {
+  const now = performance.now();
+  if (now - lastScratch < 35) return;
+  lastScratch = now;
+  try { const t = ac().currentTime; noise(t, .06, 2200 + Math.min(speed, 40) * 90 + Math.random() * 600, .18 + Math.min(speed, 30) / 150, 1.4); } catch {}
+}
+const SFX = {
+  click: () => { try { tone(900, ac().currentTime, .05, 'square', .03); } catch {} },
+  reveal: k => { try { const t = ac().currentTime; tone(660 * 2 ** (k / 12), t, .15, 'triangle', .06); } catch {} },
+  coin: () => { try { const t = ac().currentTime; [988, 1319].forEach((f, i) => tone(f, t + i * .07, .2, 'square', .04)); } catch {} },
+  win: big => { try { const t = ac().currentTime; (big ? [0, 4, 7, 12, 16, 19, 24, 28] : [0, 4, 7, 12]).forEach((s, i) => tone(523 * 2 ** (s / 12), t + i * .08, .28, 'square', .05)); } catch {} },
+  lose: () => { try { const t = ac().currentTime; [7, 4, 0].forEach((s, i) => tone(392 * 2 ** (s / 12), t + i * .12, .2, 'triangle', .05)); } catch {} },
+};
+
+// música: batida animada de festa (bpm 124), baixo + acordes + chocalho, bem baixinho
+const Music = {
+  on: false, next: 0, step: 0, out: null, timer: null,
+  CH: [[45, [57, 60, 64]], [41, [57, 60, 65]], [48, [55, 60, 64]], [43, [55, 59, 62]]], // Am F C G
+  start() {
+    if (this.on || !musicOn) return;
+    const a = ac(); this.out = a.createGain(); this.out.gain.value = 0; this.out.connect(a.destination);
+    this.out.gain.linearRampToValueAtTime(.07, a.currentTime + 1.2);
+    this.on = true; this.step = 0; this.next = a.currentTime + .1;
+    this.timer = setInterval(() => this.tick(), 25);
+  },
+  stop() { if (!this.on) return; clearInterval(this.timer); const o = this.out; o.gain.setTargetAtTime(0, ac().currentTime, .15); setTimeout(() => o.disconnect(), 700); this.on = false; },
+  tick() {
+    const a = ac(), d = 60 / 124 / 4;
+    while (this.next < a.currentTime + .12) {
+      const s = this.step, [root, ch] = this.CH[(s >> 4) % 4], i = s % 16, t = this.next, m = n => 440 * 2 ** ((n - 69) / 12);
+      if (i % 4 === 0) { const o = a.createOscillator(), g = a.createGain(); o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(45, t + .12); g.gain.setValueAtTime(.8, t); g.gain.exponentialRampToValueAtTime(.001, t + .14); o.connect(g).connect(this.out); o.start(t); o.stop(t + .15); }
+      if ([0, 3, 6, 10, 12].includes(i)) tone(m(root), t, d * 2, 'triangle', .6, this.out);
+      if ([2, 6, 10, 14].includes(i)) ch.forEach(n => tone(m(n + 12), t, d * 1.3, 'square', .06, this.out));
+      if ([4, 12].includes(i)) tone(m(ch[(s >> 2) % 3] + 24), t, d * 3, 'sine', .25, this.out);
+      if (i % 2) { const b = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); b.buffer = noiseBuf ??= (() => { const x = a.createBuffer(1, a.sampleRate, a.sampleRate), y = x.getChannelData(0); for (let k = 0; k < y.length; k++) y[k] = Math.random() * 2 - 1; return x; })(); f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(.25, t); g.gain.exponentialRampToValueAtTime(.001, t + .05); b.connect(f).connect(g).connect(this.out); b.start(t, Math.random()); b.stop(t + .06); }
+      this.next += d; this.step++;
+    }
+  },
+};
+document.addEventListener('pointerdown', () => { ac().resume?.(); Music.start(); }, { once: true });
+document.addEventListener('visibilitychange', () => { if (actx) document.hidden ? actx.suspend() : actx.resume(); });
+
+// ---------- SALDO (o do site quando aberto dentro dele) ----------
+const START = 20;
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START, betIdx = 1;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('raspa.saldo') || START; } catch {}
+let pending = 0; // prêmio já salvo, mostrado só quando a cartela for revelada
+const save = () => {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('raspa.saldo', balance); } catch {}
+};
+const fit = (el, txt, max, k) => { el.textContent = txt; el.style.setProperty('--f', Math.min(max, k / txt.length) + 'cqw'); };
+const updHud = () => { fit($('#bal'), money(r2(balance - pending)), 5, 30); fit($('#amt'), money(BETS[betIdx]), 5.4, 24); };
+const msg = t => { $('#msg').textContent = t; };
+
+// ---------- CARTELA ----------
+let card = null;     // { r, cells: [{el, cv, ctx, done}], revealed, bet }
+const grid = $('#grid');
+
+function newCardDom(r) {
+  grid.innerHTML = '';
+  $('#hint').classList.add('show');
+  return r.cells.map((p, i) => {
+    const el = document.createElement('div'); el.className = 'cell';
+    el.innerHTML = `<div class="prize"><img src="assets/raspa/${PRIZES[p].id}.webp" alt=""><b>${LABEL[p]}</b></div><canvas></canvas>`;
+    grid.appendChild(el);
+    const cv = el.querySelector('canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+    return { el, cv, ctx, i, p, done: false, last: null };
+  });
+}
+
+function paintCover(c) {
+  const { cv, ctx } = c, w = cv.width = cv.clientWidth * 1.5, h = cv.height = cv.clientHeight * 1.5;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(SCRATCH_IMG, 0, 0, w, h);
+  c.el.classList.add('ready'); // prêmio embaixo só aparece quando a capa já está pintada
+}
+
+function scratchAt(c, x, y, speed) {
+  const { ctx, cv } = c, k = cv.width / cv.clientWidth, R = cv.width * .16;
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.lineCap = 'round'; ctx.lineWidth = R;
+  ctx.beginPath();
+  if (c.last) ctx.moveTo(c.last.x * k, c.last.y * k); else ctx.moveTo(x * k, y * k);
+  ctx.lineTo(x * k + .1, y * k + .1); ctx.stroke();
+  c.last = { x, y };
+  scratchSound(speed);
+  if (Math.random() < .5) dust(c, x, y);
+}
+
+function dust(c, x, y) {
+  const d = document.createElement('i'), r = c.el.getBoundingClientRect(), s = $('#stage').getBoundingClientRect();
+  d.className = 'dust';
+  d.style.left = (r.left - s.left + x) + 'px'; d.style.top = (r.top - s.top + y) + 'px';
+  d.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px'); d.style.setProperty('--dy', (Math.random() * 50 + 20) + 'px');
+  $('#stage').appendChild(d); setTimeout(() => d.remove(), 650);
+}
+
+function clearedRatio(c) {
+  const { ctx, cv } = c, data = ctx.getImageData(0, 0, cv.width, cv.height).data;
+  let clear = 0, n = 0;
+  for (let i = 3; i < data.length; i += 4 * 16) { n++; if (data[i] < 40) clear++; }
+  return clear / n;
+}
+
+async function revealCell(c, fade = true) {
+  if (c.done) return;
+  c.done = true;
+  if (fade) { c.cv.style.transition = 'opacity .35s'; c.cv.style.opacity = 0; }
+  SFX.reveal(card.cells.filter(x => x.done).length);
+  if (card.cells.every(x => x.done)) finish();
+}
+
+function bindScratch(c) {
+  let down = false, lx = 0, ly = 0;
+  const pos = e => { const r = c.cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  c.cv.addEventListener('pointerdown', e => { if (c.done) return; down = true; c.cv.setPointerCapture(e.pointerId); c.last = null; const p = pos(e); lx = p.x; ly = p.y; scratchAt(c, p.x, p.y, 10); $('#hint').classList.remove('show'); });
+  c.cv.addEventListener('pointermove', e => {
+    if (!down || c.done) return;
+    const p = pos(e), sp = Math.hypot(p.x - lx, p.y - ly); lx = p.x; ly = p.y;
+    scratchAt(c, p.x, p.y, sp);
+    if (Math.random() < .15 && clearedRatio(c) > .55) revealCell(c);
+  });
+  const up = () => { if (!down) return; down = false; c.last = null; if (!c.done && clearedRatio(c) > .55) revealCell(c); };
+  c.cv.addEventListener('pointerup', up); c.cv.addEventListener('pointercancel', up);
+}
+
+// ---------- RODADA ----------
+async function buy() {
+  const bet = BETS[betIdx];
+  if (balance - pending < bet) {
+    if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (balance < BETS[0]) { balance = START; save(); updHud(); msg('Créditos recarregados: ' + START); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  SFX.coin();
+  const r = play(bet);
+  balance = r2(balance - bet + r.payout); pending = r.payout; save(); updHud(); reportarRodada('raspa', bet, r.payout);
+  document.querySelectorAll('.pz').forEach(z => z.classList.remove('lit'));
+  card = { r, bet, over: false, cells: newCardDom(r) };
+  card.cells.forEach(paintCover); card.cells.forEach(bindScratch);
+  msg('Raspe as 9 casas! 3 iguais = prêmio');
+  $('#go').classList.remove('pulse');
+}
+
+// botão Raspar: sem cartela → compra; cartela aberta → revela o resto de uma vez
+async function goClick() {
+  SFX.click();
+  if (!card || card.over) return buy();
+  $('#go').disabled = true;
+  for (const c of card.cells.filter(x => !x.done)) { revealCell(c); await sleep(90); }
+  $('#go').disabled = false;
+}
+
+function finish() {
+  if (card.over) return;
+  card.over = true; pending = 0; updHud();
+  const { r, bet } = card;
+  $('#hint').classList.remove('show');
+  if (r.prize >= 0) {
+    card.cells.forEach(c => c.el.classList.add(c.p === r.prize ? 'win' : 'lose'));
+    document.querySelector(`.pz[data-p="${r.prize}"]`).classList.add('lit');
+    const big = PRIZES[r.prize].mult >= 10;
+    SFX.win(big); flash(); coins(big ? 40 : 14);
+    msg(`🎉 3x ${LABEL[r.prize]}! Você ganhou ${brl(r.payout)}`);
+    if (big) setTimeout(() => bigWin(r, bet), 500);
+  } else {
+    card.cells.forEach(c => c.el.classList.add('lose'));
+    SFX.lose();
+    msg(['Quase! Tente de novo 🍀', 'A próxima é a premiada!', 'Faltou pouco… raspe outra!'][Math.random() * 3 | 0]);
+  }
+  setTimeout(() => $('#go').classList.add('pulse'), 700);
+}
+
+function bigWin(r) {
+  const ov = $('#overlay');
+  $('#ovImg').src = `assets/raspa/${PRIZES[r.prize].id}.webp`;
+  $('#ovTitle').textContent = PRIZES[r.prize].mult >= 100 ? 'SUPER PRÊMIO!' : PRIZES[r.prize].mult >= 50 ? 'MEGA PRÊMIO!' : 'GRANDE PRÊMIO!';
+  ov.classList.add('show');
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / 1800); $('#ovAmt').textContent = brl(r.payout * (1 - (1 - k) ** 3)); if (k < 1) requestAnimationFrame(step); })(t0);
+  clearTimeout(ov.timer); ov.timer = setTimeout(() => ov.classList.remove('show'), 4200);
+}
+
+function flash() { const f = $('#flash'); f.classList.remove('on'); f.offsetHeight; f.classList.add('on'); }
+function coins(n) {
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('i'); c.className = 'coin';
+    c.style.left = Math.random() * 100 + 'vw'; c.style.animationDuration = 1.4 + Math.random() * 1.4 + 's';
+    c.style.animationDelay = Math.random() * .8 + 's'; c.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+    document.body.appendChild(c); setTimeout(() => c.remove(), 3400);
+    if (i % 4 === 0) setTimeout(SFX.coin, Math.random() * 1200);
+  }
+}
+
+// ---------- INÍCIO ----------
+// cartela de demonstração tampada (sem aposta) até o primeiro "Raspar"
+SCRATCH_IMG.onload = () => {
+  if (card) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const el = document.createElement('div'); el.className = 'cell';
+    const cv = document.createElement('canvas'); el.appendChild(cv); grid.appendChild(el);
+    paintCover({ cv, ctx: cv.getContext('2d'), el });
+  }
+};
+$('#go').classList.add('pulse');
+msg('Toque em Raspar para comprar a cartela');
+updHud();
+$('#go').onclick = goClick;
+$('#up').onclick = () => { if (card && !card.over) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); SFX.click(); updHud(); };
+$('#down').onclick = () => { if (card && !card.over) return; betIdx = Math.max(0, betIdx - 1); SFX.click(); updHud(); };
+$('#info').onclick = () => { SFX.click(); $('#dlg').showModal(); };
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+$('#musicBtn').textContent = musicOn ? '🎵' : '🔇';
+$('#musicBtn').onclick = e => {
+  e.stopPropagation(); musicOn = !musicOn; $('#musicBtn').textContent = musicOn ? '🎵' : '🔇';
+  try { localStorage.setItem('raspa.music', musicOn ? 'on' : 'off'); } catch {}
+  musicOn ? Music.start() : Music.stop();
+};
+window.addEventListener('resize', () => card?.cells.forEach(c => !c.done && paintCover(c)));
+// RTP ao vivo: troca só com a cartela terminada (o resultado da cartela aberta já foi sorteado)
+rtpAoVivo('raspa', RP, { ocupado: () => !!card && !card.over, depois: rtpTextos });
+</script>
+</body>
+</html>

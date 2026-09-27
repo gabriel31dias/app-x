@@ -1,0 +1,38 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
+import { ConfiguracoesPage } from "@/features/admin/config/ConfiguracoesPage";
+import { DashboardPage } from "@/features/admin/dashboard/DashboardPage";
+import { JogadoresPage } from "@/features/admin/jogadores/JogadoresPage";
+import { RodadasPage } from "@/features/admin/rodadas/RodadasPage";
+import { RtpPage } from "@/features/admin/rtp/RtpPage";
+import { SaquesPage } from "@/features/admin/saques/SaquesPage";
+import { VendasPage } from "@/features/admin/vendas/VendasPage";
+import { LoginPage } from "@/features/auth/LoginPage";
+import { AdminLayout } from "@/shared/components/Layout/AdminLayout";
+
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
+
+// ponytail: HashRouter pra não precisar de fallback de SPA no serve.mjs
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HashRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/vendas" element={<VendasPage />} />
+            <Route path="/saques" element={<SaquesPage />} />
+            <Route path="/rodadas" element={<RodadasPage />} />
+            <Route path="/jogadores" element={<JogadoresPage />} />
+            <Route path="/rtp" element={<RtpPage />} />
+            <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </HashRouter>
+      <Toaster richColors position="top-right" />
+    </QueryClientProvider>
+  );
+}

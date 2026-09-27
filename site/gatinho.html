@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gatinho Flash</title>
+<link rel="preload" as="image" href="assets/gatinho/bg.webp">
+<style>
+/* Tela montada sobre a arte (assets/gatinho/bg.webp, 1072x1467): posições em % da imagem,
+   textos em cqw (1cqw = 1% da largura do palco) pra tudo escalar junto */
+:root{--y:#ffd76a;--p:#ff4fa0}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+/* sobra de tela (celular comprido): a própria arte desfocada */
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/gatinho/bg.webp) center/cover;filter:blur(24px) brightness(.45);z-index:-1}
+body{background:#19062d;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+.stage{position:relative;width:min(100vw,100dvh * 1072 / 1467);aspect-ratio:1072/1467;background:url(assets/gatinho/bg.webp) 0 0/100% 100%;container-type:inline-size}
+/* celular comprido: a arte continua em cima e embaixo até as bordas da tela */
+@media (max-aspect-ratio:1072/1467){
+  /* jogo no meio; em cima o céu da arte continua, embaixo o chão */
+  .stage::before,.stage::after{content:"";position:absolute;left:0;right:0;height:100dvh;pointer-events:none}
+  .stage::before{bottom:100%;background:url(assets/gatinho/top_ext.webp) center bottom/100% 100% no-repeat,#19062d}
+  .stage::after{top:100%;background:url(assets/gatinho/bot_ext.webp) center top/100% 100% no-repeat,#19062d}
+}
+.abs{position:absolute}
+/* gatinho animado do topo (17 quadros em assets/gatinho/gatinho_anim.webp), cortado pela barra do multiplicador */
+.hdr{left:13.06%;top:0;width:30.78%;height:20.79%;overflow:hidden;pointer-events:none}
+.hdr i{position:absolute;left:-8%;top:-18%;width:122%;height:142.5%;background:url(assets/gatinho/gatinho_anim.webp) 0 0/1700% 100% no-repeat}
+/* quadros trocados pelo JS (um de cada vez, sem deslizar entre eles) */
+/* botões: a própria arte recortada, na mesma posição do fundo */
+.ib{position:absolute;background:0 0/100% 100% no-repeat;transition:transform .12s,filter .2s}
+.ib:active{transform:scale(.92)}
+#sfx{left:2.24%;top:6.41%;width:11.01%;height:8.04%;background-image:url(assets/gatinho/btn_som.png);border-radius:50%}
+#sfx.off{filter:grayscale(1) brightness(.7)}
+#sfx.off::after{content:"";position:absolute;left:18%;right:18%;top:50%;height:7%;background:#fff;transform:rotate(-40deg);border-radius:9px}
+#info{left:86.75%;top:6.41%;width:11.01%;height:8.04%;background-image:url(assets/gatinho/btn_info.png);border-radius:50%}
+#betDown{left:2.43%;top:82%;width:10.82%;height:8.11%;background-image:url(assets/gatinho/btn_menos.png);border-radius:50%}
+#betUp{left:25.47%;top:82%;width:11.19%;height:8.11%;background-image:url(assets/gatinho/btn_mais.png);border-radius:50%}
+#spin{left:38.43%;top:77.37%;width:28.92%;height:21.13%;background-image:url(assets/gatinho/btn_girar.png);border-radius:50%}
+#spin.busy{animation:pulse .5s ease-in-out infinite alternate}
+/* seta do botão numa camada própria: gira devagar parado e rápido durante a rodada */
+#spin i{position:absolute;left:20.32%;top:20.65%;width:49.03%;aspect-ratio:1;border-radius:50%;background:url(assets/gatinho/spin_icon.webp) 0 0/100% 100%;pointer-events:none;animation:idleSpin 6s linear infinite}
+#spin.busy i{animation:fastSpin .45s linear infinite}
+.turbo #spin.busy i{animation-duration:.22s}
+@keyframes idleSpin{to{transform:rotate(360deg)}}
+@keyframes fastSpin{to{transform:rotate(360deg)}}
+#spin:disabled{cursor:default}
+#auto{left:68.84%;top:81.53%;width:13.25%;height:9.54%;background-image:url(assets/gatinho/btn_auto.png);border-radius:50%}
+#turbo{left:84.33%;top:81.53%;width:13.25%;height:9.54%;background-image:url(assets/gatinho/btn_turbo.png);border-radius:50%}
+#auto.on,#turbo.on{filter:drop-shadow(0 0 1.6cqw #ffe27a) brightness(1.25);animation:pulse .7s ease-in-out infinite alternate}
+/* números dos painéis */
+.num{position:absolute;display:flex;align-items:center;font:800 5.6cqw/1 system-ui;font-variant-numeric:tabular-nums;text-shadow:0 .3cqw 0 #0008;white-space:nowrap}
+#bal{left:14%;top:71.5%;height:4.5%}
+#win{left:47.1%;top:71.5%;height:4.5%}
+#bet{left:78.4%;top:71.5%;height:4.5%}
+#bet2{left:13.8%;top:84.66%;width:11.57%;height:4.09%;justify-content:center;font-size:4.4cqw}
+/* multiplicador */
+#ladder{left:38.9%;top:21.7%;width:45.3%;height:3.7%;display:flex;gap:1.6cqw}
+#ladder span{flex:1;display:grid;place-items:center;border-radius:9cqw;background:linear-gradient(#3a1050,#240838);border:.3cqw solid #7a3aa8;color:#e7b8ff;font:900 3.4cqw/1 system-ui;transition:.2s}
+#ladder span.on{background:linear-gradient(#fff3b0,#ffc83a 55%,#e89a10);border-color:#fff6c8;color:#3a1400;box-shadow:0 0 2cqw #ffd76a;transform:scale(1.08)}
+/* grade 5x3 */
+.grid{left:6.16%;top:28.43%;width:87.41%;height:37.08%;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(3,1fr);overflow:hidden;border-radius:1.2cqw}
+.cell{--d:0;position:relative;display:grid;place-items:center;padding:2%;transform:translateY(calc(var(--d) * -100%))}
+.cell img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.cell.go{transition:transform .38s cubic-bezier(.3,1.35,.6,1) var(--delay,0s)}
+.cell.out{transition:transform .28s ease-in var(--delay,0s),opacity .28s var(--delay,0s);transform:translateY(300%);opacity:0}
+.turbo .cell.go{transition-duration:.16s}.turbo .cell.out{transition-duration:.12s}
+.cell.win{background:radial-gradient(circle,#ffd76a66,transparent 70%);z-index:1}
+.cell.win img{animation:pulse .3s ease-in-out infinite alternate;filter:drop-shadow(0 0 1.4cqw #ffe27a)}
+.cell.boom{animation:boom .3s ease-in forwards}
+.cell.scat img{animation:pulse .25s ease-in-out infinite alternate;filter:drop-shadow(0 0 2cqw #fff)}
+.stepwin{left:6.16%;top:40%;width:87.41%;text-align:center;font:900 8cqw system-ui;color:#fff;text-shadow:0 0 2cqw var(--y),0 .5cqw 0 #5a1640;pointer-events:none;opacity:0;z-index:3}
+.stepwin.show{animation:rise 1s ease-out}
+#msg{left:6.16%;top:66.1%;width:87.41%;height:2.6%;display:grid;place-items:center;font:800 2.9cqw system-ui;color:#fff3c8;text-shadow:0 0 1.2cqw #ff4fa0,0 .3cqw 0 #000;pointer-events:none}
+#banner{left:6.16%;top:28.43%;width:87.41%;height:37.08%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;background:#2a0c2ce8;border-radius:1.2cqw;z-index:4;text-align:center;padding:2cqw}
+#banner.show{display:flex;animation:zoom .45s cubic-bezier(.2,1.6,.4,1)}
+#banner b{font:900 7.5cqw/1 system-ui;background:linear-gradient(#fff,var(--y) 50%,#ff8a3c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 1.5cqw #ffd76a99)}
+#banner span{font-weight:800;font-size:3.8cqw;color:#ffb3d9}
+.fsbar{left:6.16%;top:25.4%;width:87.41%;display:none;justify-content:center;gap:2cqw;font:900 3.2cqw system-ui;color:#fff;text-shadow:0 0 1.2cqw var(--p),0 .3cqw 0 #000;z-index:2}
+.storm .fsbar{display:flex}
+.storm .grid{box-shadow:inset 0 0 6cqw #ffffff55}
+.flash{position:fixed;inset:0;pointer-events:none;background:#fffaf0;opacity:0;z-index:5}
+.flash.on{animation:flash .45s ease-out}
+/* prêmio grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:radial-gradient(circle,#b23a7ccc,#16061cf0);z-index:10;text-align:center;padding:16px}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay img{width:min(240px,55vw);animation:bob 1.2s ease-in-out infinite;filter:drop-shadow(0 10px 20px #000a)}
+.overlay h2{font:900 clamp(32px,10vw,54px)/1.05 system-ui;background:linear-gradient(#fff,var(--y) 45%,#ff8a3c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #4a0f3a);animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{font-size:clamp(36px,12vw,60px);font-weight:900;color:#fff;text-shadow:0 0 20px var(--p);font-variant-numeric:tabular-nums}
+dialog{margin:auto;max-width:min(92vw,400px);border:2px solid var(--y);border-radius:16px;background:#3a1440;color:#fff2f8;padding:16px}
+dialog::backdrop{background:#000a}
+dialog h3{text-align:center;margin-bottom:10px;color:var(--y)}
+.pay{display:grid;grid-template-columns:44px 1fr;gap:6px 10px;align-items:center;font-size:13px}
+.pay img{width:44px;height:44px;object-fit:contain}
+dialog p{font-size:12px;line-height:1.5;margin-top:10px;color:#f5cde2}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#4a0f3a;font-weight:900}
+@keyframes flash{from{opacity:.75}to{opacity:0}}
+@keyframes pulse{to{transform:scale(1.08)}}
+@keyframes boom{50%{transform:scale(1.3);filter:brightness(2.5)}to{transform:scale(0);opacity:0}}
+@keyframes rise{0%{opacity:0;transform:translateY(20%) scale(.6)}20%{opacity:1;transform:scale(1.1)}80%{opacity:1}to{opacity:0;transform:translateY(-60%)}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fade{from{opacity:0}}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-3deg)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body data-back="top"><!-- avisa o site: botão Voltar no alto (embaixo ficam os controles) -->
+<div class="flash" id="flash"></div>
+<main class="stage">
+  <h1 hidden>Gatinho Flash</h1>
+  <div class="abs hdr" aria-hidden="true"><i></i></div>
+  <button class="ib" id="sfx" aria-label="Efeitos sonoros"></button>
+  <button class="ib" id="info" aria-label="Tabela de pagamentos"></button>
+  <div class="abs" id="ladder" aria-label="Multiplicador da cascata"></div>
+  <div class="abs fsbar">📸 SESSÃO DE FOTOS <span id="fsCount">1/12</span></div>
+  <div class="abs grid" id="grid"></div>
+  <div class="abs stepwin" id="stepwin"></div>
+  <div class="abs" id="banner" aria-live="assertive"></div>
+  <div class="abs" id="msg" aria-live="polite"></div>
+  <b class="num" id="bal" aria-label="Saldo">0.00</b>
+  <b class="num" id="win" aria-label="Ganho">0.00</b>
+  <b class="num" id="bet" aria-label="Aposta">0.00</b>
+  <button class="ib" id="betDown" aria-label="Diminuir aposta"></button>
+  <b class="num" id="bet2" aria-hidden="true">0.00</b>
+  <button class="ib" id="betUp" aria-label="Aumentar aposta"></button>
+  <button class="ib" id="spin" aria-label="Girar (espaço)"><i></i></button>
+  <button class="ib" id="auto" aria-label="Giro automático"></button>
+  <button class="ib" id="turbo" aria-label="Modo turbo"></button>
+</main>
+
+<div class="overlay" id="overlay">
+  <img src="assets/gatinho/gatinho.png" alt="">
+  <h2 id="ovTitle">FOTO PERFEITA!</h2>
+  <div class="amt" id="ovAmt">0.00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>10 linhas, contando da esquerda. O <b>Gatinho</b> é coringa e substitui tudo menos o flash.<br><br>
+  <b>📸 Cascata:</b> o gatinho fotografa os símbolos premiados, eles somem e caem outros no lugar. Cada cascata seguida sobe o multiplicador: x1 → x2 → x3 → x5.<br><br>
+  <b>✨ Sessão de Fotos:</b> 3, 4 ou 5 flashes em qualquer lugar dão 12, 15 ou 20 giros grátis com multiplicador x6 → x9 → x12 → x18.<br><br>
+  <b>⚡ Turbo:</b> animações mais rápidas.<br>
+  Prêmio máximo: 2.000x a aposta. RTP teórico: ~97%. Créditos fictícios, jogo para diversão.</p>
+  <button onclick="payDlg.close()">Fechar</button>
+</dialog>
+
+<script src="gatinho.js"></script>
+<script>
+const { SYMBOLS, COLS, ROWS, SCATTER, MULT_BASE, MULT_FREE, MAX_WIN, playRound } = GF;
+const $ = s => document.querySelector(s);
+const r2 = x => Math.round(x * 100) / 100;
+const money = x => x.toFixed(2);
+const BETS = [0.5, 1, 2, 5, 10, 20, 50];
+
+// ---------- ARTE (recortada do mockup em assets/gatinho) ----------
+const svgOf = sym => `<img src="assets/gatinho/${SYMBOLS[sym].id}.png" alt="${SYMBOLS[sym].id}" draggable="false">`;
+
+// turbo: animações 2,5x mais rápidas
+let turbo = false;
+const sleep = ms => new Promise(r => setTimeout(r, turbo ? ms / 2.5 : ms));
+
+// ---------- SOM (Web Audio, sintetizado) ----------
+let actx, sfxOn = true;
+const ac = () => (actx ??= new (window.AudioContext || window.webkitAudioContext)());
+function tone(f, t, d, type = 'sine', vol = .08, f2) {
+  const a = ac(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d);
+}
+function noise(t, d, freq, vol = .15, type = 'bandpass') {
+  const a = ac(), b = a.createBuffer(1, a.sampleRate * d, a.sampleRate), data = b.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = b; f.type = type; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+function play(k, n = 0) {
+  if (!sfxOn) return;
+  try {
+    const t = ac().currentTime;
+    if (k === 'click') tone(900, t, .05, 'square', .03);
+    else if (k === 'drop') tone(180, t, .08, 'triangle', .07, 90);
+    else if (k === 'win') [0, 4, 7, 12].forEach((s, i) => tone(523 * 2 ** ((s + n * 2) / 12), t + i * .06, .18, 'triangle', .07));
+    else if (k === 'shutter') { noise(t, .04, 4000, .35); noise(t + .07, .05, 2500, .3); tone(3200, t, .12, 'sine', .02, 6000); }
+    else if (k === 'studio') { [0, 4, 7, 11, 14].forEach((s, i) => tone(440 * 2 ** (s / 12), t + i * .09, .6, 'sine', .06)); noise(t, .06, 4000, .3); }
+    else if (k === 'big') [0, 4, 7, 12, 16, 19, 24].forEach((s, i) => tone(392 * 2 ** (s / 12), t + i * .08, .3, 'square', .05));
+  } catch {}
+}
+
+// ---------- ESTADO ----------
+const START = 20; // saldo inicial (só quando aberto fora do site)
+// aberto dentro do site (iframe, mesma origem): usa o saldo do site
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START, betIdx = 1, spinning = false, auto = false;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('gatinho.saldo') || START; } catch {}
+// prêmio já salvo no saldo mas ainda não mostrado (fechar no meio da animação não perde o prêmio)
+let pending = 0;
+const save = () => {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('gatinho.saldo', balance); } catch {}
+};
+
+// ---------- TELA ----------
+const gridEl = $('#grid');
+const cells = Array.from({ length: COLS * ROWS }, () => gridEl.appendChild(Object.assign(document.createElement('div'), { className: 'cell' })));
+const setCell = (i, sym) => { cells[i].innerHTML = svgOf(sym); };
+const msg = t => { $('#msg').textContent = t; };
+const updHud = () => { $('#bal').textContent = money(r2(balance - pending)); $('#bet').textContent = $('#bet2').textContent = money(BETS[betIdx]); };
+const setWin = x => { $('#win').textContent = money(x); };
+const reflow = () => gridEl.offsetHeight;
+function flash() { const f = $('#flash'); f.classList.remove('on'); f.offsetHeight; f.classList.add('on'); }
+
+function renderLadder(ladder, i) {
+  $('#ladder').innerHTML = ladder.map((m, k) => `<span class="${k === Math.min(i, ladder.length - 1) ? 'on' : ''}">x${m}</span>`).join('');
+}
+
+function countUp(el, to, ms = 900) {
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / ms); el.textContent = money(to * (1 - (1 - k) ** 3)); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+
+function stepWin(x, mult) {
+  const e = $('#stepwin');
+  e.textContent = `+${money(x)}${mult > 1 ? ` (x${mult})` : ''}`;
+  e.classList.remove('show'); e.offsetHeight; e.classList.add('show');
+}
+
+// tudo cai pra fora e a grade nova cai de cima, coluna por coluna
+async function dropIn(grid) {
+  cells.forEach((c, i) => { c.className = 'cell out'; c.style.setProperty('--delay', (i % COLS) * 50 + 'ms'); });
+  await sleep(280 + 4 * 50);
+  cells.forEach((c, i) => {
+    c.className = 'cell'; c.style.setProperty('--d', 3); setCell(i, grid[i]);
+    c.style.setProperty('--delay', (i % COLS) * 70 + (ROWS - 1 - (i / COLS | 0)) * 30 + 'ms');
+  });
+  reflow();
+  cells.forEach(c => { c.classList.add('go'); c.style.setProperty('--d', 0); });
+  play('drop');
+  await sleep(380 + 4 * 70 + 60 + 60);
+  cells.forEach(c => c.classList.remove('go'));
+}
+
+// mesma regra do motor (tumble): o que ficou cai, os novos vêm de cima
+async function tumbleTo(next, removed) {
+  for (let c = 0; c < COLS; c++) {
+    const kept = [];
+    for (let r = ROWS - 1; r >= 0; r--) if (!removed.has(r * COLS + c)) kept.push(r);
+    const novos = ROWS - kept.length;
+    for (let r = ROWS - 1, k = 0; r >= 0; r--, k++) {
+      const i = r * COLS + c, cell = cells[i];
+      cell.className = 'cell'; setCell(i, next[i]);
+      cell.style.setProperty('--delay', '0ms');
+      cell.style.setProperty('--d', k < kept.length ? r - kept[k] : novos);
+    }
+  }
+  reflow();
+  cells.forEach(c => { c.classList.add('go'); c.style.setProperty('--d', 0); });
+  play('drop');
+  await sleep(430);
+  cells.forEach(c => c.classList.remove('go'));
+}
+
+// anima um giro (com todas as cascatas) que o motor já calculou; devolve quanto pagou
+async function playSpin(s, ladder, acc) {
+  renderLadder(ladder, 0);
+  await dropIn(s.steps[0].grid);
+  let won = 0;
+  for (let i = 0; i < s.steps.length; i++) {
+    const st = s.steps[i];
+    renderLadder(ladder, i);
+    if (!st.wins.length) break;
+    const hit = new Set(st.wins.flatMap(w => w.cells));
+    hit.forEach(j => cells[j].classList.add('win'));
+    won += st.win; setWin(acc + won);
+    play('win', Math.min(i, 5)); stepWin(st.win, st.mult);
+    await sleep(750);
+    hit.forEach(j => { cells[j].classList.remove('win'); cells[j].classList.add('boom'); });
+    play('shutter'); flash();
+    await sleep(300);
+    await tumbleTo(s.steps[i + 1].grid, hit);
+  }
+  return won;
+}
+
+async function banner(html, ms) {
+  const b = $('#banner');
+  b.innerHTML = html; b.classList.add('show');
+  await sleep(ms);
+  b.classList.remove('show');
+}
+
+function bigWin(total, bet) {
+  const ov = $('#overlay');
+  play('big');
+  $('#ovTitle').textContent = total >= bet * MAX_WIN ? 'PRÊMIO MÁXIMO!' : total >= bet * 100 ? 'SUPER FLASH!' : total >= bet * 50 ? 'MEGA CLIQUE!' : 'FOTO PERFEITA!';
+  ov.classList.add('show');
+  countUp($('#ovAmt'), total, 2000);
+  clearTimeout(ov.timer);
+  ov.timer = setTimeout(() => ov.classList.remove('show'), 4500);
+}
+
+// ---------- RODADA ----------
+async function spin() {
+  if (spinning) return;
+  const bet = BETS[betIdx];
+  if (balance < bet) {
+    auto = false; $('#auto').classList.remove('on');
+    if (balance < BETS[0] && host) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (balance < BETS[0]) { balance = START; save(); updHud(); msg('Créditos recarregados: ' + START); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').classList.add('busy'); $('#spin').disabled = true;
+  play('click'); msg('Boa sorte!'); setWin(0);
+  balance = r2(balance - bet); save(); updHud();
+
+  const r = playRound(bet);
+  balance = r2(balance + r.total); pending = r.total; save();
+  let shown = await playSpin(r.base, MULT_BASE, 0);
+
+  if (r.free.length) {
+    const n = r.free.length, last = r.base.steps.at(-1).grid;
+    last.forEach((s, i) => s === SCATTER && cells[i].classList.add('scat'));
+    play('studio'); flash();
+    await sleep(900);
+    await banner(`<b>📸 SESSÃO DE FOTOS</b><span>${n} fotos grátis · multiplicador até x${MULT_FREE.at(-1)}</span>`, 2200);
+    document.body.classList.add('storm');
+    for (let k = 0; k < n; k++) {
+      $('#fsCount').textContent = `${k + 1}/${n}`;
+      shown += await playSpin(r.free[k], MULT_FREE, shown);
+      await sleep(250);
+    }
+    document.body.classList.remove('storm');
+    await banner(`<b>ÁLBUM: ${money(Math.max(0, r2(r.total - r.base.total)))}</b><span>ganhos na Sessão de Fotos</span>`, 1800);
+  }
+
+  // teto: o total do motor já vem limitado a MAX_WIN
+  pending = 0; updHud(); setWin(r.total);
+  renderLadder(MULT_BASE, 0);
+  const big = r.total >= bet * 20;
+  if (big) bigWin(r.total, bet);
+  else if (r.total > 0) { play('win', 2); msg(`Você ganhou ${money(r.total)}! 📸`); }
+  else msg(['Quase saiu na foto!', 'Sorria! 📸', 'Ajustando o foco…', 'Mais um clique!'][Math.random() * 4 | 0]);
+  if (r.capped) msg(`Prêmio máximo de ${MAX_WIN}x atingido!`);
+
+  spinning = false; $('#spin').classList.remove('busy'); $('#spin').disabled = false;
+  if (auto) setTimeout(spin, (big ? 4800 : r.total ? 1400 : 400) / (turbo ? 2.5 : 1));
+}
+
+// ---------- GATINHO DO TOPO: 17 quadros, um de cada vez ----------
+{
+  const el = document.querySelector('.hdr i'), N = 17;
+  let k = 0;
+  (function tick() {
+    el.style.backgroundPositionX = (k / (N - 1)) * 100 + '%';
+    const last = k === N - 1;
+    k = (k + 1) % N;
+    setTimeout(tick, last ? 1700 : 150); // 17 quadros em ~2,5 s, descansa e repete
+  })();
+}
+
+// ---------- INICIALIZAÇÃO ----------
+{
+  const g = Array.from({ length: COLS * ROWS }, GF.drawSymbol);
+  cells.forEach((c, i) => setCell(i, g[i]));
+}
+renderLadder(MULT_BASE, 0);
+updHud();
+$('#payTable').innerHTML = SYMBOLS.map((s, i) => i === SCATTER
+  ? `${svgOf(i)}<span><b>Flash</b>: 3+ em qualquer lugar = Sessão de Fotos</span>`
+  : `${svgOf(i)}<span>${s.pays.map((p, k) => `${k + 3}x: <b>${money(p / 10 * BETS[betIdx])}</b>`).join(' · ')}</span>`).join('');
+
+$('#spin').onclick = spin;
+$('#betUp').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); updHud(); };
+$('#betDown').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); updHud(); };
+$('#auto').onclick = () => { auto = !auto; $('#auto').classList.toggle('on', auto); play('click'); if (auto) spin(); };
+$('#sfx').onclick = () => { sfxOn = !sfxOn; $('#sfx').classList.toggle('off', !sfxOn); };
+$('#turbo').onclick = () => { turbo = !turbo; $('#turbo').classList.toggle('on', turbo); play('click'); document.body.classList.toggle('turbo', turbo); };
+$('#info').onclick = () => {
+  $('#payTable').querySelectorAll('span').forEach((sp, k) => {
+    const s = SYMBOLS[k];
+    if (k !== SCATTER) sp.innerHTML = s.pays.map((p, j) => `${j + 3}x: <b>${money(p / 10 * BETS[betIdx])}</b>`).join(' · ');
+  });
+  play('click'); $('#payDlg').showModal();
+};
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !$('#payDlg').open) { e.preventDefault(); spin(); } });
+</script>
+</body>
+</html>

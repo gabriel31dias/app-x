@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Papagaio Gay</title>
+<link rel="preload" as="image" href="assets/papagaio/bg.webp">
+<style>
+/* Tela sobre a arte (assets/papagaio/bg.webp, 941x1672): posições em % da imagem, textos em cqw */
+:root{--y:#ffd23f}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/papagaio/bg.webp) center/cover;filter:blur(24px) brightness(.45);z-index:-1}
+body{background:#1a0820;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/papagaio/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden}
+.abs{position:absolute}
+/* papagaio do topo dançando: mesma arte por cima, com máscara suave, balançando */
+.parrot{left:8%;top:0;width:74%;height:25%;background:url(assets/papagaio/bg.webp) -8cqw 0/100cqw auto no-repeat;
+  -webkit-mask:radial-gradient(ellipse 48% 52% at 52% 46%,#000 62%,transparent 100%);mask:radial-gradient(ellipse 48% 52% at 52% 46%,#000 62%,transparent 100%);
+  transform-origin:52% 95%;animation:dance 1.94s ease-in-out infinite;pointer-events:none}
+.stage.hype .parrot{animation-duration:.48s}
+@keyframes dance{0%,100%{transform:rotate(0) translateY(0)}25%{transform:rotate(-2.4deg) translateY(-1%) scale(1.01)}50%{transform:rotate(0) translateY(0)}75%{transform:rotate(2.4deg) translateY(-1%) scale(1.01)}}
+/* arco-íris passando no letreiro e corações neon */
+.shine{left:18%;top:25.5%;width:64%;height:17%;pointer-events:none;mix-blend-mode:overlay;
+  background:linear-gradient(105deg,transparent 30%,#fff 45%,transparent 60%) -200% 0/250% 100% no-repeat;animation:shine 3.2s ease-in-out infinite}
+@keyframes shine{60%,100%{background-position:200% 0}}
+.heart{pointer-events:none;border-radius:50%;animation:neon 1.1s ease-in-out infinite alternate}
+@keyframes neon{from{box-shadow:0 0 1cqw 0 #ff5fd255}to{box-shadow:0 0 5cqw 2cqw #ff5fd2aa}}
+.float{position:absolute;font-size:4.4cqw;pointer-events:none;animation:up 4s linear forwards;z-index:2}
+@keyframes up{to{transform:translateY(-35cqw) rotate(25deg);opacity:0}}
+#glitter{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:6}
+.ib{position:absolute;border-radius:50%;transition:background .15s,transform .12s}
+.ib:active{background:#fff3;transform:scale(.94)}
+#info{left:87.6%;top:1.32%;width:9.56%;height:5.38%}
+#betDown{left:6.8%;top:84.9%;width:8.7%;height:5.14%}
+#betUp{left:36.56%;top:84.9%;width:8.7%;height:5.14%}
+#spin{left:49.1%;top:82.4%;width:47.6%;height:9.2%;border-radius:12cqw}
+.spinIcon{left:54.52%;top:84.09%;width:10.63%;aspect-ratio:1;background:url(assets/papagaio/spin_icon.webp) 0 0/100% 100%;border-radius:50%;pointer-events:none;animation:idleSpin 6s linear infinite}
+/* girando: setas rodam rápido; parado: rodam devagar pra chamar o toque */
+.spinIcon.busy{animation:fastSpin .45s linear infinite}
+.turbo .spinIcon.busy{animation-duration:.22s}
+@keyframes idleSpin{to{transform:rotate(360deg)}}
+@keyframes fastSpin{to{transform:rotate(360deg)}}
+#spin{transition:transform .1s,background .15s}
+#spin:active,#spin.press{transform:scale(.95);background:#fff2}
+#spin.busy{background:#0002}
+#spin:disabled{cursor:default}
+.tiny{position:absolute;top:93.2%;width:9.2%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b06bff,#6a1fb0 60%,#3a0a70);border:.45cqw solid var(--y);font:900 2.6cqw system-ui;display:grid;place-items:center;box-shadow:0 .6cqw 1.2cqw #0008}
+.tiny.on{background:radial-gradient(circle at 35% 30%,#fff6b0,var(--y) 55%,#e08a00);color:#3a1a00;box-shadow:0 0 3cqw var(--y)}
+#musicBtn{left:4%;font-size:4.2cqw}#sfx{left:15%;font-size:4.2cqw}#sfx.off{filter:grayscale(1)}
+#auto{left:75.4%}#turbo{left:86.6%;font-size:4.4cqw}
+.num{position:absolute;display:grid;place-items:center;font:900 var(--f,5cqw)/1 system-ui;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-shadow:0 .3cqw 0 #000}
+#bal{left:13.6%;top:3.8%;width:14.2%;height:2.4%}
+#bet{left:18%;top:87.1%;width:16.4%;height:2.6%}
+#bet2{display:none}
+#win{left:26%;top:77.3%;width:48%;height:3.2%;display:flex;justify-content:center;align-items:baseline;gap:1.4cqw;color:var(--y);font-size:5.4cqw;text-shadow:0 0 2cqw #ff5fd2,0 .4cqw 0 #5a1060}
+#win::before{content:"GANHO";font-size:.55em;color:#fff}
+#ladder{left:25%;top:42.7%;width:50%;height:1.9%;display:flex;gap:1.4cqw;z-index:1}
+#ladder span{flex:1;display:grid;place-items:center;border-radius:6cqw;background:#2a0a38e0;border:.3cqw solid #a24bff;color:#e2c2ff;font:900 2.6cqw system-ui}
+#ladder span.on{background:linear-gradient(90deg,#ff3b3b,#ff9a1f,#ffe93b,#3bdc5a,#3b8cff,#a24bff);color:#fff;border-color:#fff;text-shadow:0 .2cqw 0 #000;box-shadow:0 0 2cqw #ff5fd2}
+.fsbar{left:0;top:81%;width:100%;display:none;justify-content:center;gap:2cqw;font:900 3.4cqw system-ui;text-shadow:0 0 1.5cqw #ff5fd2,0 .3cqw 0 #000;z-index:3}
+.storm .fsbar{display:flex}
+.storm .stage{filter:saturate(1.35)}
+.grid{left:3.51%;top:44.38%;width:92.99%;height:32.3%;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(3,1fr);overflow:hidden}
+.cell{--d:0;position:relative;padding:.6cqw;transform:translateY(calc(var(--d) * -100%))}
+.cell img{width:100%;height:100%;object-fit:cover;border-radius:1cqw;display:block;pointer-events:none}
+.cell .tag{position:absolute;left:0;right:0;bottom:6%;text-align:center;font:900 3.6cqw system-ui;color:#fff;text-shadow:0 0 1cqw #ff5fd2,0 .3cqw 0 #6a0a50;background:linear-gradient(90deg,#ff3b3b,#ff9a1f,#ffe93b,#3bdc5a,#3b8cff,#a24bff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 .3cqw 0 #000)}
+.cell.go{transition:transform .38s cubic-bezier(.3,1.35,.6,1) var(--delay,0s)}
+.cell.out{transition:transform .28s ease-in var(--delay,0s),opacity .28s var(--delay,0s);transform:translateY(300%);opacity:0}
+.turbo .cell.go{transition-duration:.16s}.turbo .cell.out{transition-duration:.12s}
+.cell.win{z-index:1}
+.cell.win img{animation:pulse .3s ease-in-out infinite alternate;box-shadow:0 0 0 .4cqw #fff,0 0 3cqw #ff5fd2,0 0 5cqw #3b8cff}
+.cell.boom{animation:boom .3s ease-in forwards}
+.cell.scat img{animation:pulse .25s ease-in-out infinite alternate;box-shadow:0 0 0 .4cqw var(--y),0 0 4cqw var(--y)}
+.stepwin{left:0;top:55%;width:100%;text-align:center;font:900 9cqw system-ui;color:#fff;text-shadow:0 0 2cqw #ff5fd2,0 .5cqw 0 #5a1060;pointer-events:none;opacity:0;z-index:3}
+.stepwin.show{animation:rise 1s ease-out}
+#msg{left:4%;top:80.9%;width:92%;height:1.6%;display:grid;place-items:center;font:800 2.8cqw system-ui;color:#fff3c8;text-shadow:0 0 1.2cqw #ff5fd2,0 .3cqw 0 #000;pointer-events:none}
+.storm #msg{visibility:hidden}
+#banner{left:3.51%;top:44.38%;width:92.99%;height:32.3%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.4cqw;background:#2a0838ee;border-radius:1.4cqw;z-index:4;text-align:center;padding:3cqw}
+#banner.show{display:flex;animation:zoom .45s cubic-bezier(.2,1.6,.4,1)}
+#banner b{font:900 7.4cqw/1.05 system-ui;background:linear-gradient(90deg,#ff3b3b,#ff9a1f,#ffe93b,#3bdc5a,#3b8cff,#a24bff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .4cqw 0 #000)}
+#banner span{font-weight:800;font-size:4cqw;color:#ffc2f0}
+.flash{position:fixed;inset:0;pointer-events:none;background:linear-gradient(135deg,#ff3b3b55,#ffe93b55,#3bdc5a55,#3b8cff55,#a24bff55);opacity:0;z-index:5}
+.flash.on{animation:flash .5s ease-out}
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:radial-gradient(circle,#a0208acc,#12041cf2);z-index:10;text-align:center;padding:16px}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay img{width:min(240px,55vw);border-radius:20px;animation:dance .5s ease-in-out infinite;box-shadow:0 0 0 4px #fff,0 0 40px #ff5fd2}
+.overlay h2{font:900 clamp(34px,11vw,58px)/1.05 system-ui;background:linear-gradient(90deg,#ff3b3b,#ff9a1f,#ffe93b,#3bdc5a,#3b8cff,#a24bff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #3a0a40);animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{font-size:clamp(36px,12vw,62px);font-weight:900;color:#fff;text-shadow:0 0 20px #ff5fd2;font-variant-numeric:tabular-nums}
+dialog{margin:auto;max-width:min(92vw,400px);max-height:90dvh;border:3px solid #ff5fd2;border-radius:16px;background:#2a0838;color:#fff;padding:16px}
+dialog::backdrop{background:#000a}
+dialog h3{text-align:center;margin-bottom:10px;color:var(--y)}
+.pay{display:grid;grid-template-columns:44px 1fr;gap:6px 10px;align-items:center;font-size:13px}
+.pay img{width:44px;height:45px;border-radius:6px;object-fit:cover}
+.pay .tag{display:none}
+dialog p{font-size:12px;line-height:1.5;margin-top:10px;color:#f5d4ff}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#3a0a40;font-weight:900}
+@keyframes flash{from{opacity:1}to{opacity:0}}
+@keyframes pulse{to{transform:scale(1.06)}}
+@keyframes boom{50%{transform:scale(1.3);filter:brightness(2.5) hue-rotate(90deg)}to{transform:scale(0) rotate(40deg);opacity:0}}
+@keyframes rise{0%{opacity:0;transform:translateY(20%) scale(.6)}20%{opacity:1;transform:scale(1.1)}80%{opacity:1}to{opacity:0;transform:translateY(-60%)}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<div class="flash" id="flash"></div>
+<canvas id="glitter" aria-hidden="true"></canvas>
+<main class="stage" id="stage">
+  <h1 hidden>Papagaio Gay</h1>
+  <div class="abs parrot" aria-hidden="true"></div>
+  <div class="abs shine" aria-hidden="true"></div>
+  <div class="abs heart" style="left:74.8%;top:10.2%;width:6%;height:3.3%"></div>
+  <div class="abs heart" style="left:89.6%;top:29.3%;width:8%;height:4.4%"></div>
+  <div class="abs heart" style="left:46.4%;top:38.8%;width:7%;height:3.9%"></div>
+  <b class="num" id="bal">0.00</b>
+  <button class="ib" id="info" aria-label="Tabela de pagamentos"></button>
+  <div class="abs" id="ladder" aria-label="Multiplicador da cascata"></div>
+  <div class="abs grid" id="grid"></div>
+  <div class="abs stepwin" id="stepwin"></div>
+  <div class="abs" id="banner" aria-live="assertive"></div>
+  <b class="num" id="win" aria-label="Ganho">0.00</b>
+  <div class="abs" id="msg" aria-live="polite"></div>
+  <div class="abs fsbar">🏳️‍🌈 PARADA DO ORGULHO <span id="fsCount">1/12</span></div>
+  <button class="ib" id="betDown" aria-label="Diminuir aposta"></button>
+  <b class="num" id="bet" aria-label="Aposta">0.00</b><b id="bet2" hidden></b>
+  <button class="ib" id="betUp" aria-label="Aumentar aposta"></button>
+  <div class="abs spinIcon" id="spinIcon" aria-hidden="true"></div>
+  <button class="ib" id="spin" aria-label="Girar (espaço)"></button>
+  <button class="tiny" id="musicBtn" aria-label="Música">🎵</button>
+  <button class="tiny" id="sfx" aria-label="Efeitos sonoros">🔊</button>
+  <button class="tiny" id="auto" aria-label="Giro automático">AUTO</button>
+  <button class="tiny" id="turbo" aria-label="Modo turbo">⚡</button>
+</main>
+
+<div class="overlay" id="overlay">
+  <img src="assets/papagaio/wild.webp" alt="">
+  <h2 id="ovTitle">LACROU!</h2>
+  <div class="amt" id="ovAmt">0.00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>10 linhas, contando da esquerda. O <b>Papagaio WILD</b> substitui tudo menos o baú.<br><br>
+  <b>🌈 Cascata:</b> os símbolos premiados explodem em purpurina e caem outros no lugar. Cada cascata seguida sobe o multiplicador: x1 → x2 → x3 → x5.<br><br>
+  <b>🏳️‍🌈 Parada do Orgulho:</b> 3, 4 ou 5 baús em qualquer lugar dão 12, 15 ou 20 giros grátis com multiplicador x6 → x9 → x12 → x16.<br><br>
+  Prêmio máximo: 2.000x a aposta. RTP teórico: ~97%. Créditos fictícios, jogo para diversão.</p>
+  <button onclick="payDlg.close()">Fechar</button>
+</dialog>
+
+<script src="papagaio.js"></script>
+<script>
+const { SYMBOLS, COLS, ROWS, SCATTER, MULT_BASE, MULT_FREE, MAX_WIN, playRound } = PG;
+const $ = s => document.querySelector(s);
+const r2 = x => Math.round(x * 100) / 100;
+const money = x => x.toFixed(2);
+const BETS = [0.5, 1, 2, 5, 10, 20, 50];
+
+// ---------- ARTE (recortada do mockup em assets/gatinho) ----------
+const svgOf = sym => `<img src="assets/papagaio/${SYMBOLS[sym].id}.webp" alt="${SYMBOLS[sym].id}" draggable="false">${sym === SCATTER ? '<b class="tag">BÔNUS</b>' : ''}`;
+
+// turbo: animações 2,5x mais rápidas
+let turbo = false;
+const sleep = ms => new Promise(r => setTimeout(r, turbo ? ms / 2.5 : ms));
+
+// ---------- SOM (Web Audio, sintetizado) ----------
+let actx, sfxOn = true;
+const ac = () => (actx ??= new (window.AudioContext || window.webkitAudioContext)());
+function tone(f, t, d, type = 'sine', vol = .08, f2) {
+  const a = ac(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d);
+}
+function noise(t, d, freq, vol = .15, type = 'bandpass') {
+  const a = ac(), b = a.createBuffer(1, a.sampleRate * d, a.sampleRate), data = b.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = b; f.type = type; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+function play(k, n = 0) {
+  if (!sfxOn) return;
+  try {
+    const t = ac().currentTime;
+    if (k === 'click') tone(900, t, .05, 'square', .03);
+    else if (k === 'drop') tone(180, t, .08, 'triangle', .07, 90);
+    else if (k === 'win') [0, 4, 7, 12].forEach((s, i) => tone(523 * 2 ** ((s + n * 2) / 12), t + i * .06, .18, 'triangle', .07));
+    else if (k === 'sparkle') { [0, 7, 12, 19, 24].forEach((s, i) => tone(1318 * 2 ** (s / 12), t + i * .04, .18, 'sine', .035)); }
+    else if (k === 'shutter') { noise(t, .04, 4000, .35); noise(t + .07, .05, 2500, .3); tone(3200, t, .12, 'sine', .02, 6000); }
+    else if (k === 'studio') { [0, 4, 7, 11, 14].forEach((s, i) => tone(440 * 2 ** (s / 12), t + i * .09, .6, 'sine', .06)); noise(t, .06, 4000, .3); }
+    else if (k === 'big') [0, 4, 7, 12, 16, 19, 24].forEach((s, i) => tone(392 * 2 ** (s / 12), t + i * .08, .3, 'square', .05));
+  } catch {}
+}
+
+// ---------- ESTADO ----------
+const START = 20; // saldo inicial (só quando aberto fora do site)
+// aberto dentro do site (iframe, mesma origem): usa o saldo do site
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START, betIdx = 1, spinning = false, auto = false;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('papagaio.saldo') || START; } catch {}
+// prêmio já salvo no saldo mas ainda não mostrado (fechar no meio da animação não perde o prêmio)
+let pending = 0;
+const save = () => {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('papagaio.saldo', balance); } catch {}
+};
+
+// ---------- TELA ----------
+const gridEl = $('#grid');
+const cells = Array.from({ length: COLS * ROWS }, () => gridEl.appendChild(Object.assign(document.createElement('div'), { className: 'cell' })));
+const setCell = (i, sym) => { cells[i].innerHTML = svgOf(sym); };
+const msg = t => { $('#msg').textContent = t; };
+const updHud = () => { const bt = money(r2(balance - pending)); $('#bal').textContent = bt; $('#bal').style.setProperty('--f', Math.min(5, 30 / bt.length) + 'cqw'); $('#bet').textContent = $('#bet2').textContent = money(BETS[betIdx]); };
+const setWin = x => { $('#win').textContent = money(x); };
+const reflow = () => gridEl.offsetHeight;
+function flash() { const f = $('#flash'); f.classList.remove('on'); f.offsetHeight; f.classList.add('on'); glitter(40); }
+
+function renderLadder(ladder, i) {
+  $('#ladder').innerHTML = ladder.map((m, k) => `<span class="${k === Math.min(i, ladder.length - 1) ? 'on' : ''}">x${m}</span>`).join('');
+}
+
+function countUp(el, to, ms = 900) {
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / ms); el.textContent = money(to * (1 - (1 - k) ** 3)); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+
+function stepWin(x, mult) {
+  const e = $('#stepwin');
+  e.textContent = `+${money(x)}${mult > 1 ? ` (x${mult})` : ''}`;
+  e.classList.remove('show'); e.offsetHeight; e.classList.add('show');
+}
+
+// tudo cai pra fora e a grade nova cai de cima, coluna por coluna
+async function dropIn(grid) {
+  cells.forEach((c, i) => { c.className = 'cell out'; c.style.setProperty('--delay', (i % COLS) * 50 + 'ms'); });
+  await sleep(280 + 4 * 50);
+  cells.forEach((c, i) => {
+    c.className = 'cell'; c.style.setProperty('--d', 3); setCell(i, grid[i]);
+    c.style.setProperty('--delay', (i % COLS) * 70 + (ROWS - 1 - (i / COLS | 0)) * 30 + 'ms');
+  });
+  reflow();
+  cells.forEach(c => { c.classList.add('go'); c.style.setProperty('--d', 0); });
+  play('drop');
+  await sleep(380 + 4 * 70 + 60 + 60);
+  cells.forEach(c => c.classList.remove('go'));
+}
+
+// mesma regra do motor (tumble): o que ficou cai, os novos vêm de cima
+async function tumbleTo(next, removed) {
+  for (let c = 0; c < COLS; c++) {
+    const kept = [];
+    for (let r = ROWS - 1; r >= 0; r--) if (!removed.has(r * COLS + c)) kept.push(r);
+    const novos = ROWS - kept.length;
+    for (let r = ROWS - 1, k = 0; r >= 0; r--, k++) {
+      const i = r * COLS + c, cell = cells[i];
+      cell.className = 'cell'; setCell(i, next[i]);
+      cell.style.setProperty('--delay', '0ms');
+      cell.style.setProperty('--d', k < kept.length ? r - kept[k] : novos);
+    }
+  }
+  reflow();
+  cells.forEach(c => { c.classList.add('go'); c.style.setProperty('--d', 0); });
+  play('drop');
+  await sleep(430);
+  cells.forEach(c => c.classList.remove('go'));
+}
+
+// anima um giro (com todas as cascatas) que o motor já calculou; devolve quanto pagou
+async function playSpin(s, ladder, acc) {
+  renderLadder(ladder, 0);
+  await dropIn(s.steps[0].grid);
+  let won = 0;
+  for (let i = 0; i < s.steps.length; i++) {
+    const st = s.steps[i];
+    renderLadder(ladder, i);
+    if (!st.wins.length) break;
+    const hit = new Set(st.wins.flatMap(w => w.cells));
+    hit.forEach(j => cells[j].classList.add('win'));
+    won += st.win; setWin(acc + won);
+    play('win', Math.min(i, 5)); stepWin(st.win, st.mult);
+    await sleep(750);
+    hit.forEach(j => { cells[j].classList.remove('win'); cells[j].classList.add('boom'); });
+    play('sparkle'); flash();
+    await sleep(300);
+    await tumbleTo(s.steps[i + 1].grid, hit);
+  }
+  return won;
+}
+
+async function banner(html, ms) {
+  const b = $('#banner');
+  b.innerHTML = html; b.classList.add('show');
+  await sleep(ms);
+  b.classList.remove('show');
+}
+
+function bigWin(total, bet) {
+  const ov = $('#overlay');
+  play('big');
+  $('#ovTitle').textContent = total >= bet * MAX_WIN ? 'PRÊMIO MÁXIMO!' : total >= bet * 100 ? 'SUPER FABULOSO!' : total >= bet * 50 ? 'MEGA ARRASOU!' : 'LACROU!';
+  ov.classList.add('show');
+  countUp($('#ovAmt'), total, 2000);
+  clearTimeout(ov.timer);
+  ov.timer = setTimeout(() => ov.classList.remove('show'), 4500);
+}
+
+// ---------- RODADA ----------
+async function spin() {
+  if (spinning) return;
+  const bet = BETS[betIdx];
+  if (balance < bet) {
+    auto = false; $('#auto').classList.remove('on');
+    if (balance < BETS[0] && host) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (balance < BETS[0]) { balance = START; save(); updHud(); msg('Créditos recarregados: ' + START); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').classList.add('busy'); $('#spin').disabled = true; $('#spinIcon').classList.add('busy');
+  $('#spin').classList.add('press'); setTimeout(() => $('#spin').classList.remove('press'), 120);
+  play('click'); msg('Boa sorte!'); setWin(0);
+  balance = r2(balance - bet); save(); updHud();
+
+  const r = playRound(bet);
+  balance = r2(balance + r.total); pending = r.total; save();
+  let shown = await playSpin(r.base, MULT_BASE, 0);
+
+  if (r.free.length) {
+    const n = r.free.length, last = r.base.steps.at(-1).grid;
+    last.forEach((s, i) => s === SCATTER && cells[i].classList.add('scat'));
+    play('studio'); flash(); glitter(120);
+    await sleep(900);
+    await banner(`<b>🏳️‍🌈 PARADA DO ORGULHO</b><span>${n} giros grátis · multiplicador até x${MULT_FREE.at(-1)}</span>`, 2200);
+    document.body.classList.add('storm');
+    for (let k = 0; k < n; k++) {
+      $('#fsCount').textContent = `${k + 1}/${n}`;
+      shown += await playSpin(r.free[k], MULT_FREE, shown);
+      await sleep(250);
+    }
+    document.body.classList.remove('storm');
+    await banner(`<b>PARADA: ${money(Math.max(0, r2(r.total - r.base.total)))}</b><span>ganhos nos giros grátis</span>`, 1800);
+  }
+
+  // teto: o total do motor já vem limitado a MAX_WIN
+  pending = 0; updHud(); setWin(r.total);
+  renderLadder(MULT_BASE, 0);
+  const big = r.total >= bet * 20;
+  if (r.total > 0) hype(big ? 4500 : 1800);
+  if (big) bigWin(r.total, bet);
+  else if (r.total > 0) { play('win', 2); msg(`Você ganhou ${money(r.total)}! 🌈`); }
+  else msg(['Quase, bee! 💅', 'O arco-íris já vem 🌈', 'Solta as plumas! 🪶', 'Mais um giro, amore!'][Math.random() * 4 | 0]);
+  if (r.capped) msg(`Prêmio máximo de ${MAX_WIN}x atingido!`);
+
+  spinning = false; $('#spin').classList.remove('busy'); $('#spin').disabled = false; $('#spinIcon').classList.remove('busy');
+  if (auto) setTimeout(spin, (big ? 4800 : r.total ? 1400 : 400) / (turbo ? 2.5 : 1));
+}
+
+// ---------- INICIALIZAÇÃO ----------
+{
+  const g = Array.from({ length: COLS * ROWS }, PG.drawSymbol);
+  cells.forEach((c, i) => setCell(i, g[i]));
+}
+renderLadder(MULT_BASE, 0);
+updHud();
+$('#payTable').innerHTML = SYMBOLS.map((s, i) => i === SCATTER
+  ? `${svgOf(i)}<span><b>Baú</b>: 3+ em qualquer lugar = Parada do Orgulho (giros grátis)</span>`
+  : `${svgOf(i)}<span>${s.pays.map((p, k) => `${k + 3}x: <b>${money(p / 10 * BETS[betIdx])}</b>`).join(' · ')}</span>`).join('');
+
+$('#spin').onclick = spin;
+$('#betUp').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); updHud(); };
+$('#betDown').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); updHud(); };
+$('#auto').onclick = () => { auto = !auto; $('#auto').classList.toggle('on', auto); play('click'); if (auto) spin(); };
+$('#sfx').onclick = () => { sfxOn = !sfxOn; $('#sfx').classList.toggle('off', !sfxOn); };
+$('#turbo').onclick = () => { turbo = !turbo; $('#turbo').classList.toggle('on', turbo); play('click'); document.body.classList.toggle('turbo', turbo); };
+$('#info').onclick = () => {
+  $('#payTable').querySelectorAll('span').forEach((sp, k) => {
+    const s = SYMBOLS[k];
+    if (k !== SCATTER) sp.innerHTML = s.pays.map((p, j) => `${j + 3}x: <b>${money(p / 10 * BETS[betIdx])}</b>`).join(' · ');
+  });
+  play('click'); $('#payDlg').showModal();
+};
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !$('#payDlg').open) { e.preventDefault(); spin(); } });
+
+// papagaio dança acelerado + corações subindo quando ganha
+function hype(ms) {
+  const st = $('#stage'); st.classList.add('hype'); clearTimeout(st.hy); st.hy = setTimeout(() => st.classList.remove('hype'), ms);
+  for (let i = 0; i < 8; i++) setTimeout(heartUp, i * 180);
+}
+function heartUp() {
+  const h = document.createElement('span'); h.className = 'float';
+  h.textContent = ['💖', '🌈', '💜', '💛', '💙', '🪶'][Math.random() * 6 | 0];
+  h.style.left = 10 + Math.random() * 80 + '%'; h.style.top = 30 + Math.random() * 40 + '%';
+  $('#stage').appendChild(h); setTimeout(() => h.remove(), 4000);
+}
+setInterval(() => { if (!document.hidden) heartUp(); }, 2600);
+
+// ---------- PURPURINA ----------
+const glCv = $('#glitter'), glx = glCv.getContext('2d'), bits = [];
+const COLORS = ['#ff3b3b', '#ff9a1f', '#ffe93b', '#3bdc5a', '#3b8cff', '#a24bff', '#ff5fd2', '#ffffff', '#ffd76a'];
+function sizeGlitter() { glCv.width = innerWidth * devicePixelRatio; glCv.height = innerHeight * devicePixelRatio; }
+sizeGlitter(); addEventListener('resize', sizeGlitter);
+function glitter(n, burst = true) {
+  const W = glCv.width, H = glCv.height;
+  for (let i = 0; i < n; i++) bits.push({
+    x: burst ? W / 2 + (Math.random() - .5) * W * .5 : Math.random() * W, y: burst ? H * .45 : -10,
+    vx: burst ? (Math.random() - .5) * 14 : (Math.random() - .5) * 1.2, vy: burst ? -Math.random() * 14 - 2 : Math.random() * 1.5 + 1,
+    s: (Math.random() * 3 + 2) * devicePixelRatio, a: Math.random() * 6, va: (Math.random() - .5) * .4,
+    c: COLORS[Math.random() * COLORS.length | 0], life: burst ? 120 : 400,
+  });
+}
+(function glLoop() {
+  glx.clearRect(0, 0, glCv.width, glCv.height);
+  for (let i = bits.length - 1; i >= 0; i--) {
+    const b = bits[i];
+    b.vy += .25 * devicePixelRatio * .5; b.vx *= .99; b.x += b.vx; b.y += b.vy; b.a += b.va; b.life--;
+    if (b.life <= 0 || b.y > glCv.height + 20) { bits.splice(i, 1); continue; }
+    const tw = .5 + .5 * Math.sin(b.a * 3); // brilho piscando
+    glx.save(); glx.translate(b.x, b.y); glx.rotate(b.a);
+    glx.globalAlpha = .55 + .45 * tw; glx.fillStyle = b.c;
+    glx.fillRect(-b.s, -b.s * .6, b.s * 2, b.s * 1.2);
+    if (tw > .92) { glx.fillStyle = '#fff'; glx.fillRect(-b.s * .4, -b.s * 2, b.s * .8, b.s * 4); glx.fillRect(-b.s * 2, -b.s * .4, b.s * 4, b.s * .8); }
+    glx.restore();
+  }
+  requestAnimationFrame(glLoop);
+})();
+setInterval(() => { if (bits.length < 60) glitter(2, false); }, 300); // chuvinha constante de purpurina
+
+// ---------- MÚSICA: disco/house animada (124 bpm) ----------
+let musicOn = true;
+try { musicOn = localStorage.getItem('papagaio.music') !== 'off'; } catch {}
+const Music = {
+  on: false, out: null, timer: null, next: 0, step: 0,
+  CH: [[41, [65, 69, 72]], [43, [67, 70, 74]], [45, [69, 72, 76]], [40, [64, 67, 71]]], // F G Am Em
+  start() {
+    if (this.on || !musicOn) return;
+    const a = ac(); this.out = a.createGain(); this.out.gain.value = 0; this.out.connect(a.destination);
+    this.out.gain.linearRampToValueAtTime(.08, a.currentTime + 1.2);
+    this.on = true; this.step = 0; this.next = a.currentTime + .1; this.timer = setInterval(() => this.tick(), 25);
+  },
+  stop() { if (!this.on) return; clearInterval(this.timer); const o = this.out; o.gain.setTargetAtTime(0, ac().currentTime, .15); setTimeout(() => o.disconnect(), 700); this.on = false; },
+  tick() {
+    const a = ac(), d = 60 / 124 / 4, m = n => 440 * 2 ** ((n - 69) / 12);
+    while (this.next < a.currentTime + .12) {
+      const s = this.step, i = s % 16, [root, ch] = this.CH[(s >> 4) % 4], t = this.next, o = this.out;
+      const osc = (f, dur, type, vol, f2) => { const x = a.createOscillator(), g = a.createGain(); x.type = type; x.frequency.setValueAtTime(f, t); if (f2) x.frequency.exponentialRampToValueAtTime(f2, t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); x.connect(g).connect(o); x.start(t); x.stop(t + dur); };
+      if (i % 4 === 0) osc(140, .16, 'sine', 1, 42);                         // bumbo 4x4
+      if (i % 4 === 2) noise(t, .05, 8000, .12);                             // chimbal aberto no contratempo
+      if (i % 2 === 1) osc(m(root + (i % 4 === 3 ? 12 : 0)), d * .9, 'sawtooth', .18); // baixo oitavado disco
+      if ([2, 6, 10, 14].includes(i)) ch.forEach(n => osc(m(n), d * 1.5, 'square', .05)); // acordes stab
+      if (i === 0 || i === 7 || i === 10) osc(m(ch[(s >> 4) % 3] + 12), d * 3, 'triangle', .12); // melodia
+      this.next += d; this.step++;
+    }
+  },
+};
+document.addEventListener('pointerdown', () => { try { ac().resume(); } catch {} Music.start(); }, { once: true });
+document.addEventListener('visibilitychange', () => { if (actx) document.hidden ? actx.suspend() : actx.resume(); });
+$('#musicBtn').textContent = musicOn ? '🎵' : '🔇';
+$('#musicBtn').onclick = e => { e.stopPropagation(); musicOn = !musicOn; $('#musicBtn').textContent = musicOn ? '🎵' : '🔇'; try { localStorage.setItem('papagaio.music', musicOn ? 'on' : 'off'); } catch {} musicOn ? Music.start() : Music.stop(); };
+</script>
+</body>
+</html>
