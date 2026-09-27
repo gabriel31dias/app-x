@@ -7,7 +7,7 @@ import { brl, dataHora, doc, num, pct, ymd } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { subDays } from "date-fns";
-import { BarChart3, Clock, Coins, Dices, Gamepad2, Gauge, Gift, Loader2, Percent, Receipt, RefreshCw, ShoppingCart, TrendingUp, UserCheck, Users, Wallet } from "lucide-react";
+import { BarChart3, Clock, Coins, Dices, Gamepad2, Gauge, Gift, HandCoins, Loader2, Percent, Receipt, RefreshCw, ShoppingCart, TrendingUp, UserCheck, Users, Wallet } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -16,7 +16,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 const PADRAO: Periodo = { startDate: ymd(subDays(new Date(), 6)), endDate: ymd(new Date()) };
 const SERIES = [
   { key: "vendas", label: "Vendas", color: "#E91E63" },
-  { key: "lucro", label: "Lucro dos jogos", color: "#9B5BF8" },
+  { key: "lucroLiquido", label: "Lucro líquido (jogos − bônus)", color: "#9B5BF8" },
 ] as const;
 
 export function DashboardPage() {
@@ -54,8 +54,13 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard loading={isLoading} title="Vendas (depósitos pagos)" value={brl(d?.vendas.valor ?? 0)} icon={<Wallet className="h-6 w-6" />} up={(d?.vendas.valor ?? 0) > 0}
           hint={d && `${num(d.vendas.quantidade)} vendas · líquido ${brl(d.vendas.liquido)}`} />
-        <StatCard loading={isLoading} title={jogo === "todos" ? "Lucro dos jogos" : `Lucro · ${JOGOS[jogo]}`} value={brl(d?.jogos.lucro ?? 0)} icon={<TrendingUp className="h-6 w-6" />} up={(d?.jogos.lucro ?? 0) >= 0}
-          hint={d && `apostado ${brl(d.jogos.apostado)} − prêmios ${brl(d.jogos.premios)}`} />
+        {jogo === "todos" ? (
+          <StatCard loading={isLoading} title="Lucro líquido" value={brl(d?.lucroLiquido ?? 0)} icon={<TrendingUp className="h-6 w-6" />} up={(d?.lucroLiquido ?? 0) >= 0}
+            hint={d && `jogos ${brl(d.jogos.lucro)} − bônus ${brl(d.bonus.valor)}`} />
+        ) : (
+          <StatCard loading={isLoading} title={`Lucro · ${JOGOS[jogo]}`} value={brl(d?.jogos.lucro ?? 0)} icon={<TrendingUp className="h-6 w-6" />} up={(d?.jogos.lucro ?? 0) >= 0}
+            hint={d && `apostado ${brl(d.jogos.apostado)} − prêmios ${brl(d.jogos.premios)} · bônus não entram por jogo`} />
+        )}
       </div>
 
       <Grafico d={d} loading={isLoading} />
@@ -68,6 +73,13 @@ export function DashboardPage() {
         <MiniCard title="PIX pendentes" value={brl(d?.vendas.pendentes.valor ?? 0)} icon={<Clock className="h-5 w-5" />} hint={`${num(d?.vendas.pendentes.quantidade ?? 0)} aguardando`} />
         <MiniCard title="Total apostado" value={brl(d?.jogos.apostado ?? 0)} icon={<Coins className="h-5 w-5" />} />
         <MiniCard title="Prêmios pagos" value={brl(d?.jogos.premios ?? 0)} icon={<Gift className="h-5 w-5" />} />
+        <MiniCard title="Lucro dos jogos" value={brl(d?.jogos.lucro ?? 0)} icon={<TrendingUp className="h-5 w-5" />} hint="apostado − prêmios, antes dos bônus" />
+        {jogo === "todos" && (
+          <Link to="/bonus" className="contents">
+            <MiniCard title="Bônus concedidos" value={brl(d?.bonus.valor ?? 0)} icon={<HandCoins className="h-5 w-5" />}
+              hint={d && `cadastro ${brl(d.bonus.cadastro.valor)} (${num(d.bonus.cadastro.quantidade)}) · diário ${brl(d.bonus.diario.valor)} (${num(d.bonus.diario.quantidade)})`} />
+          </Link>
+        )}
         <MiniCard title="RTP real" value={pct(d?.jogos.rtpReal, 2)} icon={<Gauge className="h-5 w-5" />} hint="prêmios ÷ apostado no período" />
         <MiniCard title="Rodadas" value={num(d?.jogos.rodadas ?? 0)} icon={<Dices className="h-5 w-5" />} />
         <MiniCard title="Jogadores logados" value={num(d?.jogos.jogadores ?? 0)} icon={<UserCheck className="h-5 w-5" />} hint="com conta no site" />
@@ -109,7 +121,7 @@ export function DashboardPage() {
 
 // gráfico no mesmo estilo do SalesChart da loja, com as duas séries
 function Grafico({ d, loading }: { d?: Dashboard; loading: boolean }) {
-  const vazio = !d || d.serie.every((s) => !s.vendas && !s.lucro);
+  const vazio = !d || d.serie.every((s) => !s.vendas && !s.lucroLiquido);
   return (
     <Panel title={d?.periodo.granularidade === "dia" ? "Vendas e lucro por dia" : "Vendas e lucro por hora"} icon={<BarChart3 className="h-5 w-5" />}
       actions={SERIES.map((s) => (

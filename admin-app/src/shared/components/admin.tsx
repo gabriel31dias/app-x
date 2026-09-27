@@ -77,6 +77,8 @@ const STATUS = {
   falhou: { label: "Recusado", cls: "bg-[rgba(204,8,84,0.1)] text-[#CC0854]" },
   ganhou: { label: "Com prêmio", cls: "bg-[rgba(204,8,84,0.1)] text-[#CC0854]" },
   perdeu: { label: "Sem prêmio", cls: "bg-[rgba(69,188,86,0.15)] text-[#45BC56]" },
+  cadastro: { label: "Cadastro", cls: "bg-[rgba(155,91,248,0.12)] text-[#9B5BF8]" },
+  diario: { label: "Diário", cls: "bg-[rgba(245,158,11,0.15)] text-[#F59E0B]" },
 };
 
 export const StatusBadge = ({ status }: { status: keyof typeof STATUS }) => (

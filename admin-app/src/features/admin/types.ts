@@ -6,12 +6,18 @@ export type Dashboard = {
   periodo: { de: string; ate: string; granularidade: "hora" | "dia" };
   vendas: { valor: number; liquido: number; quantidade: number; ticketMedio: number; clientes: number; pendentes: { quantidade: number; valor: number }; falhas: { quantidade: number; valor: number }; conversao: number | null };
   jogos: { apostado: number; premios: number; lucro: number; rtpReal: number | null; rodadas: number; jogadores: number };
-  serie: { rotulo: string; vendas: number; quantidade: number; apostado: number; lucro: number }[];
+  bonus: { valor: number; quantidade: number; cadastro: BonusResumo; diario: BonusResumo };
+  lucroLiquido: number; // lucro dos jogos − bônus
+  serie: { rotulo: string; vendas: number; quantidade: number; apostado: number; lucro: number; bonus: number; lucroLiquido: number }[];
   porJogo: { jogo: string; nome: string; apostado: number; premios: number; lucro: number; rtpReal: number | null; rtpConfig: number; rodadas: number }[];
   ultimasVendas: Venda[];
 };
 
 export type Pagina<T, S> = { itens: T[]; total: number; pagina: number; porPagina: number; soma: S };
+
+export type BonusResumo = { quantidade: number; valor: number };
+export type Bonus = { id: number; tipo: "cadastro" | "diario"; jogador: string; nome: string | null; valor: number; criadoEm: string };
+export type BonusSoma = { valor: number; cadastro: BonusResumo; diario: BonusResumo };
 
 export type Rodada = { id: number; jogo: string; nome: string; jogador: string | null; aposta: number; premio: number; lucro: number; criadoEm: string };
 

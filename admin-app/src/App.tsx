@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
+import { BonusPage } from "@/features/admin/bonus/BonusPage";
 import { ConfiguracoesPage } from "@/features/admin/config/ConfiguracoesPage";
 import { DashboardPage } from "@/features/admin/dashboard/DashboardPage";
 import { JogadoresPage } from "@/features/admin/jogadores/JogadoresPage";
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/vendas" element={<VendasPage />} />
             <Route path="/saques" element={<SaquesPage />} />
             <Route path="/rodadas" element={<RodadasPage />} />
+            <Route path="/bonus" element={<BonusPage />} />
             <Route path="/jogadores" element={<JogadoresPage />} />
             <Route path="/rtp" element={<RtpPage />} />
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />

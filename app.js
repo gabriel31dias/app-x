@@ -4,7 +4,7 @@
 
 // --- Global State ---
 const State = {
-  balance: 50.00,
+  balance: 0,
   userLevel: 5,
   userXp: 3850,
   userXpMax: 5000,
@@ -243,8 +243,7 @@ function formatCurrency(val) {
 
 // saldo salvo por conta (neste aparelho); conta nova começa com o saldo inicial.
 // ponytail: trocar o número da chave ("saldo6") zera todo mundo pra START_BALANCE uma vez
-const START_BALANCE = 50; // contas que já existiam, sem saldo salvo
-const NEW_ACCOUNT_BALANCE = 10; // saldo de quem se cadastra
+const START_BALANCE = 0; // visitante, logout e conta sem saldo salvo: dinheiro grátis só o bônus de cadastro
 const balanceKey = () => (Auth.current ? `orama_saldo6_${Auth.current.email}` : null);
 function loadBalance() {
   const k = balanceKey(), v = k ? parseFloat(localStorage.getItem(k)) : NaN;
@@ -1251,9 +1250,30 @@ const Auth = {
     const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("");
     users.push({ nome: v("nome"), cpf, email, cel: v("cel"), nasc: v("nasc"), salt, hash: this.hash(salt, senha) });
     localStorage.setItem("orama_users", JSON.stringify(users));
-    localStorage.setItem(`orama_saldo6_${email}`, String(NEW_ACCOUNT_BALANCE)); // conta nova: saldo de boas-vindas
+    localStorage.setItem(`orama_saldo6_${email}`, "0"); // conta nova começa zerada; o bônus de cadastro vem da API
     f.reset(); this.strength(f.elements.senha);
-    this.startSession(users[users.length - 1], "Conta criada! Bem-vindo(a)");
+    const novo = users[users.length - 1];
+    this.startSession(novo, "Conta criada! Bem-vindo(a)");
+    this.bonusCadastro(novo);
+  },
+
+  // A API registra o bônus (um por CPF e por e-mail; aparece no painel e sai do lucro) e diz o valor.
+  // Só credita depois que ela aceitou.
+  async bonusCadastro(u) {
+    try {
+      const { valor } = await apiFetch("/bonus-cadastro", { method: "POST", body: JSON.stringify({ email: u.email, cpf: u.cpf, nome: u.nome }) });
+      if (this.current?.email === u.email) {
+        State.balance = Math.round((State.balance + valor) * 100) / 100;
+        updateBalanceUI();
+      } else { // saiu da conta antes da resposta: credita no saldo guardado dela
+        const k = `orama_saldo6_${u.email}`;
+        localStorage.setItem(k, String(Math.round(((parseFloat(localStorage.getItem(k)) || 0) + valor) * 100) / 100));
+      }
+      Sounds.playCoin();
+      showToast(`🎁 Você ganhou ${formatCurrency(valor)} de bônus de cadastro!`, "🎉");
+    } catch (e) {
+      showToast(e?.statusCode === 409 ? e.message : "Não foi possível liberar o bônus de cadastro agora.", "⚠️");
+    }
   },
 
   login(ev) {

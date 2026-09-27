@@ -145,13 +145,17 @@ model Saque {
   @@index([email])
 }
 
-// bônus diário resgatado: um por conta por dia (dia no fuso de Brasília)
-model BonusResgate {
+// bônus que entrou no saldo de um jogador: dinheiro da casa, sai do lucro no dashboard
+model Bonus {
   id            Int      @id @default(autoincrement())
+  // o mesmo bônus não entra duas vezes: "cadastro:<cpf>" ou "diario:<email>:<AAAA-MM-DD>"
+  chave         String   @unique
+  tipo          String // cadastro | diario
   jogador       String // e-mail da conta do site (minúsculo)
-  dia           String // AAAA-MM-DD em America/Sao_Paulo
+  nome          String?
   valorCentavos Int
   criadoEm      DateTime @default(now())
 
-  @@unique([jogador, dia])
+  @@index([criadoEm])
+  @@index([jogador])
 }

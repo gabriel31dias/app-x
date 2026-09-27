@@ -380,4 +380,40 @@ describe('Auth + Perfil (e2e)', () => {
     await api().post('/saques').send({ ...conta, valor: 25 }).expect(201);
     await api().put('/admin/config').set(adminAuth).send({ autoBalanco: false, janelaHoras: 24, saqueMinimo: 10 }).expect(200);
   });
+
+  it('bônus de cadastro: um por CPF e por e-mail, aparece na tela Bônus e sai do lucro do dashboard', async () => {
+    const conta = { email: 'Bia@X.com', cpf: '390.533.447-05', nome: 'Bia Lima' };
+    await api().post('/bonus-cadastro').send({ ...conta, cpf: '111.111.111-11' }).expect(400);
+    expect((await api().post('/bonus-cadastro').send(conta).expect(200)).body).toEqual({ valor: 5 });
+    await api().post('/bonus-cadastro').send(conta).expect(409); // mesma conta de novo
+    await api().post('/bonus-cadastro').send({ ...conta, email: 'outra@x.com' }).expect(409); // mesmo CPF, outro e-mail
+    await api().post('/bonus-cadastro').send({ ...conta, cpf: '529.982.247-25' }).expect(409); // mesmo e-mail, outro CPF
+
+    await api().get('/admin/bonus').expect(401);
+    const { body: l } = await api().get('/admin/bonus?tipo=cadastro').set(adminAuth).expect(200);
+    expect(l.itens[0]).toMatchObject({ tipo: 'cadastro', jogador: 'bia@x.com', nome: 'Bia Lima', valor: 5 });
+    expect(l.soma.cadastro).toEqual({ quantidade: 1, valor: 5 });
+    expect((await api().get('/admin/bonus?q=bia').set(adminAuth).expect(200)).body.total).toBe(1);
+    expect((await api().get('/admin/bonus?tipo=diario').set(adminAuth).expect(200)).body.total).toBe(0);
+
+    const { body: d } = await api().get('/admin/dashboard').set(adminAuth).expect(200);
+    expect(d.bonus).toMatchObject({ valor: 5, quantidade: 1, cadastro: { quantidade: 1, valor: 5 } });
+    expect(d.lucroLiquido).toBeCloseTo(d.jogos.lucro - 5, 2);
+    expect(d.serie.reduce((a: number, b: { bonus: number }) => a + b.bonus, 0)).toBe(5);
+    // bônus não é de um jogo: com filtro de jogo não desconta
+    const { body: soCrash } = await api().get('/admin/dashboard?jogo=crash').set(adminAuth).expect(200);
+    expect(soCrash.bonus.valor).toBe(0);
+    expect(soCrash.lucroLiquido).toBe(soCrash.jogos.lucro);
+
+    // bônus diário também entra na lista, com o nome vindo do saldo informado pelo site
+    await api().put('/admin/config').set(adminAuth).send({ autoBalanco: false, janelaHoras: 24, bonusDiarioAtivo: true, bonusDiario: 2 }).expect(200);
+    await api().post('/saldos').send({ email: 'caio@x.com', nome: 'Caio Prado', saldo: 10 }).expect(204);
+    await api().post('/rodadas').send({ jogo: 'crash', aposta: 1, premio: 0, chave: 'rodada-bonus-caio', jogador: 'caio@x.com' }).expect(204);
+    expect((await api().post('/bonus-diario').send({ email: 'caio@x.com' }).expect(200)).body).toEqual({ valor: 2 });
+    await api().post('/bonus-diario').send({ email: 'caio@x.com' }).expect(409);
+    const { body: diario } = await api().get('/admin/bonus?tipo=diario').set(adminAuth).expect(200);
+    expect(diario.itens[0]).toMatchObject({ tipo: 'diario', jogador: 'caio@x.com', nome: 'Caio Prado', valor: 2 });
+    expect((await api().get('/admin/bonus').set(adminAuth).expect(200)).body.soma).toMatchObject({ valor: 7 });
+    await api().put('/admin/config').set(adminAuth).send({ autoBalanco: false, janelaHoras: 24, bonusDiarioAtivo: false }).expect(200);
+  });
 });

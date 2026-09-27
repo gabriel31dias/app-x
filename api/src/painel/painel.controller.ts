@@ -42,6 +42,11 @@ class RodadasDto extends PaginaDto {
   @IsOptional() @IsIn(['ganhou', 'perdeu']) resultado?: string;
 }
 
+class BonusDto extends PaginaDto {
+  @IsOptional() @IsIn(['cadastro', 'diario']) tipo?: string;
+  @IsOptional() @IsString() @MaxLength(254) q?: string;
+}
+
 class JogadoresDto {
   @IsOptional() @IsString() @MaxLength(254) q?: string;
   @IsOptional() @IsIn(['saldo', 'recente', 'nome']) ordem?: string;
@@ -71,10 +76,12 @@ export class PainelController {
   async dashboard(@Query() q: DashboardDto) {
     const p = intervalo(q);
     // ponytail: soma em memória; troque por GROUP BY no banco quando passar de ~100 mil linhas por período
-    const [deps, rodadas, rtps] = await Promise.all([
+    const [deps, rodadas, rtps, bonus] = await Promise.all([
       this.prisma.deposito.findMany({ where: { criadoEm: p.where }, orderBy: { criadoEm: 'desc' } }),
       this.prisma.rodada.findMany({ where: { criadoEm: p.where, ...(q.jogo && { jogo: q.jogo }) } }),
       this.prisma.gameRtp.findMany(),
+      // bônus não é de um jogo só: com filtro de jogo não entra no lucro
+      q.jogo ? [] : this.prisma.bonus.findMany({ where: { criadoEm: p.where }, select: { tipo: true, valorCentavos: true, criadoEm: true } }),
     ]);
 
     // série: por hora se for um dia só, senão por dia
@@ -83,7 +90,7 @@ export class PainelController {
     const serie = Array.from({ length: n }, (_, i) => {
       const d = new Date(p.inicio.getTime() - FUSO_MS + i * DIA_MS);
       const rotulo = porHora ? `${String(i).padStart(2, '0')}h` : `${d.toISOString().slice(8, 10)}/${d.toISOString().slice(5, 7)}`;
-      return { rotulo, vendas: 0, quantidade: 0, apostado: 0, lucro: 0 };
+      return { rotulo, vendas: 0, quantidade: 0, apostado: 0, lucro: 0, bonus: 0 };
     });
     const balde = (t: Date) => serie[Math.floor((t.getTime() - p.inicio.getTime()) / (porHora ? 3600_000 : DIA_MS))];
 
@@ -105,7 +112,10 @@ export class PainelController {
       jogos.set(r.jogo, j);
     }
 
+    for (const b of bonus) balde(b.criadoEm).bonus += b.valorCentavos;
+
     const soma = (xs: { valorCentavos: number }[]) => xs.reduce((a, d) => a + d.valorCentavos, 0);
+    const totalBonus = soma(bonus), porTipo = (tipo: string) => bonus.filter((b) => b.tipo === tipo);
     const valorPago = soma(pagos), apostado = rodadas.reduce((a, r) => a + r.apostaCentavos, 0), premios = rodadas.reduce((a, r) => a + r.premioCentavos, 0);
     const pendentes = deps.filter((d) => d.status === 'pendente'), falhas = deps.filter((d) => d.status === 'falhou');
     const rtpConfig = new Map(rtps.map((r) => [r.jogo, r.rtp]));
@@ -130,7 +140,15 @@ export class PainelController {
         rodadas: rodadas.length,
         jogadores: new Set(rodadas.map((r) => r.jogador).filter(Boolean)).size,
       },
-      serie: serie.map((b) => ({ ...b, vendas: reais(b.vendas), apostado: reais(b.apostado), lucro: reais(b.lucro) })),
+      // dinheiro dado pela casa (cadastro, diário): o lucro de verdade é o dos jogos menos isso
+      bonus: {
+        valor: reais(totalBonus),
+        quantidade: bonus.length,
+        cadastro: { quantidade: porTipo('cadastro').length, valor: reais(soma(porTipo('cadastro'))) },
+        diario: { quantidade: porTipo('diario').length, valor: reais(soma(porTipo('diario'))) },
+      },
+      lucroLiquido: reais(apostado - premios - totalBonus),
+      serie: serie.map((b) => ({ ...b, vendas: reais(b.vendas), apostado: reais(b.apostado), lucro: reais(b.lucro), bonus: reais(b.bonus), lucroLiquido: reais(b.lucro - b.bonus) })),
       porJogo: Object.entries(JOGOS)
         .filter(([id]) => !q.jogo || id === q.jogo)
         .map(([id, info]) => {
@@ -175,6 +193,33 @@ export class PainelController {
       pagina,
       porPagina,
       soma: reais(agg._sum.saldoCentavos ?? 0),
+    };
+  }
+
+  @Get('bonus')
+  async bonus(@Query() q: BonusDto) {
+    const p = intervalo(q), pagina = q.pagina ?? 1, porPagina = q.porPagina ?? 20;
+    const where: Prisma.BonusWhereInput = {
+      criadoEm: p.where,
+      ...(q.tipo && { tipo: q.tipo }),
+      ...(q.q && { OR: [{ jogador: { contains: q.q.toLowerCase() } }, { nome: { contains: q.q } }] }),
+    };
+    const [itens, total, tipos] = await Promise.all([
+      this.prisma.bonus.findMany({ where, orderBy: { criadoEm: 'desc' }, skip: (pagina - 1) * porPagina, take: porPagina }),
+      this.prisma.bonus.count({ where }),
+      this.prisma.bonus.groupBy({ by: ['tipo'], where, _sum: { valorCentavos: true }, _count: true }),
+    ]);
+    // bônus diário não guarda o nome: vem do último saldo informado pelo site
+    const semNome = [...new Set(itens.filter((b) => !b.nome).map((b) => b.jogador))];
+    const nomes = new Map((await this.prisma.jogador.findMany({ where: { email: { in: semNome } }, select: { email: true, nome: true } })).map((j) => [j.email, j.nome]));
+    const doTipo = (tipo: string) => tipos.find((t) => t.tipo === tipo);
+    const resumo = (tipo: string) => ({ quantidade: doTipo(tipo)?._count ?? 0, valor: reais(doTipo(tipo)?._sum.valorCentavos ?? 0) });
+    return {
+      itens: itens.map((b) => ({ id: b.id, tipo: b.tipo, jogador: b.jogador, nome: b.nome ?? nomes.get(b.jogador) ?? null, valor: reais(b.valorCentavos), criadoEm: b.criadoEm })),
+      total,
+      pagina,
+      porPagina,
+      soma: { valor: reais(tipos.reduce((a, t) => a + (t._sum.valorCentavos ?? 0), 0)), cadastro: resumo('cadastro'), diario: resumo('diario') },
     };
   }
 
