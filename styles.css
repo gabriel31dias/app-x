@@ -1649,3 +1649,5 @@ body {
 .indique-lista li { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #fff; padding: 6px 8px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; }
 .indique-lista li span:last-child { color: var(--text-dim); white-space: nowrap; }
 .indique-lista li span.ok { color: var(--neon-green-bright); font-weight: 700; }
+
+.notification-badge[hidden] { display: none; }

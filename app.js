@@ -868,6 +868,10 @@ const Bonus = {
         : b.apostadoHoje > 0 ? `🎁 Resgatar Bônus Diário (+${formatCurrency(b.valor)})`
         : `🎁 Jogue uma rodada hoje pra liberar ${formatCurrency(b.valor)}`;
     }
+    // bolinha do sino e "nenhuma notificação": só acende com aviso de verdade
+    const badge = document.getElementById("notif-badge"), vazio = document.getElementById("notif-vazio");
+    if (badge) badge.hidden = !pode;
+    if (vazio) vazio.style.display = pode ? "none" : "";
     if (aviso) {
       aviso.style.display = pode ? "" : "none";
       const d = aviso.querySelector(".notif-bonus-desc");
@@ -1118,6 +1122,7 @@ const Auth = {
     Saques.sincronizar();
     Deposit.sincronizar();
     Indicacoes.sincronizar();
+    Bonus.atualizar();
     ["login", "register"].forEach(k => closeModal("modal-" + k));
     Sounds.playCoin();
     showToast(`${msg}, ${State.username}!`, "🎉");
@@ -1130,6 +1135,7 @@ const Auth = {
     syncSessionCookie(null);
     State.balance = START_BALANCE; updateBalanceUI(false);
     this.render();
+    Bonus.atualizar(); // apaga a bolinha do sino da conta que saiu
     closeModal("modal-profile");
     showToast("Você saiu da conta", "👋");
     this.show("login");
@@ -1368,9 +1374,9 @@ const Saques = {
     if (document.getElementById("modal-withdraw").classList.contains("show")) document.getElementById("saque-disponivel").textContent = formatCurrency(State.balance);
   },
 };
-setInterval(() => { Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); }, 30_000);
+setInterval(() => { Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); Bonus.atualizar(); }, 30_000);
 
-document.addEventListener("DOMContentLoaded", () => { Auth.init(); Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); });
+document.addEventListener("DOMContentLoaded", () => { Auth.init(); Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); Bonus.atualizar(); });
 
 // ==========================================================================
 // JOGO EM TELA CHEIA (iframe da mesma origem: o jogo lê/escreve State.balance)
