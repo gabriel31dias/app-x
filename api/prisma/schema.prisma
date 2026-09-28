@@ -157,12 +157,17 @@ model Saque {
 // bônus que entrou no saldo de um jogador: dinheiro da casa, sai do lucro no dashboard
 model Bonus {
   id            Int      @id @default(autoincrement())
-  // o mesmo bônus não entra duas vezes: "cadastro:<cpf>", "diario:<email>:<AAAA-MM-DD>" ou "indicacao:<id da indicação>"
+  // o mesmo bônus não entra duas vezes: "cadastro:<cpf>", "diario:<email>:<AAAA-MM-DD>" ou "indicacao:<id da indicação>" ou "manual:<id>"
   chave         String   @unique
-  tipo          String // cadastro | diario | indicacao
+  tipo          String // cadastro | diario | indicacao | manual
   jogador       String // e-mail da conta do site (minúsculo)
   nome          String?
   valorCentavos Int
+  motivo        String? // manual: por que o admin deu
+  criadoPor     String? // manual: e-mail do admin
+  // já entrou no saldo do jogador. Os outros tipos entram na hora em que são criados; o manual fica
+  // pendente até o site da conta buscar (o saldo mora no aparelho)
+  creditadoEm   DateTime?
   criadoEm      DateTime @default(now())
 
   @@index([criadoEm])

@@ -1,6 +1,10 @@
-import { BadRequestException, Body, ConflictException, Controller, Get, HttpCode, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Get, HttpCode, NotFoundException, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { Throttle } from '@nestjs/throttler';
-import { IsEmail, IsString, Matches, MaxLength } from 'class-validator';
+import { IsEmail, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { AdminGuard } from '../auth/admin.guard.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
+import type { User } from '../generated/prisma/client.js';
 import { cpfValido } from '../common/validators.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -93,5 +97,67 @@ export class BonusCadastroController {
       throw jaRecebeu(); // CPF já recebeu (o índice único da chave segura)
     }
     return { valor: BONUS_CADASTRO_CENTAVOS / 100 };
+  }
+}
+
+class ContaCpfDto extends ContaDto {
+  @Matches(/^[\d.\-\s]{11,14}$/, { message: 'CPF inválido' }) cpf: string;
+}
+
+class DarBonusDto extends ContaDto {
+  @IsNumber({}, { message: 'Valor inválido' }) @Min(0.01, { message: 'Valor inválido' }) @Max(10_000, { message: 'Máximo R$ 10.000' }) valor: number;
+  @IsOptional() @IsString() @MaxLength(200) motivo?: string;
+}
+
+/**
+ * Bônus que o admin dá na mão pra uma conta. O saldo mora no aparelho do jogador, então o bônus fica pendente
+ * no servidor e o site da conta credita na próxima vez que abrir (ou em até 30 s, se já estiver aberto) — uma vez só.
+ * ponytail: a conta se identifica por e-mail + CPF (login ainda é local); o CPF confere com o do bônus de cadastro.
+ */
+@Controller('bonus')
+export class BonusManualController {
+  constructor(private readonly prisma: PrismaService) {}
+
+  /** CPF que a API conhece dessa conta (vem do bônus de cadastro); sem ele, vale só o e-mail */
+  private async confere(email: string, cpf: string) {
+    const cad = await this.prisma.bonus.findFirst({ where: { tipo: 'cadastro', jogador: email }, select: { chave: true } });
+    return !cad || cad.chave === `cadastro:${cpf.replace(/\D/g, '')}`;
+  }
+
+  @Get('pendentes')
+  async pendentes(@Query() q: ContaCpfDto) {
+    const jogador = q.email.toLowerCase();
+    if (!(await this.confere(jogador, q.cpf))) return [];
+    const itens = await this.prisma.bonus.findMany({ where: { tipo: 'manual', jogador, creditadoEm: null }, orderBy: { criadoEm: 'asc' } });
+    return itens.map((b) => ({ id: b.id, valor: b.valorCentavos / 100, motivo: b.motivo }));
+  }
+
+  @Post(':id/credito')
+  @HttpCode(200)
+  async creditar(@Param('id', ParseIntPipe) id: number, @Body() dto: ContaCpfDto) {
+    const jogador = dto.email.toLowerCase();
+    if (!(await this.confere(jogador, dto.cpf))) return { creditar: false, valor: 0 };
+    const { count } = await this.prisma.bonus.updateMany({ where: { id, tipo: 'manual', jogador, creditadoEm: null }, data: { creditadoEm: new Date() } });
+    if (!count) return { creditar: false, valor: 0 };
+    const b = await this.prisma.bonus.findUniqueOrThrow({ where: { id } });
+    return { creditar: true, valor: b.valorCentavos / 100, motivo: b.motivo };
+  }
+}
+
+@Controller('admin/bonus')
+@UseGuards(AdminGuard)
+export class AdminBonusController {
+  constructor(private readonly prisma: PrismaService) {}
+
+  @Post()
+  async dar(@Body() dto: DarBonusDto, @CurrentUser() u: User) {
+    const jogador = dto.email.toLowerCase();
+    const conhecido = await this.prisma.jogador.findUnique({ where: { email: jogador }, select: { nome: true } });
+    if (!conhecido) throw new NotFoundException('Nenhum jogador com esse e-mail abriu o site ainda');
+    const chave = `manual:${randomUUID()}`;
+    const b = await this.prisma.bonus.create({
+      data: { chave, tipo: 'manual', jogador, nome: conhecido.nome, valorCentavos: Math.round(dto.valor * 100), motivo: dto.motivo?.trim() || null, criadoPor: u.email },
+    });
+    return { id: b.id, jogador, nome: conhecido.nome, valor: b.valorCentavos / 100 };
   }
 }

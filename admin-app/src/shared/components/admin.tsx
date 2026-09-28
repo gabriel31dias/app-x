@@ -80,6 +80,7 @@ const STATUS = {
   cadastro: { label: "Cadastro", cls: "bg-[rgba(155,91,248,0.12)] text-[#9B5BF8]" },
   diario: { label: "Diário", cls: "bg-[rgba(245,158,11,0.15)] text-[#F59E0B]" },
   indicacao: { label: "Indicação", cls: "bg-[rgba(59,130,246,0.12)] text-[#3B82F6]" },
+  manual: { label: "Dado pelo admin", cls: "bg-[rgba(236,72,153,0.12)] text-[#EC4899]" },
   liberada: { label: "Liberada", cls: "bg-[rgba(59,130,246,0.12)] text-[#3B82F6]" },
   recebida: { label: "Paga", cls: "bg-[rgba(69,188,86,0.15)] text-[#45BC56]" },
 };

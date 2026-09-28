@@ -454,6 +454,30 @@ describe('Auth + Perfil (e2e)', () => {
     await prisma.deposito.deleteMany({ where: { id: { startsWith: 'plg-rui-' } } });
   });
 
+  it('bônus dado pelo admin: fica pendente, o site da conta credita uma vez só', async () => {
+    await api().post('/saldos').send({ email: 'Tami@x.com', nome: 'Tami Lima', saldo: 0.42 }).expect(204);
+    const tami = { email: 'tami@x.com', cpf: '975.318.642-82' };
+    await api().post('/admin/bonus').send({ email: 'tami@x.com', valor: 20 }).expect(401);
+    await api().post('/admin/bonus').set(adminAuth).send({ email: 'ninguem@x.com', valor: 20 }).expect(404);
+    const { body: b } = await api().post('/admin/bonus').set(adminAuth).send({ email: 'TAMI@x.com', valor: 20, motivo: 'Cortesia' }).expect(201);
+    expect(b).toMatchObject({ jogador: 'tami@x.com', nome: 'Tami Lima', valor: 20 });
+
+    const { body: pend } = await api().get('/bonus/pendentes').query(tami).expect(200);
+    expect(pend).toEqual([{ id: b.id, valor: 20, motivo: 'Cortesia' }]);
+    await api().post(`/bonus/${b.id}/credito`).send({ email: 'outra@x.com', cpf: tami.cpf }).expect(200, { creditar: false, valor: 0 });
+    await api().post(`/bonus/${b.id}/credito`).send(tami).expect(200, { creditar: true, valor: 20, motivo: 'Cortesia' });
+    await api().post(`/bonus/${b.id}/credito`).send(tami).expect(200, { creditar: false, valor: 0 });
+    expect((await api().get('/bonus/pendentes').query(tami).expect(200)).body).toEqual([]);
+
+    const { body: l } = await api().get('/admin/bonus?tipo=manual').set(adminAuth).expect(200);
+    expect(l.itens[0]).toMatchObject({ tipo: 'manual', jogador: 'tami@x.com', valor: 20, motivo: 'Cortesia' });
+    expect(l.itens[0].creditadoEm).not.toBeNull();
+    const { PrismaService } = await import('../src/prisma/prisma.service.js');
+    // não mexe nas somas dos testes de bônus/dashboard/saldos
+    await app.get(PrismaService).bonus.deleteMany({ where: { tipo: 'manual' } });
+    await app.get(PrismaService).jogador.deleteMany({ where: { email: 'tami@x.com' } });
+  });
+
   it('saldos: o site informa, o admin lista com soma, busca e ordem', async () => {
     await api().post('/saldos').send({ email: 'Zeca@X.com', nome: 'Zeca Paz', saldo: 50 }).expect(204);
     await api().post('/saldos').send({ email: 'zeca@x.com', nome: 'Zeca Paz', saldo: 72.35 }).expect(204); // mesma conta: atualiza

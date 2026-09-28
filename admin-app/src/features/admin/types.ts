@@ -16,8 +16,8 @@ export type Dashboard = {
 export type Pagina<T, S> = { itens: T[]; total: number; pagina: number; porPagina: number; soma: S };
 
 export type BonusResumo = { quantidade: number; valor: number };
-export type Bonus = { id: number; tipo: "cadastro" | "diario" | "indicacao"; jogador: string; nome: string | null; valor: number; criadoEm: string };
-export type BonusSoma = { valor: number; cadastro: BonusResumo; diario: BonusResumo; indicacao: BonusResumo };
+export type Bonus = { id: number; tipo: "cadastro" | "diario" | "indicacao" | "manual"; jogador: string; nome: string | null; valor: number; motivo: string | null; criadoPor: string | null; creditadoEm: string | null; criadoEm: string };
+export type BonusSoma = { valor: number; cadastro: BonusResumo; diario: BonusResumo; indicacao: BonusResumo; manual: BonusResumo };
 
 export type Indicacao = {
   id: string; codigo: string; indicador: string; indicadorNome: string | null; indicado: string; indicadoNome: string;

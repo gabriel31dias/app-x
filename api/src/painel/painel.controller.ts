@@ -43,7 +43,7 @@ class RodadasDto extends PaginaDto {
 }
 
 class BonusDto extends PaginaDto {
-  @IsOptional() @IsIn(['cadastro', 'diario', 'indicacao']) tipo?: string;
+  @IsOptional() @IsIn(['cadastro', 'diario', 'indicacao', 'manual']) tipo?: string;
   @IsOptional() @IsString() @MaxLength(254) q?: string;
 }
 
@@ -216,11 +216,11 @@ export class PainelController {
     const doTipo = (tipo: string) => tipos.find((t) => t.tipo === tipo);
     const resumo = (tipo: string) => ({ quantidade: doTipo(tipo)?._count ?? 0, valor: reais(doTipo(tipo)?._sum.valorCentavos ?? 0) });
     return {
-      itens: itens.map((b) => ({ id: b.id, tipo: b.tipo, jogador: b.jogador, nome: b.nome ?? nomes.get(b.jogador) ?? null, valor: reais(b.valorCentavos), criadoEm: b.criadoEm })),
+      itens: itens.map((b) => ({ id: b.id, tipo: b.tipo, jogador: b.jogador, nome: b.nome ?? nomes.get(b.jogador) ?? null, valor: reais(b.valorCentavos), motivo: b.motivo, criadoPor: b.criadoPor, creditadoEm: b.creditadoEm, criadoEm: b.criadoEm })),
       total,
       pagina,
       porPagina,
-      soma: { valor: reais(tipos.reduce((a, t) => a + (t._sum.valorCentavos ?? 0), 0)), cadastro: resumo('cadastro'), diario: resumo('diario'), indicacao: resumo('indicacao') },
+      soma: { valor: reais(tipos.reduce((a, t) => a + (t._sum.valorCentavos ?? 0), 0)), cadastro: resumo('cadastro'), diario: resumo('diario'), indicacao: resumo('indicacao'), manual: resumo('manual') },
     };
   }
 

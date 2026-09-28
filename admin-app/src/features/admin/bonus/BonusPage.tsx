@@ -5,15 +5,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { api, qs } from "@/shared/lib/api";
 import { brl, dataHora, num, ymd } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { subDays } from "date-fns";
-import { CalendarCheck, Download, Gift, Handshake, Loader2, Search, UserPlus } from "lucide-react";
+import { CalendarCheck, Download, Gift, Handshake, Loader2, Plus, Search, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const PADRAO: Periodo = { startDate: ymd(subDays(new Date(), 6)), endDate: ymd(new Date()) };
 const inputCls = "h-9 rounded-full border border-border bg-white dark:bg-transparent px-3 text-sm text-foreground outline-none focus:border-primary placeholder:text-muted-foreground";
-const TIPOS = { cadastro: "Cadastro", diario: "Diário", indicacao: "Indicação" } as const;
+const TIPOS = { cadastro: "Cadastro", diario: "Diário", indicacao: "Indicação", manual: "Dado pelo admin" } as const;
 
 /** bônus que a casa deu (cadastro, diário e indicação): é dinheiro nosso, por isso o dashboard desconta do lucro */
 export function BonusPage() {
@@ -23,6 +25,18 @@ export function BonusPage() {
   const [busca, setBusca] = useState("");
   const [pagina, setPagina] = useState(1);
   const [exportando, setExportando] = useState(false);
+  const qc = useQueryClient();
+  const [dar, setDar] = useState(false);
+  const [novo, setNovo] = useState({ email: "", valor: "", motivo: "" });
+  const darBonus = useMutation({
+    mutationFn: () => api<{ nome: string; valor: number }>("/admin/bonus", { method: "POST", body: JSON.stringify({ email: novo.email.trim(), valor: Number(novo.valor.replace(",", ".")), motivo: novo.motivo }) }),
+    onSuccess: (r) => {
+      toast.success(`${brl(r.valor)} de bônus pra ${r.nome}`, { description: "Entra no saldo quando o jogador abrir o site (em até 30 s se já estiver aberto)." });
+      setDar(false); setNovo({ email: "", valor: "", motivo: "" });
+      qc.invalidateQueries({ queryKey: ["bonus"] });
+    },
+    onError: (e) => toast.error("Não deu pra dar o bônus", { description: (e as Error).message }),
+  });
   const porPagina = 20;
 
   useEffect(() => {
@@ -68,6 +82,7 @@ export function BonusPage() {
 
       <Panel title="Bônus concedidos" icon={<Gift className="h-5 w-5" />}
         actions={<>
+          <button onClick={() => setDar(true)} className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#9B5BF8] hover:bg-[#884BE0] text-white text-sm font-semibold"><Plus className="h-4 w-4" />Dar bônus</button>
           <DateFilter onDateRangeChange={setPeriodo} />
           <button onClick={exportar} disabled={exportando || !data?.total} className={cn(pillCls, "inline-flex items-center text-primary disabled:opacity-50")}>
             {exportando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}Exportar CSV
@@ -85,6 +100,7 @@ export function BonusPage() {
               <SelectItem value="cadastro">Cadastro</SelectItem>
               <SelectItem value="diario">Diário</SelectItem>
               <SelectItem value="indicacao">Indicação</SelectItem>
+              <SelectItem value="manual">Dado pelo admin</SelectItem>
             </SelectContent>
           </Select>
           {isFetching && !isLoading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
@@ -99,7 +115,10 @@ export function BonusPage() {
               <tr key={b.id}>
                 <td className="!text-muted-foreground">{dataHora(b.criadoEm)}</td>
                 <td><StatusBadge status={b.tipo} /></td>
-                <td className="font-medium">{b.nome ?? "—"}</td>
+                <td className="font-medium">
+                  {b.nome ?? "—"}
+                  {b.tipo === "manual" && <p className="text-[11px] font-normal !text-muted-foreground">{b.motivo ? `${b.motivo} · ` : ""}por {b.criadoPor} · {b.creditadoEm ? "já no saldo" : "aguardando o jogador abrir o site"}</p>}
+                </td>
                 <td className="!text-muted-foreground">{b.jogador}</td>
                 <td className="font-semibold !text-[#CC0854]">{brl(b.valor)}</td>
               </tr>
@@ -108,6 +127,29 @@ export function BonusPage() {
         )}
         <Pagination currentPage={pagina} totalPages={data ? Math.ceil(data.total / porPagina) : 0} onPageChange={setPagina} />
       </Panel>
+
+      <AlertDialog open={dar} onOpenChange={(o) => !o && setDar(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dar bônus pra um jogador</AlertDialogTitle>
+            <AlertDialogDescription>O valor entra no saldo da conta quando o jogador abrir o site (em até 30 s se já estiver aberto), uma vez só. Sai do lucro no dashboard.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <form id="form-bonus" className="space-y-3" onSubmit={(e) => { e.preventDefault(); darBonus.mutate(); }}>
+            <input type="email" required value={novo.email} onChange={(e) => setNovo({ ...novo, email: e.target.value })} placeholder="E-mail da conta do jogador" aria-label="E-mail do jogador" className={cn(inputCls, "w-full rounded-xl h-10")} />
+            <div className="flex items-center rounded-xl border border-border bg-white dark:bg-transparent h-10 px-3 focus-within:border-primary">
+              <span className="text-sm text-muted-foreground mr-1">R$</span>
+              <input type="number" required min={0.01} max={10000} step="0.01" inputMode="decimal" value={novo.valor} onChange={(e) => setNovo({ ...novo, valor: e.target.value })} placeholder="20,00" aria-label="Valor" className="w-full bg-transparent text-sm outline-none tabular-nums" />
+            </div>
+            <input value={novo.motivo} maxLength={200} onChange={(e) => setNovo({ ...novo, motivo: e.target.value })} placeholder="Motivo (opcional, o jogador vê)" aria-label="Motivo" className={cn(inputCls, "w-full rounded-xl h-10")} />
+          </form>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <Button type="submit" form="form-bonus" disabled={darBonus.isPending || !(Number(novo.valor.replace(",", ".")) > 0) || !novo.email.includes("@")} className="bg-[#9B5BF8] hover:bg-[#884BE0] text-white">
+              {darBonus.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Dar bônus"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

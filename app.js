@@ -855,6 +855,27 @@ function errorMessage(err) {
 // se a conta apostou hoje e ainda não resgatou; sem API o botão fica escondido.
 const Bonus = {
   info: null,
+  // bônus dado pelo admin: fica pendente no servidor e entra no saldo aqui, uma vez só
+  recebendo: null,
+  receber() {
+    return (this.recebendo ??= this.receberAgora().finally(() => { this.recebendo = null; }));
+  },
+  async receberAgora() {
+    const u = Auth.current;
+    if (!u?.cpf) return;
+    const conta = { email: u.email, cpf: onlyDigits(u.cpf) };
+    let pend;
+    try { pend = await apiFetch(`/bonus/pendentes?${new URLSearchParams(conta)}`); } catch { return; }
+    for (const p of pend) {
+      let r;
+      try { r = await apiFetch(`/bonus/${p.id}/credito`, { method: "POST", body: JSON.stringify(conta) }); } catch { continue; }
+      if (!r.creditar || Auth.current?.email !== conta.email) continue; // trocou de conta no meio
+      State.balance = Math.round((State.balance + r.valor) * 100) / 100;
+      updateBalanceUI();
+      Sounds.playCoin();
+      showToast(`🎁 Você recebeu ${formatCurrency(r.valor)} de bônus!${r.motivo ? ` (${r.motivo})` : ""}`, "🎉");
+    }
+  },
   async atualizar() {
     const btn = document.getElementById("btn-claim-daily"), aviso = document.getElementById("notif-bonus");
     const u = Auth.current;
@@ -1123,6 +1144,7 @@ const Auth = {
     Deposit.sincronizar();
     Indicacoes.sincronizar();
     Bonus.atualizar();
+    Bonus.receber();
     ["login", "register"].forEach(k => closeModal("modal-" + k));
     Sounds.playCoin();
     showToast(`${msg}, ${State.username}!`, "🎉");
@@ -1387,9 +1409,9 @@ const Saques = {
     if (document.getElementById("modal-withdraw").classList.contains("show")) document.getElementById("saque-disponivel").textContent = formatCurrency(State.balance);
   },
 };
-setInterval(() => { Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); Bonus.atualizar(); }, 30_000);
+setInterval(() => { Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); Bonus.atualizar(); Bonus.receber(); }, 30_000);
 
-document.addEventListener("DOMContentLoaded", () => { Auth.init(); Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); Bonus.atualizar(); });
+document.addEventListener("DOMContentLoaded", () => { Auth.init(); Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); Bonus.atualizar(); Bonus.receber(); });
 
 // ==========================================================================
 // JOGO EM TELA CHEIA (iframe da mesma origem: o jogo lê/escreve State.balance)
