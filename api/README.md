@@ -1,13 +1,13 @@
 # Orama API
 
-Cadastro, login e perfil em NestJS 12 + Prisma 7 + SQLite.
+Cadastro, login e perfil em NestJS 12 + Prisma 7 + PostgreSQL.
 
 ## Rodar
 
 ```bash
 npm install          # também gera o cliente do Prisma
-cp .env.example .env # e preencha JWT_SECRET e as chaves BullsCash
-npm run db:deploy    # cria o banco dev.db com as migrações
+cp .env.example .env # e preencha JWT_SECRET e as chaves Pix (Pluggou)
+npm run db:deploy    # cria as tabelas no Postgres de DATABASE_URL
 npm run start:dev    # http://localhost:3000
 npm test             # testes e2e (usa test.db separado)
 ```
@@ -28,20 +28,35 @@ Rotas com 🔒 precisam do header `Authorization: Bearer <accessToken>`.
 | PATCH | `/perfil/senha` 🔒 | `senhaAtual, novaSenha` | `{ accessToken, user }` (token novo) |
 | DELETE | `/perfil` 🔒 | `senha` | 204, apaga a conta |
 | GET | `/avatars/padrao.png` | – | foto de perfil padrão |
-| POST | `/depositos` | `amountCents, buyerName, buyerDocument, buyerPhone, buyerEmail?` | cobrança BullsCash com `id`, `pixEmv`, `status` |
+| POST | `/depositos` | `amountCents, buyerName, buyerDocument, buyerPhone, buyerEmail?` | cobrança Pix (Pluggou por padrão) com `id`, `pixEmv`, `status` |
 | GET | `/depositos/:id` | – | status atualizado da cobrança; `paid` confirma o depósito |
 
-## BullsCash
+## Pix
 
-As credenciais da BullsCash nunca ficam no navegador. Configure no ambiente da API:
+As credenciais nunca ficam no navegador. O provedor das cobranças novas vem de `PIX_PROVEDOR`:
 
 ```bash
-BULLSCASH_PUBLIC_KEY=pk_live...
-BULLSCASH_SECRET_KEY=sk_live...
-BULLSCASH_BASE_URL=https://v1.pagintermediacao.com/api/v1
+PIX_PROVEDOR=pluggou            # padrão; ou gatebox
+
+# Pluggou — https://docs.pluggoucash.com (chave do tipo "entradas" basta)
+PLUGGOU_PUBLIC_KEY=pk_live_...
+PLUGGOU_SECRET_KEY=sk_live_...
+# PLUGGOU_BASE_URL=https://api.pluggoutech.com/api  (padrão)
+
+# Gatebox — a mesma do sinuca-mult
+PIX_CLIENT_ID=...
+PIX_CLIENT_SECRET=...
 ```
 
-O site cria o PIX em `POST /depositos`, mostra o `pixEmv` para copiar e consulta `GET /depositos/:id` a cada 3 segundos. Quando a BullsCash retorna `status: paid`, o saldo da sessão do jogador é creditado imediatamente.
+O site cria o PIX em `POST /depositos`, mostra o `pixEmv` para copiar e consulta `GET /depositos/:id` a cada 3 segundos. O id diz quem gerou a cobrança, então a consulta sempre vai ao provedor certo, mesmo depois de trocar `PIX_PROVEDOR`:
+
+| id | provedor | consulta |
+| --- | --- | --- |
+| `plg-<uuid>` | Pluggou | `GET /transactions/<uuid>` |
+| `orama-<hex>` | Gatebox | `GET /pix/invoice?externalId=...` (expira em 1 h) |
+| outro | BullsCash (antigos, só se `BULLSCASH_*` estiver no .env) | `GET /deposit/<id>` |
+
+Só vira `paid` quando o provedor confirma e entrou pelo menos o valor cobrado.
 
 Erro de validação (400) e conta repetida (409) vêm com uma mensagem por campo:
 

@@ -43,7 +43,7 @@ class RodadasDto extends PaginaDto {
 }
 
 class BonusDto extends PaginaDto {
-  @IsOptional() @IsIn(['cadastro', 'diario']) tipo?: string;
+  @IsOptional() @IsIn(['cadastro', 'diario', 'indicacao']) tipo?: string;
   @IsOptional() @IsString() @MaxLength(254) q?: string;
 }
 
@@ -146,6 +146,7 @@ export class PainelController {
         quantidade: bonus.length,
         cadastro: { quantidade: porTipo('cadastro').length, valor: reais(soma(porTipo('cadastro'))) },
         diario: { quantidade: porTipo('diario').length, valor: reais(soma(porTipo('diario'))) },
+        indicacao: { quantidade: porTipo('indicacao').length, valor: reais(soma(porTipo('indicacao'))) },
       },
       lucroLiquido: reais(apostado - premios - totalBonus),
       serie: serie.map((b) => ({ ...b, vendas: reais(b.vendas), apostado: reais(b.apostado), lucro: reais(b.lucro), bonus: reais(b.bonus), lucroLiquido: reais(b.lucro - b.bonus) })),
@@ -167,7 +168,7 @@ export class PainelController {
       criadoEm: p.where,
       ...(q.status && { status: q.status }),
       ...((q.min != null || q.max != null) && { valorCentavos: { gte: q.min != null ? Math.round(q.min * 100) : undefined, lte: q.max != null ? Math.round(q.max * 100) : undefined } }),
-      ...(q.q && { OR: [{ nome: { contains: q.q } }, { documento: { contains: q.q.replace(/\D/g, '') || q.q } }, { email: { contains: q.q.toLowerCase() } }, { id: { contains: q.q } }] }),
+      ...(q.q && { OR: [{ nome: { contains: q.q, mode: 'insensitive' } }, { documento: { contains: q.q.replace(/\D/g, '') || q.q, mode: 'insensitive' } }, { email: { contains: q.q.toLowerCase(), mode: 'insensitive' } }, { id: { contains: q.q, mode: 'insensitive' } }] }),
     };
     const [itens, total, agg] = await Promise.all([
       this.prisma.deposito.findMany({ where, orderBy: { criadoEm: 'desc' }, skip: (pagina - 1) * porPagina, take: porPagina }),
@@ -180,7 +181,7 @@ export class PainelController {
   @Get('jogadores')
   async jogadores(@Query() q: JogadoresDto) {
     const pagina = q.pagina ?? 1, porPagina = q.porPagina ?? 20;
-    const where: Prisma.JogadorWhereInput = q.q ? { OR: [{ email: { contains: q.q.toLowerCase() } }, { nome: { contains: q.q } }] } : {};
+    const where: Prisma.JogadorWhereInput = q.q ? { OR: [{ email: { contains: q.q.toLowerCase(), mode: 'insensitive' } }, { nome: { contains: q.q, mode: 'insensitive' } }] } : {};
     const orderBy: Prisma.JogadorOrderByWithRelationInput = q.ordem === 'recente' ? { atualizadoEm: 'desc' } : q.ordem === 'nome' ? { nome: 'asc' } : { saldoCentavos: 'desc' };
     const [itens, total, agg] = await Promise.all([
       this.prisma.jogador.findMany({ where, orderBy, skip: (pagina - 1) * porPagina, take: porPagina }),
@@ -202,7 +203,7 @@ export class PainelController {
     const where: Prisma.BonusWhereInput = {
       criadoEm: p.where,
       ...(q.tipo && { tipo: q.tipo }),
-      ...(q.q && { OR: [{ jogador: { contains: q.q.toLowerCase() } }, { nome: { contains: q.q } }] }),
+      ...(q.q && { OR: [{ jogador: { contains: q.q.toLowerCase(), mode: 'insensitive' } }, { nome: { contains: q.q, mode: 'insensitive' } }] }),
     };
     const [itens, total, tipos] = await Promise.all([
       this.prisma.bonus.findMany({ where, orderBy: { criadoEm: 'desc' }, skip: (pagina - 1) * porPagina, take: porPagina }),
@@ -219,7 +220,7 @@ export class PainelController {
       total,
       pagina,
       porPagina,
-      soma: { valor: reais(tipos.reduce((a, t) => a + (t._sum.valorCentavos ?? 0), 0)), cadastro: resumo('cadastro'), diario: resumo('diario') },
+      soma: { valor: reais(tipos.reduce((a, t) => a + (t._sum.valorCentavos ?? 0), 0)), cadastro: resumo('cadastro'), diario: resumo('diario'), indicacao: resumo('indicacao') },
     };
   }
 
@@ -234,7 +235,7 @@ export class PainelController {
     const where: Prisma.RodadaWhereInput = {
       criadoEm: p.where,
       ...(q.jogo && { jogo: q.jogo }),
-      ...(q.jogador && { jogador: { contains: q.jogador.toLowerCase() } }),
+      ...(q.jogador && { jogador: { contains: q.jogador.toLowerCase(), mode: 'insensitive' } }),
       ...(q.resultado === 'ganhou' && { premioCentavos: { gt: 0 } }),
       ...(q.resultado === 'perdeu' && { premioCentavos: 0 }),
     };

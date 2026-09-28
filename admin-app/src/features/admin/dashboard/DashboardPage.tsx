@@ -77,7 +77,7 @@ export function DashboardPage() {
         {jogo === "todos" && (
           <Link to="/bonus" className="contents">
             <MiniCard title="Bônus concedidos" value={brl(d?.bonus.valor ?? 0)} icon={<HandCoins className="h-5 w-5" />}
-              hint={d && `cadastro ${brl(d.bonus.cadastro.valor)} (${num(d.bonus.cadastro.quantidade)}) · diário ${brl(d.bonus.diario.valor)} (${num(d.bonus.diario.quantidade)})`} />
+              hint={d && `cadastro ${brl(d.bonus.cadastro.valor)} (${num(d.bonus.cadastro.quantidade)}) · diário ${brl(d.bonus.diario.valor)} (${num(d.bonus.diario.quantidade)}) · indicação ${brl(d.bonus.indicacao.valor)} (${num(d.bonus.indicacao.quantidade)})`} />
           </Link>
         )}
         <MiniCard title="RTP real" value={pct(d?.jogos.rtpReal, 2)} icon={<Gauge className="h-5 w-5" />} hint="prêmios ÷ apostado no período" />

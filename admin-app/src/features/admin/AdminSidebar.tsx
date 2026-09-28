@@ -2,7 +2,7 @@ import { ConfiguracoesIcon, ContasIcon, DashboardIcon, LogsIcon, RankingIcon, Sa
 import { Logo, SidebarToggleIcon } from "@/shared/components/Logo";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils";
-import { Gift } from "lucide-react";
+import { Gift, Handshake } from "lucide-react";
 import type { ComponentType } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -25,6 +25,7 @@ export const adminMenuItems: MenuItem[] = [
   { icon: SaquesIcon, label: "Saques", path: "/saques" },
   { icon: RankingIcon, label: "Rodadas", path: "/rodadas" },
   { icon: ({ className, color }) => <Gift size={24} strokeWidth={1.8} className={className} color={color} />, label: "Bônus", path: "/bonus" },
+  { icon: ({ className, color }) => <Handshake size={24} strokeWidth={1.8} className={className} color={color} />, label: "Indicações", path: "/indicacoes" },
   { icon: ContasIcon, label: "Jogadores", path: "/jogadores" },
   { icon: LogsIcon, label: "RTP dos jogos", path: "/rtp" },
   { icon: ConfiguracoesIcon, label: "Configurações", path: "/configuracoes" },

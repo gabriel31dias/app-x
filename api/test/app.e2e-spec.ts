@@ -1,15 +1,29 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { execSync } from 'node:child_process';
-import { rmSync } from 'node:fs';
+import pg from 'pg';
 import request from 'supertest';
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client';
 import { nivelDe } from '../src/profile/levels.js';
 
-// banco próprio de teste (test.db), recriado a cada execução com as migrações reais
-process.env.DATABASE_URL = 'file:./test.db';
+// banco de teste: schema "e2e" no Postgres de TEST_DATABASE_URL (.env), apagado e recriado a cada execução com as
+// migrações reais. Só o schema e2e é apagado — nunca o public, onde ficam os dados de verdade.
+try {
+  process.loadEnvFile();
+} catch {
+  // sem .env: TEST_DATABASE_URL vem do ambiente
+}
+if (!process.env.TEST_DATABASE_URL) throw new Error('Configure TEST_DATABASE_URL (postgresql://...) pra rodar os testes');
+const urlTeste = new URL(process.env.TEST_DATABASE_URL);
+urlTeste.searchParams.set('schema', 'e2e');
+process.env.DATABASE_URL = urlTeste.toString();
 process.env.JWT_SECRET = 'segredo-de-teste';
-rmSync('test.db', { force: true });
+{
+  const c = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
+  await c.connect();
+  await c.query('DROP SCHEMA IF EXISTS e2e CASCADE');
+  await c.end();
+}
 execSync('npx prisma migrate deploy', { stdio: 'ignore', env: process.env });
 
 const { AppModule } = await import('../src/app.module.js');
@@ -204,21 +218,168 @@ describe('Auth + Perfil (e2e)', () => {
     expect(r.body.itens[0]).toMatchObject({ jogo: 'bichos', nome: 'Bichos da Sorte', jogador: 'ana@x.com' });
   });
 
-  it('depósito PIX vira venda: grava ao criar e marca pago na consulta', async () => {
-    process.env.BULLSCASH_PUBLIC_KEY = 'pk';
-    process.env.BULLSCASH_SECRET_KEY = 'sk';
-    const resposta = (status: string) => new Response(JSON.stringify({ id: 'bc-1', gross_amount_cents: 2500, net_amount_cents: 2400, status, pix_emv: '000201' }));
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(resposta('pending'));
-    await api().post('/depositos').send({ amountCents: 2500, buyerName: 'Carla Dias', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(201);
+  it('depósito PIX vira venda: grava ao criar e marca pago na consulta (Gatebox)', async () => {
+    process.env.PIX_CLIENT_ID = 'x';
+    process.env.PIX_CLIENT_SECRET = 'y';
+    process.env.PIX_PROVEDOR = 'gatebox';
+    const json = (o: unknown) => new Response(JSON.stringify(o));
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json({ access_token: 't', expires_in: 8000 }))
+      .mockResolvedValueOnce(json({ data: { key: '000201-brcode', uuid: 'u1' } }));
+    const { body: dep } = await api().post('/depositos').send({ amountCents: 2500, buyerName: 'Carla Dias', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(201);
+    expect(dep).toMatchObject({ status: 'pending', pixEmv: '000201-brcode', grossAmountCents: 2500 });
     let v = await api().get('/admin/vendas?q=carla').set(adminAuth).expect(200);
-    expect(v.body.itens[0]).toMatchObject({ id: 'bc-1', valor: 25, status: 'pendente', pagoEm: null });
+    expect(v.body.itens[0]).toMatchObject({ id: dep.id, valor: 25, status: 'pendente', pagoEm: null });
 
-    fetchMock.mockResolvedValueOnce(resposta('paid'));
-    await api().get('/depositos/bc-1').expect(200);
+    // pago a menos que o cobrado não conta
+    fetchMock.mockResolvedValueOnce(json({ data: { status: 'PAID', amount: '20' }, transaction: {} }));
+    expect((await api().get(`/depositos/${dep.id}`).expect(200)).body.status).toBe('pending');
+
+    fetchMock.mockResolvedValueOnce(json({ data: { status: 'PAID', amount: '25' }, transaction: { transactionId: 'tx1' } }));
+    expect((await api().get(`/depositos/${dep.id}`).expect(200)).body.status).toBe('paid');
     v = await api().get('/admin/vendas?q=carla').set(adminAuth).expect(200);
-    expect(v.body.itens[0]).toMatchObject({ status: 'pago', liquido: 24 });
+    expect(v.body.itens[0]).toMatchObject({ status: 'pago', liquido: 25 });
     expect(v.body.itens[0].pagoEm).not.toBeNull();
+
+    // já pago: não volta a perguntar à Gatebox
+    const chamadas = fetchMock.mock.calls.length;
+    expect((await api().get(`/depositos/${dep.id}`).expect(200)).body.status).toBe('paid');
+    expect(fetchMock.mock.calls.length).toBe(chamadas);
+    await api().get('/depositos/nao-existe').expect(404);
     fetchMock.mockRestore();
+    delete process.env.PIX_PROVEDOR;
+  });
+
+  it('depósito PIX pela Pluggou (padrão): cria, consulta e só credita o valor cheio', async () => {
+    process.env.PLUGGOU_PUBLIC_KEY = 'pk';
+    process.env.PLUGGOU_SECRET_KEY = 'sk';
+    const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status });
+    const uuid = '3f9c1a2e-1111-4222-8333-444455556666';
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 1500, platform_tax: 60, liquid_amount: 1440, pix: { emv: '000201-pluggou' } } }, 201));
+    const { body: dep } = await api().post('/depositos').send({ amountCents: 1500, buyerName: 'Rita Luz', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(201);
+    expect(dep).toMatchObject({ id: `plg-${uuid}`, status: 'pending', pixEmv: '000201-pluggou', source: 'pluggou' });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.pluggoutech.com/api/transactions');
+    expect((init.headers as Record<string, string>)['X-Secret-Key']).toBe('sk');
+    expect(JSON.parse(init.body as string)).toMatchObject({ payment_method: 'pix', amount: 1500, buyer: { buyer_document: '52998224725' } });
+
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 1500, status: 'pending' } }));
+    expect((await api().get(`/depositos/${dep.id}`).expect(200)).body.status).toBe('pending');
+    expect(fetchMock.mock.calls[1][0]).toBe(`https://api.pluggoutech.com/api/transactions/${uuid}`);
+
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 1500, liquid_amount: 1440, status: 'paid' } }));
+    expect((await api().get(`/depositos/${dep.id}`).expect(200)).body.status).toBe('paid');
+    const v = await api().get('/admin/vendas?q=rita').set(adminAuth).expect(200);
+    expect(v.body.itens[0]).toMatchObject({ status: 'pago', liquido: 14.4 });
+
+    // abaixo de R$ 2,00 nem chega na Pluggou
+    const antes = fetchMock.mock.calls.length;
+    await api().post('/depositos').send({ amountCents: 199, buyerName: 'Rita Luz', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(400);
+    expect(fetchMock.mock.calls.length).toBe(antes);
+
+    // erro de regra da Pluggou chega com a mensagem dela
+    fetchMock.mockResolvedValueOnce(json({ success: false, message: 'Valor máximo excedido', data: null }, 400));
+    const { body: erro } = await api().post('/depositos').send({ amountCents: 400000, buyerName: 'Rita Luz', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(502);
+    expect(erro.message).toBe('Valor máximo excedido');
+    fetchMock.mockRestore();
+  });
+
+  it('webhook da Pluggou marca pago e o saldo entra uma vez só, mesmo depois de reiniciar o site', async () => {
+    process.env.PLUGGOU_PUBLIC_KEY = 'pk';
+    process.env.PLUGGOU_SECRET_KEY = 'sk';
+    process.env.PLUGGOU_WEBHOOK_CODE = 'whk_ok';
+    const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status });
+    const uuid = '7b1d0c9e-2222-4333-8444-555566667777';
+    const conta = { email: 'Tina@X.com', cpf: '529.982.247-25' };
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 3000, liquid_amount: 2880, pix: { emv: '000201' } } }, 201));
+    const { body: dep } = await api().post('/depositos')
+      .send({ amountCents: 3000, buyerName: 'Tina Sol', buyerDocument: '52998224725', buyerPhone: '11987654321', buyerEmail: 'tina@x.com' }).expect(201);
+
+    // nada pago ainda: a conta confere o pendente na Pluggou e não tem o que creditar
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 3000, status: 'pending' } }));
+    expect((await api().get('/depositos/conta').query(conta).expect(200)).body).toEqual([]);
+
+    // webhook sem o código da conta é recusado e não consulta nada
+    const antes = fetchMock.mock.calls.length;
+    await api().post('/depositos/webhook/pluggou').set('x-webhook-code', 'falso').send({ data: { id: uuid, status: 'paid' } }).expect(401);
+    expect(fetchMock.mock.calls.length).toBe(antes);
+
+    // webhook verdadeiro: a API confirma na Pluggou (não confia no corpo) e marca pago
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 3000, liquid_amount: 2880, status: 'paid' } }));
+    await api().post('/depositos/webhook/pluggou').set('x-webhook-code', 'whk_ok').send({ id: 'ev1', event_type: 'transaction', data: { id: uuid, status: 'paid' } }).expect(200);
+    const { PrismaService } = await import('../src/prisma/prisma.service.js');
+    const prisma = app.get(PrismaService);
+    await vi.waitFor(async () => expect((await prisma.deposito.findUnique({ where: { id: dep.id } }))?.status).toBe('pago'));
+
+    // jogador reinicia o site: a conta lista o pago e o crédito sai uma vez só
+    const { body: pagos } = await api().get('/depositos/conta').query(conta).expect(200);
+    expect(pagos).toEqual([{ id: dep.id, valor: 30 }]);
+    await api().post(`/depositos/${dep.id}/credito`).send({ email: 'outra@x.com', cpf: conta.cpf }).expect(200, { creditar: false, valor: 0 });
+    await api().post(`/depositos/${dep.id}/credito`).send(conta).expect(200, { creditar: true, valor: 30 });
+    await api().post(`/depositos/${dep.id}/credito`).send(conta).expect(200, { creditar: false, valor: 0 });
+    expect((await api().get('/depositos/conta').query(conta).expect(200)).body).toEqual([]);
+    fetchMock.mockRestore();
+    delete process.env.PLUGGOU_WEBHOOK_CODE;
+  });
+
+  it('indicação: link, cadastro pelo link, libera com depósito + rodada, credita uma vez e aparece no admin', async () => {
+    const { PrismaService } = await import('../src/prisma/prisma.service.js');
+    const prisma = app.get(PrismaService);
+    const ana = { email: 'Ana.Ind@x.com', cpf: '111.444.777-35', nome: 'Ana Indica' };
+    const caio = { email: 'caio.novo@x.com', cpf: '123.456.789-09', nome: 'Caio Novo Silva' };
+
+    const { body: meu } = await api().get('/indicacoes/minhas').query(ana).expect(200);
+    expect(meu).toMatchObject({ ativo: true, valor: 5, minRodadas: 1, ganho: 0, indicados: [], paraCreditar: [] });
+    expect(meu.codigo).toMatch(/^[A-Z2-9]{7}$/);
+    expect((await api().get('/indicacoes/minhas').query(ana).expect(200)).body.codigo).toBe(meu.codigo); // mesmo código sempre
+
+    await api().post('/indicacoes').send({ ...ana, codigo: meu.codigo }).expect(400); // o próprio link
+    await api().post('/indicacoes').send({ ...caio, codigo: 'NAOEXISTE' }).expect(400);
+    await api().post('/indicacoes').send({ ...caio, codigo: meu.codigo.toLowerCase() }).expect(200);
+    await api().post('/indicacoes').send({ ...caio, codigo: meu.codigo }).expect(409); // já indicada
+
+    // cadastrou mas não depositou nem jogou: pendente
+    let m = (await api().get('/indicacoes/minhas').query(ana).expect(200)).body;
+    expect(m.indicados).toEqual([expect.objectContaining({ nome: 'Caio', depositou: false, rodadas: 0, status: 'pendente', valor: null })]);
+
+    // depositou, mas ainda não jogou: segue pendente
+    await prisma.deposito.create({ data: { id: 'plg-caio-1', valorCentavos: 2000, status: 'pago', statusBruto: 'paid', nome: 'Caio', documento: '12345678909', celular: '11987654321', email: 'caio.novo@x.com' } });
+    expect((await api().get('/indicacoes/minhas').query(ana).expect(200)).body.paraCreditar).toEqual([]);
+
+    // o admin muda o valor antes de liberar: vale o valor de quando libera
+    await api().put('/admin/config').set(adminAuth).send({ autoBalanco: false, janelaHoras: 24, indicacao: 7.5 }).expect(200);
+    await api().post('/rodadas').send({ chave: 'caio-r1-abcdefgh', jogo: 'bichos', aposta: 2, premio: 0, jogador: 'caio.novo@x.com' }).expect(204);
+    m = (await api().get('/indicacoes/minhas').query(ana).expect(200)).body;
+    expect(m.paraCreditar).toEqual([{ id: expect.any(String), valor: 7.5 }]);
+    const id = m.paraCreditar[0].id;
+
+    await api().post(`/indicacoes/${id}/credito`).send({ ...caio }).expect(200, { creditar: false, valor: 0 }); // não é dele
+    await api().post(`/indicacoes/${id}/credito`).send(ana).expect(200, { creditar: true, valor: 7.5 });
+    await api().post(`/indicacoes/${id}/credito`).send(ana).expect(200, { creditar: false, valor: 0 });
+    m = (await api().get('/indicacoes/minhas').query(ana).expect(200)).body;
+    expect(m).toMatchObject({ ganho: 7.5, paraCreditar: [], indicados: [expect.objectContaining({ status: 'recebida', valor: 7.5 })] });
+
+    // admin: lista, resumo e o bônus entra como tipo indicação
+    await api().get('/admin/indicacoes').expect(401);
+    const { body: adm } = await api().get('/admin/indicacoes').set(adminAuth).expect(200);
+    expect(adm.soma).toEqual({ pendentes: 0, liberadas: 0, pagas: 1, valorPago: 7.5 });
+    expect(adm.itens[0]).toMatchObject({ indicador: 'ana.ind@x.com', indicadorNome: 'Ana Indica', indicado: 'caio.novo@x.com', depositado: 20, rodadas: 1, status: 'recebida', valor: 7.5 });
+    expect((await api().get('/admin/indicacoes?status=pendente').set(adminAuth).expect(200)).body.total).toBe(0);
+    expect((await api().get('/admin/indicacoes?q=caio').set(adminAuth).expect(200)).body.total).toBe(1);
+    const { body: b } = await api().get('/admin/bonus?tipo=indicacao').set(adminAuth).expect(200);
+    expect(b.soma.indicacao).toEqual({ quantidade: 1, valor: 7.5 });
+
+    // desligado: o site esconde e nada novo libera
+    const { body: cfg } = await api().put('/admin/config').set(adminAuth).send({ autoBalanco: false, janelaHoras: 24, indicacaoAtiva: false }).expect(200);
+    expect(cfg).toMatchObject({ indicacaoAtiva: false, indicacao: 7.5, indicacaoMinRodadas: 1 });
+    expect((await api().get('/indicacoes/minhas').query(ana).expect(200)).body.ativo).toBe(false);
+    await api().put('/admin/config').set(adminAuth).send({ autoBalanco: false, janelaHoras: 24, indicacaoAtiva: true, indicacao: 5 }).expect(200);
+    // não deixa rastro pros testes de bônus/dashboard/saque que vêm depois
+    await prisma.bonus.deleteMany({ where: { tipo: 'indicacao' } });
+    await prisma.rodada.deleteMany({ where: { jogador: 'caio.novo@x.com' } });
+    await prisma.deposito.deleteMany({ where: { id: 'plg-caio-1' } });
   });
 
   it('saldos: o site informa, o admin lista com soma, busca e ordem', async () => {

@@ -6,10 +6,12 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WEB=/var/www/oramagames
 
 cd "$ROOT/api"
-# cópia do banco antes das migrações (guarda as 20 últimas)
+# cópia do banco (Postgres de DATABASE_URL no api/.env) antes das migrações; guarda as 20 últimas
 mkdir -p "$ROOT/api/backups"
-[ -f prod.db ] && sqlite3 prod.db ".backup backups/prod-$(date +%Y%m%d-%H%M%S).db" 2>/dev/null || cp prod.db "backups/prod-$(date +%Y%m%d-%H%M%S).db"
-ls -1t backups/prod-*.db | tail -n +21 | xargs -r rm --
+DB_URL="$(node -e 'process.loadEnvFile(); process.stdout.write(process.env.DATABASE_URL || "")')"
+[[ "$DB_URL" == postgres* ]] || { echo "DATABASE_URL do api/.env não é postgres"; exit 1; }
+(umask 077; pg_dump --no-owner --format=custom --file "backups/prod-$(date +%Y%m%d-%H%M%S).dump" "$DB_URL")
+ls -1t backups/prod-*.dump 2>/dev/null | tail -n +21 | xargs -r rm --
 npm ci
 npx prisma migrate deploy
 npm run build

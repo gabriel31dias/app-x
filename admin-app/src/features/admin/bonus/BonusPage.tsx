@@ -7,15 +7,15 @@ import { brl, dataHora, num, ymd } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { subDays } from "date-fns";
-import { CalendarCheck, Download, Gift, Loader2, Search, UserPlus } from "lucide-react";
+import { CalendarCheck, Download, Gift, Handshake, Loader2, Search, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const PADRAO: Periodo = { startDate: ymd(subDays(new Date(), 6)), endDate: ymd(new Date()) };
 const inputCls = "h-9 rounded-full border border-border bg-white dark:bg-transparent px-3 text-sm text-foreground outline-none focus:border-primary placeholder:text-muted-foreground";
-const TIPOS = { cadastro: "Cadastro", diario: "Diário" } as const;
+const TIPOS = { cadastro: "Cadastro", diario: "Diário", indicacao: "Indicação" } as const;
 
-/** bônus que a casa deu (cadastro e diário): é dinheiro nosso, por isso o dashboard desconta do lucro */
+/** bônus que a casa deu (cadastro, diário e indicação): é dinheiro nosso, por isso o dashboard desconta do lucro */
 export function BonusPage() {
   const [periodo, setPeriodo] = useState(PADRAO);
   const [tipo, setTipo] = useState("todos");
@@ -59,10 +59,11 @@ export function BonusPage() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-10">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <MiniCard title="Total em bônus" value={brl(data?.soma.valor ?? 0)} icon={<Gift className="h-5 w-5" />} hint={`${num(data?.total ?? 0)} bônus · sai do lucro no dashboard`} />
         <MiniCard title="Bônus de cadastro" value={brl(data?.soma.cadastro.valor ?? 0)} icon={<UserPlus className="h-5 w-5" />} hint={`${num(data?.soma.cadastro.quantidade ?? 0)} contas novas`} />
         <MiniCard title="Bônus diário" value={brl(data?.soma.diario.valor ?? 0)} icon={<CalendarCheck className="h-5 w-5" />} hint={`${num(data?.soma.diario.quantidade ?? 0)} resgates`} />
+        <MiniCard title="Indicações" value={brl(data?.soma.indicacao?.valor ?? 0)} icon={<Handshake className="h-5 w-5" />} hint={`${num(data?.soma.indicacao?.quantidade ?? 0)} amigos que depositaram e jogaram`} />
       </div>
 
       <Panel title="Bônus concedidos" icon={<Gift className="h-5 w-5" />}
@@ -83,6 +84,7 @@ export function BonusPage() {
               <SelectItem value="todos">Todos os tipos</SelectItem>
               <SelectItem value="cadastro">Cadastro</SelectItem>
               <SelectItem value="diario">Diário</SelectItem>
+              <SelectItem value="indicacao">Indicação</SelectItem>
             </SelectContent>
           </Select>
           {isFetching && !isLoading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}

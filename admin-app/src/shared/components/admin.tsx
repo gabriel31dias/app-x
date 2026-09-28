@@ -79,6 +79,9 @@ const STATUS = {
   perdeu: { label: "Sem prêmio", cls: "bg-[rgba(69,188,86,0.15)] text-[#45BC56]" },
   cadastro: { label: "Cadastro", cls: "bg-[rgba(155,91,248,0.12)] text-[#9B5BF8]" },
   diario: { label: "Diário", cls: "bg-[rgba(245,158,11,0.15)] text-[#F59E0B]" },
+  indicacao: { label: "Indicação", cls: "bg-[rgba(59,130,246,0.12)] text-[#3B82F6]" },
+  liberada: { label: "Liberada", cls: "bg-[rgba(59,130,246,0.12)] text-[#3B82F6]" },
+  recebida: { label: "Paga", cls: "bg-[rgba(69,188,86,0.15)] text-[#45BC56]" },
 };
 
 export const StatusBadge = ({ status }: { status: keyof typeof STATUS }) => (

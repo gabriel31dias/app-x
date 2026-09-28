@@ -107,7 +107,7 @@ export class AdminSaquesController {
     const where: Prisma.SaqueWhereInput = {
       ...(q.status && { status: q.status }),
       ...(q.de && { criadoEm: { gte: new Date(Date.parse(q.de) + fuso), ...(q.ate && { lt: new Date(Date.parse(q.ate) + fuso + 86400_000) }) } }),
-      ...(q.q && { OR: [{ email: { contains: q.q.toLowerCase() } }, { nome: { contains: q.q } }, { cpf: { contains: digitos(q.q) || q.q } }] }),
+      ...(q.q && { OR: [{ email: { contains: q.q.toLowerCase(), mode: 'insensitive' } }, { nome: { contains: q.q, mode: 'insensitive' } }, { cpf: { contains: digitos(q.q) || q.q, mode: 'insensitive' } }] }),
     };
     const [itens, total, agg, pend] = await Promise.all([
       this.prisma.saque.findMany({ where, orderBy: [{ status: 'desc' }, { criadoEm: 'desc' }], skip: (pagina - 1) * porPagina, take: porPagina }),

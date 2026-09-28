@@ -834,7 +834,7 @@ const Deposit = {
     }
 
     this.setButton("Gerando PIX...", true);
-    this.setStatus("Solicitando cobranca PIX na BullsCash...");
+    this.setStatus("Solicitando cobranca PIX...");
     try {
       const data = await apiFetch("/depositos", {
         method: "POST",
@@ -1012,7 +1012,7 @@ function errorMessage(err) {
   if (typeof err === "string") return err;
   if (err?.message) return err.message;
   if (err?.detail?.message) return err.detail.message;
-  return "verifique se a API esta rodando e configurada com as chaves BullsCash";
+  return "verifique se a API esta rodando e configurada com as chaves Pix";
 }
 
 // ==========================================================================

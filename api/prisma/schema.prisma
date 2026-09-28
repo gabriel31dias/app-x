@@ -3,9 +3,9 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
-// ponytail: SQLite por enquanto; pra Postgres troque o provider e o adapter em prisma.service.ts
+// Postgres (adapter pg em prisma.service.ts). As migrações da época do SQLite estão em prisma/migrations-sqlite.
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {
@@ -69,19 +69,21 @@ model JogadorRtpAlteracao {
 
 // depósito PIX = "venda" no painel admin. Gravado ao criar o PIX e atualizado a cada consulta de status.
 model Deposito {
-  id              String    @id // id da transação na BullsCash
+  id              String    @id // plg-<uuid> Pluggou · orama-<hex> Gatebox · uuid puro BullsCash
   valorCentavos   Int
   liquidoCentavos Int?
   status          String // pendente | pago | falhou
-  statusBruto     String // como veio da BullsCash
+  statusBruto     String // como veio do provedor
   nome            String
   documento       String
   celular         String
   email           String?
   criadoEm        DateTime  @default(now())
   pagoEm          DateTime?
+  creditadoEm     DateTime? // já entrou no saldo do jogador (uma vez só, marcado pelo servidor)
 
   @@index([criadoEm])
+  @@index([email])
 }
 
 // rodada informada pelo próprio jogo (navegador): serve pro painel até o sorteio ir pro servidor
@@ -117,6 +119,9 @@ model Configuracao {
   saqueMinimoCentavos Int    @default(1000) // R$ 10
   bonusDiarioAtivo Boolean @default(false) // bônus diário liberado no perfil
   bonusDiarioCentavos Int @default(500)
+  indicacaoAtiva     Boolean @default(true) // programa "indique e ganhe" ligado
+  indicacaoCentavos  Int     @default(500) // quanto o indicador ganha por indicado liberado
+  indicacaoMinRodadas Int    @default(1) // rodadas com aposta que o indicado precisa jogar (além de 1 depósito pago)
   balancoAtivo  Boolean   @default(false) // RTPs estão baixados agora
   motivoBalanco String? // por que baixou: "janela" | "hora" | "janela+hora"
   rtpsAntes     String? // JSON { jogo: rtp | null } pra restaurar; null = estava no de fábrica
@@ -148,9 +153,9 @@ model Saque {
 // bônus que entrou no saldo de um jogador: dinheiro da casa, sai do lucro no dashboard
 model Bonus {
   id            Int      @id @default(autoincrement())
-  // o mesmo bônus não entra duas vezes: "cadastro:<cpf>" ou "diario:<email>:<AAAA-MM-DD>"
+  // o mesmo bônus não entra duas vezes: "cadastro:<cpf>", "diario:<email>:<AAAA-MM-DD>" ou "indicacao:<id da indicação>"
   chave         String   @unique
-  tipo          String // cadastro | diario
+  tipo          String // cadastro | diario | indicacao
   jogador       String // e-mail da conta do site (minúsculo)
   nome          String?
   valorCentavos Int
@@ -158,4 +163,32 @@ model Bonus {
 
   @@index([criadoEm])
   @@index([jogador])
+}
+
+// link de indicação de cada conta do site: https://.../?ref=<codigo>
+model Afiliado {
+  email    String   @id // minúsculo
+  codigo   String   @unique
+  nome     String
+  cpf      String // só dígitos (barra indicar a si mesmo)
+  criadoEm DateTime @default(now())
+}
+
+// conta nova criada pelo link de alguém. Libera quando o indicado deposita (1 PIX pago) e joga;
+// aí o indicador recebe o valor da configuração, uma vez só (vira Bonus tipo "indicacao")
+model Indicacao {
+  id            String    @id @default(cuid())
+  codigo        String
+  indicador     String // e-mail de quem indicou
+  indicado      String    @unique // e-mail da conta nova
+  indicadoCpf   String    @unique
+  indicadoNome  String
+  status        String    @default("pendente") // pendente | liberada
+  valorCentavos Int? // fixado quando libera (mudar a config depois não mexe no que já liberou)
+  liberadaEm    DateTime?
+  creditadoEm   DateTime? // já entrou no saldo do indicador
+  criadoEm      DateTime  @default(now())
+
+  @@index([indicador])
+  @@index([criadoEm])
 }

@@ -4,18 +4,18 @@ import { api } from "@/shared/lib/api";
 import { brl, dataHora } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Banknote, Clock, Gift, Loader2, Scale } from "lucide-react";
+import { AlertTriangle, Banknote, Clock, Gift, Handshake, Loader2, Scale } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-export type Config = { saqueExigeDeposito: boolean; saqueMinimo: number; bonusDiarioAtivo: boolean; bonusDiario: number; autoBalanco: boolean; janelaHoras: number; metaHoraAtiva: boolean; metaHora: number; lucroHora: number; motivoBalanco: string | null; balancoAtivo: boolean; ativadoEm: string | null; atualizadoPor: string | null; atualizadoEm: string; lucroJanela: number };
+export type Config = { saqueExigeDeposito: boolean; saqueMinimo: number; bonusDiarioAtivo: boolean; bonusDiario: number; indicacaoAtiva: boolean; indicacao: number; indicacaoMinRodadas: number; autoBalanco: boolean; janelaHoras: number; metaHoraAtiva: boolean; metaHora: number; lucroHora: number; motivoBalanco: string | null; balancoAtivo: boolean; ativadoEm: string | null; atualizadoPor: string | null; atualizadoEm: string; lucroJanela: number };
 const JANELAS = [{ h: 24, label: "Últimas 24 horas" }, { h: 168, label: "Últimos 7 dias" }, { h: 720, label: "Últimos 30 dias" }];
 
 export function ConfiguracoesPage() {
   const qc = useQueryClient();
   const { data: c, isLoading, error } = useQuery({ queryKey: ["config"], queryFn: () => api<Config>("/admin/config"), refetchInterval: 30_000 });
   const salvar = useMutation({
-    mutationFn: (dto: Partial<Pick<Config, "autoBalanco" | "janelaHoras" | "metaHoraAtiva" | "metaHora" | "saqueExigeDeposito" | "saqueMinimo" | "bonusDiarioAtivo" | "bonusDiario">>) => api<Config>("/admin/config", { method: "PUT", body: JSON.stringify({ autoBalanco: c!.autoBalanco, janelaHoras: c!.janelaHoras, ...dto }) }),
+    mutationFn: (dto: Partial<Pick<Config, "autoBalanco" | "janelaHoras" | "metaHoraAtiva" | "metaHora" | "saqueExigeDeposito" | "saqueMinimo" | "bonusDiarioAtivo" | "bonusDiario" | "indicacaoAtiva" | "indicacao" | "indicacaoMinRodadas">>) => api<Config>("/admin/config", { method: "PUT", body: JSON.stringify({ autoBalanco: c!.autoBalanco, janelaHoras: c!.janelaHoras, ...dto }) }),
     onSuccess: (novo) => {
       qc.setQueryData(["config"], novo);
       qc.invalidateQueries({ queryKey: ["rtp"] });
@@ -31,6 +31,10 @@ export function ConfiguracoesPage() {
   useEffect(() => { if (c) setMeta(String(c.metaHora)); }, [c?.metaHora]);
   const [bonus, setBonus] = useState("");
   useEffect(() => { if (c) setBonus(String(c.bonusDiario)); }, [c?.bonusDiario]);
+  const [indicacao, setIndicacao] = useState("");
+  useEffect(() => { if (c) setIndicacao(String(c.indicacao)); }, [c?.indicacao]);
+  const [minRodadas, setMinRodadas] = useState("");
+  useEffect(() => { if (c) setMinRodadas(String(c.indicacaoMinRodadas)); }, [c?.indicacaoMinRodadas]);
   const [minSaque, setMinSaque] = useState("");
   useEffect(() => { if (c) setMinSaque(String(c.saqueMinimo)); }, [c?.saqueMinimo]);
 
@@ -90,6 +94,37 @@ export function ConfiguracoesPage() {
           <button type="submit" disabled={salvar.isPending || !(Number(bonus) > 0) || Number(bonus) === c.bonusDiario}
             className="h-9 px-5 rounded-full bg-[#9B5BF8] hover:bg-[#884BE0] text-white text-sm font-semibold disabled:opacity-50">Salvar valor</button>
         </form>
+      </Panel>
+
+      <Panel title="Indique e ganhe" icon={<Handshake className="h-5 w-5" />}>
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <p className="text-sm font-medium text-[#54052D] dark:text-foreground">Link de indicação no perfil</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cada jogador tem um link. Quem cria a conta por ele só libera o prêmio de quem indicou depois de fazer <b className="text-foreground">1 depósito pago</b> e
+              <b className="text-foreground"> jogar</b> o mínimo de rodadas abaixo. O valor entra no saldo do indicador uma vez por amigo e aparece em Bônus. Desligado, o link some do perfil.
+            </p>
+          </div>
+          <button role="switch" aria-checked={c.indicacaoAtiva} aria-label="Ligar indique e ganhe" disabled={salvar.isPending}
+            onClick={() => salvar.mutate({ indicacaoAtiva: !c.indicacaoAtiva })}
+            className={cn("relative shrink-0 h-7 w-12 rounded-full border-2 border-[#9B5BF8] transition-colors disabled:opacity-50", c.indicacaoAtiva ? "bg-[#9B5BF8]" : "bg-transparent")}>
+            <span className={cn("absolute top-0.5 h-5 w-5 rounded-full transition-all", c.indicacaoAtiva ? "left-[22px] bg-white" : "left-0.5 bg-[#9B5BF8]")} />
+          </button>
+        </div>
+        <form className="mt-5 flex flex-wrap items-center gap-3" onSubmit={(e) => { e.preventDefault(); salvar.mutate({ indicacao: Number(indicacao), indicacaoMinRodadas: Number(minRodadas) }); }}>
+          <label htmlFor="indicacao" className="text-sm font-medium text-[#54052D] dark:text-foreground">Ganho por indicação</label>
+          <div className="flex items-center rounded-full border border-border bg-white dark:bg-transparent h-9 px-3 focus-within:border-primary">
+            <span className="text-sm text-muted-foreground mr-1">R$</span>
+            <input id="indicacao" type="number" min={0.01} max={1000} step="0.01" inputMode="decimal" value={indicacao} onChange={(e) => setIndicacao(e.target.value)} className="w-28 bg-transparent text-sm outline-none tabular-nums" />
+          </div>
+          <label htmlFor="min-rodadas" className="text-sm font-medium text-[#54052D] dark:text-foreground">Rodadas mínimas do indicado</label>
+          <div className="flex items-center rounded-full border border-border bg-white dark:bg-transparent h-9 px-3 focus-within:border-primary">
+            <input id="min-rodadas" type="number" min={0} max={1000} step="1" inputMode="numeric" value={minRodadas} onChange={(e) => setMinRodadas(e.target.value)} className="w-16 bg-transparent text-sm outline-none tabular-nums" />
+          </div>
+          <button type="submit" disabled={salvar.isPending || !(Number(indicacao) > 0) || !Number.isInteger(Number(minRodadas)) || minRodadas === "" || (Number(indicacao) === c.indicacao && Number(minRodadas) === c.indicacaoMinRodadas)}
+            className="h-9 px-5 rounded-full bg-[#9B5BF8] hover:bg-[#884BE0] text-white text-sm font-semibold disabled:opacity-50">Salvar</button>
+        </form>
+        <p className="mt-2 text-xs text-muted-foreground">Mudar o valor vale pras indicações liberadas daqui pra frente; as já liberadas mantêm o valor de quando liberaram.</p>
       </Panel>
 
       <Panel title="Auto-balanço do RTP" icon={<Scale className="h-5 w-5" />}>

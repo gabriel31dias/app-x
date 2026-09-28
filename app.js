@@ -305,6 +305,7 @@ function openModal(id) {
   if (id === "modal-withdraw") Saques.abrir();
   if (id === "modal-deposit") Deposit.reset();
   if (id === "modal-profile" || id === "modal-notifications") Bonus.atualizar();
+  if (id === "modal-profile") Indicacoes.sincronizar();
 }
 
 function closeModal(id) {
@@ -319,18 +320,6 @@ function closeModal(id) {
 }
 
 // --- Category Filtering ---
-const GAME_DATA = [
-  { id: 'capivara', title: 'Capivara da Sorte', cat: 'Slots', img: 'assets/card_grid_capivara.png', featured: true, featImg: 'assets/card_feat_capivara.png', rtp: '97.2%' },
-  { id: 'fortuna_tigre', title: 'Fortuna Tigre', cat: 'Slots', img: 'assets/card_fortuna_tigre.png', featured: true, featImg: 'assets/card_feat_tigre.png', rtp: '96.8%' },
-  { id: 'dragao_dourado', title: 'Dragão Dourado', cat: 'Slots', img: 'assets/card_grid_dragao.png', featured: true, featImg: 'assets/card_feat_dragao.png', rtp: '96.9%' },
-  { id: 'tigre_sortudo', title: 'Tigre Sortudo', cat: 'Slots', img: 'assets/card_grid_tigre_sortudo.png', rtp: '96.5%' },
-  { id: 'coelho_sorte', title: 'Coelho da Sorte', cat: 'Slots', img: 'assets/card_grid_coelho.png', rtp: '96.7%' },
-  { id: 'mines', title: 'Mines', cat: 'Outros', img: 'assets/card_grid_mines.png', isMines: true, rtp: '98.0%' },
-  { id: 'aviator', title: 'Aviator', cat: 'Crash', img: 'assets/card_grid_aviator.png', isAviator: true, rtp: '97.0%' },
-  { id: 'roleta', title: 'Roleta', cat: 'Cassino', img: 'assets/card_grid_roleta.png', isRoulette: true, rtp: '97.3%' },
-  { id: 'sweet_bonanza', title: 'Sweet Bonanza', cat: 'Slots', img: 'assets/card_grid_sweet_bonanza.png', rtp: '96.4%' }
-];
-
 function filterGames(category) {
   State.activeCategory = category;
   Sounds.playClick();
@@ -352,7 +341,7 @@ function filterGames(category) {
   const cards = grid.querySelectorAll(".game-card");
   cards.forEach(card => {
     const cardCat = card.dataset.cat;
-    if (category === "Todos" || cardCat === category || (category === "Roleta" && cardCat === "Cassino")) {
+    if (category === "Todos" || cardCat === category) {
       card.style.display = "flex";
     } else {
       card.style.display = "none";
@@ -406,18 +395,6 @@ function launchGame(gameId) {
     openGame('velha.html?v=5');
   } else if (gameId === 'bichos') {
     openGame('bichos.html?v=8');
-  } else if (gameId === 'mines') {
-    openModal('modal-game-mines');
-    initMinesGame();
-  } else if (gameId === 'aviator') {
-    openModal('modal-game-aviator');
-    initAviatorGame();
-  } else if (gameId === 'roleta') {
-    openModal('modal-game-roleta');
-    initRouletteGame();
-  } else {
-    // Generic high quality slot simulator for Tigre, Dragão, Coelho, Sweet Bonanza
-    openGenericSlot(gameId);
   }
 }
 
@@ -586,232 +563,11 @@ function showBigWinCelebration(amount) {
 }
 
 // ==========================================================================
-// MINES GAME SIMULATOR
-// ==========================================================================
-let minesState = {
-  active: false,
-  bet: 5.00,
-  mineCount: 3,
-  grid: [],
-  revealedCount: 0,
-  multiplier: 1.00
-};
-
-function initMinesGame() {
-  renderMinesGrid();
-}
-
-function renderMinesGrid() {
-  const board = document.getElementById("mines-board");
-  if (!board) return;
-  board.innerHTML = "";
-  for (let i = 0; i < 25; i++) {
-    const tile = document.createElement("button");
-    tile.className = "mines-tile";
-    tile.innerHTML = `<span>💎</span>`;
-    tile.onclick = () => revealMinesTile(i, tile);
-    board.appendChild(tile);
-  }
-}
-
-function startMinesRound() {
-  if (State.balance < minesState.bet) {
-    showToast("Saldo insuficiente!", "⚠️");
-    return;
-  }
-  State.balance -= minesState.bet;
-  updateBalanceUI();
-  
-  minesState.active = true;
-  minesState.revealedCount = 0;
-  minesState.multiplier = 1.00;
-  
-  // Place random mines
-  const mines = new Set();
-  while (mines.size < minesState.mineCount) {
-    mines.add(Math.floor(Math.random() * 25));
-  }
-  minesState.grid = Array.from({ length: 25 }, (_, i) => mines.has(i) ? 'bomb' : 'gem');
-
-  renderMinesGrid();
-  document.getElementById("btn-mines-start").style.display = "none";
-  document.getElementById("btn-mines-cashout").style.display = "block";
-  document.getElementById("mines-cashout-mult").textContent = "1.00x";
-}
-
-function revealMinesTile(idx, tileEl) {
-  if (!minesState.active || tileEl.classList.contains("revealed")) return;
-  
-  tileEl.classList.add("revealed");
-  if (minesState.grid[idx] === 'bomb') {
-    tileEl.classList.add("bomb");
-    tileEl.innerHTML = "💣";
-    minesState.active = false;
-    showToast("💥 Boom! Você atingiu uma mina.", "💣");
-    document.getElementById("btn-mines-start").style.display = "block";
-    document.getElementById("btn-mines-cashout").style.display = "none";
-  } else {
-    tileEl.classList.add("gem");
-    tileEl.innerHTML = "💎";
-    minesState.revealedCount++;
-    minesState.multiplier = (1 + minesState.revealedCount * 0.35);
-    Sounds.playCoin();
-    document.getElementById("mines-cashout-mult").textContent = minesState.multiplier.toFixed(2) + "x";
-    document.getElementById("mines-cashout-val").textContent = formatCurrency(minesState.bet * minesState.multiplier);
-  }
-}
-
-function cashoutMines() {
-  if (!minesState.active || minesState.revealedCount === 0) return;
-  const win = minesState.bet * minesState.multiplier;
-  State.balance += win;
-  updateBalanceUI();
-  Sounds.playWin();
-  showToast(`🎉 Ganhou ${formatCurrency(win)}!`, "💰");
-  minesState.active = false;
-  document.getElementById("btn-mines-start").style.display = "block";
-  document.getElementById("btn-mines-cashout").style.display = "none";
-}
-
-// ==========================================================================
-// AVIATOR CRASH SIMULATOR
-// ==========================================================================
-let aviatorTimer = null;
-let aviatorMult = 1.00;
-let aviatorBet = 5.00;
-let aviatorRunning = false;
-
-function initAviatorGame() {}
-
-function startAviatorFlight() {
-  if (aviatorRunning) return;
-  if (State.balance < aviatorBet) {
-    showToast("Saldo insuficiente!", "⚠️");
-    return;
-  }
-  State.balance -= aviatorBet;
-  updateBalanceUI();
-
-  aviatorRunning = true;
-  aviatorMult = 1.00;
-  const crashPoint = 1.2 + Math.random() * 5.5;
-
-  document.getElementById("btn-aviator-bet").style.display = "none";
-  document.getElementById("btn-aviator-cashout").style.display = "block";
-
-  const plane = document.getElementById("aviator-plane");
-  const multEl = document.getElementById("aviator-mult-display");
-
-  aviatorTimer = setInterval(() => {
-    aviatorMult += 0.05;
-    if (multEl) multEl.textContent = aviatorMult.toFixed(2) + "x";
-    if (plane) plane.style.transform = `translate(${Math.min(180, (aviatorMult - 1) * 40)}px, -${Math.min(100, (aviatorMult - 1) * 25)}px)`;
-
-    if (aviatorMult >= crashPoint) {
-      clearInterval(aviatorTimer);
-      aviatorRunning = false;
-      if (multEl) multEl.textContent = "CRASHOU!";
-      showToast("✈️ Avião voou para longe!", "💥");
-      document.getElementById("btn-aviator-bet").style.display = "block";
-      document.getElementById("btn-aviator-cashout").style.display = "none";
-    }
-  }, 100);
-}
-
-function cashoutAviator() {
-  if (!aviatorRunning) return;
-  clearInterval(aviatorTimer);
-  aviatorRunning = false;
-  const win = aviatorBet * aviatorMult;
-  State.balance += win;
-  updateBalanceUI();
-  Sounds.playWin();
-  showToast(`🎉 Ganhou ${formatCurrency(win)}!`, "💰");
-  document.getElementById("btn-aviator-bet").style.display = "block";
-  document.getElementById("btn-aviator-cashout").style.display = "none";
-}
-
-// ==========================================================================
-// ROULETTE SIMULATOR
-// ==========================================================================
-function initRouletteGame() {}
-
-function spinRoulette(choice) {
-  const bet = 5.00;
-  if (State.balance < bet) {
-    showToast("Saldo insuficiente!", "⚠️");
-    return;
-  }
-  State.balance -= bet;
-  updateBalanceUI();
-  Sounds.playReelSpin();
-
-  const wheel = document.getElementById("roulette-wheel-img");
-  if (wheel) wheel.style.transform = `rotate(${Math.floor(Math.random() * 1440 + 720)}deg)`;
-
-  setTimeout(() => {
-    const isWin = Math.random() < 0.48;
-    if (isWin) {
-      const win = bet * 2;
-      State.balance += win;
-      updateBalanceUI();
-      Sounds.playWin();
-      showToast(`🎉 Vitória na Roleta: ${formatCurrency(win)}!`, "🎡");
-    } else {
-      showToast("Tente novamente na Roleta!", "🎡");
-    }
-  }, 1200);
-}
-
-// ==========================================================================
-// GENERIC HIGH-END SLOTS (Tigre, Dragão, Coelho, Sweet Bonanza)
-// ==========================================================================
-function openGenericSlot(gameId) {
-  const game = GAME_DATA.find(g => g.id === gameId);
-  if (!game) return;
-  
-  const modal = document.getElementById("modal-generic-slot");
-  if (!modal) return;
-
-  document.getElementById("generic-slot-title").textContent = game.title;
-  document.getElementById("generic-slot-img").src = game.img;
-  openModal("modal-generic-slot");
-}
-
-function spinGenericSlot() {
-  const bet = 5.00;
-  if (State.balance < bet) {
-    showToast("Saldo insuficiente!", "⚠️");
-    return;
-  }
-  State.balance -= bet;
-  updateBalanceUI();
-  Sounds.playReelSpin();
-
-  const img = document.getElementById("generic-slot-img");
-  if (img) {
-    img.style.filter = "brightness(1.4) blur(2px)";
-    setTimeout(() => {
-      img.style.filter = "";
-      const isWin = Math.random() < 0.35;
-      if (isWin) {
-        const win = bet * (2 + Math.floor(Math.random() * 6));
-        State.balance += win;
-        updateBalanceUI();
-        Sounds.playWin();
-        showToast(`🎉 Ganhou ${formatCurrency(win)}!`, "🎰");
-      } else {
-        showToast("Boa sorte no próximo giro!", "🎰");
-      }
-    }, 800);
-  }
-}
-
-// ==========================================================================
 // PIX DEPOSIT INTEGRATION
 // ==========================================================================
 let selectedDepositAmount = null; // nada marcado: a pessoa escolhe antes de gerar
 const DEPOSIT_TEXT_INICIAL = "Apos gerar o PIX, o saldo sera creditado automaticamente quando o pagamento for confirmado.";
+const DEPOSIT_MIN = 2; // R$ — a API recusa abaixo disso também
 const DEPOSIT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // PIX esquecido sai da fila depois de 1 dia
 const Deposit = {
   current: null, // PIX mostrado no modal agora
@@ -875,13 +631,13 @@ const Deposit = {
     const user = Auth.current;
     if (!user) return Auth.show("login");
     const amountCents = Math.round(amount * 100);
-    if (!Number.isInteger(amountCents) || amountCents < 100) {
-      this.setStatus("Informe um valor valido para gerar o PIX.", "error");
+    if (!Number.isInteger(amountCents) || amountCents < DEPOSIT_MIN * 100) {
+      this.setStatus(`O deposito minimo e de ${formatCurrency(DEPOSIT_MIN)}.`, "error");
       return;
     }
 
     this.setButton("Gerando PIX...", true);
-    this.setStatus("Solicitando cobranca PIX na BullsCash...");
+    this.setStatus("Solicitando cobranca PIX...");
     try {
       const data = await apiFetch("/depositos", {
         method: "POST",
@@ -919,11 +675,15 @@ const Deposit = {
 
   startPolling() {
     clearInterval(this.timer);
-    if (this.pending.length) this.timer = setInterval(() => this.pollNow(), 3000);
+    if (this.current && this.pending.some(d => d.id === this.current.id)) this.timer = setInterval(() => this.pollNow(), 3000);
   },
 
+  // a cada 3 s só o PIX que está na tela; os outros pendentes a conferência da conta (sincronizar, 30 s) resolve
+  // no servidor numa requisição só — consultar todos daqui estourava o limite de requisições da API
   pollNow() {
-    return Promise.all(this.pending.map(dep => this.pollOne(dep)));
+    const dep = this.pending.find(d => d.id === this.current?.id);
+    if (!dep) return clearInterval(this.timer); // o da tela já resolveu: o resto fica com a conferência de 30 s
+    return this.pollOne(dep);
   },
 
   async pollOne(dep) {
@@ -936,33 +696,23 @@ const Deposit = {
       dep.amountCents = data.grossAmountCents || dep.amountCents;
       dep.pixEmv = data.pixEmv || dep.pixEmv;
 
-      if (PIX_SUCCESS_STATUSES.has(status)) return this.credit(dep, data);
+      if (PIX_SUCCESS_STATUSES.has(status)) return this.credit(dep);
       if (PIX_FAILURE_STATUSES.has(status)) return this.fail(dep, status);
       this.persist();
       if (shown()) {
         this.setPixCode(dep.pixEmv);
-        this.setStatus(`Pagamento ainda ${status || "pendente"}. Consultando novamente...`);
+        this.setStatus("Aguardando pagamento... assim que o PIX cair, o saldo entra sozinho.");
       }
-    } catch (err) {
-      if (shown()) this.setStatus(`Nao consegui consultar agora: ${errorMessage(err)}`, "error");
+    } catch {
+      // falha passageira (rede, limite, provedor lento): não assusta o jogador, tenta de novo no próximo ciclo
     }
   },
 
-  credit(dep, data) {
+  // pago: quem decide se entra no saldo é o servidor (uma vez só por depósito, mesmo com várias abas)
+  async credit(dep) {
     const shown = this.current?.id === dep.id;
-    const amount = centsToReais(data.grossAmountCents || dep.amountCents);
-    if (!dep.credited) {
-      dep.credited = true;
-      State.balance += amount;
-      State.userXp += Math.floor(amount * 10);
-      const pending = State.depositHistory.find(item => item.status === "Aguardando" && item.amount === dep.amount);
-      if (pending) pending.status = "Aprovado";
-      else State.depositHistory.unshift({ date: "Agora mesmo", amount, status: "Aprovado", method: "PIX" });
-      updateBalanceUI();
-      Sounds.playCoin();
-      showToast(`Deposito de ${formatCurrency(amount)} creditado!`, "🎉");
-    }
     this.remove(dep);
+    await this.sincronizar();
     if (shown) {
       this.setStatus("Pagamento confirmado. Saldo atualizado.", "ok");
       this.setButton("Gerar novo PIX");
@@ -976,9 +726,41 @@ const Deposit = {
     if (pending) pending.status = "Falhou";
     this.remove(dep);
     if (shown) {
-      this.setStatus(`Deposito ${status}. Gere um novo PIX para tentar novamente.`, "error");
+      this.setStatus("Este PIX expirou ou foi cancelado. Gere um novo PIX.");
       this.setButton("Gerar novo PIX");
       this.setPixCode(null);
+    }
+  },
+
+  /**
+   * Pergunta à API pelos depósitos pagos desta conta que ainda não entraram no saldo e credita cada um
+   * que o servidor liberar. É o que faz o PIX cair mesmo se o jogador fechou ou reiniciou o site:
+   * o webhook da Pluggou marca pago no servidor e isto traz pro saldo ao voltar.
+   */
+  syncing: null,
+  sincronizar() {
+    return (this.syncing ??= this.syncAgora().finally(() => { this.syncing = null; }));
+  },
+  async syncAgora() {
+    const u = Auth.current;
+    if (!u?.cpf) return;
+    const conta = { email: u.email, cpf: onlyDigits(u.cpf) };
+    let pagos;
+    try { pagos = await apiFetch(`/depositos/conta?email=${encodeURIComponent(conta.email)}&cpf=${conta.cpf}`); } catch { return; }
+    for (const p of pagos) {
+      let r;
+      try { r = await apiFetch(`/depositos/${encodeURIComponent(p.id)}/credito`, { method: "POST", body: JSON.stringify(conta) }); } catch { continue; }
+      if (!r.creditar || Auth.current?.email !== conta.email) continue; // trocou de conta no meio: fica pra próxima
+      State.balance = Math.round((State.balance + r.valor) * 100) / 100;
+      State.userXp += Math.floor(r.valor * 10);
+      const item = State.depositHistory.find(i => i.status === "Aguardando" && i.amount === r.valor);
+      if (item) item.status = "Aprovado";
+      else State.depositHistory.unshift({ date: "Agora mesmo", amount: r.valor, status: "Aprovado", method: "PIX" });
+      this.pending = this.pending.filter(d => d.id !== p.id);
+      this.persist();
+      updateBalanceUI();
+      Sounds.playCoin();
+      showToast(`Deposito de ${formatCurrency(r.valor)} creditado!`, "🎉");
     }
   },
 
@@ -986,21 +768,20 @@ const Deposit = {
   resume() {
     this.pending = this.load();
     this.persist();
-    if (!this.pending.length) return;
-    this.pollNow();
-    this.startPolling();
+    // os pendentes daqui são conferidos pela conta (sincronizar), que roda ao abrir e a cada 30 s
   },
 };
 
 // escolher/trocar o valor: o PIX mostrado sai da tela (segue sendo consultado) e pede pra gerar de novo
 function setDepositAmount(amt) {
-  selectedDepositAmount = amt >= 1 ? Math.round(amt * 100) / 100 : null;
+  selectedDepositAmount = amt >= DEPOSIT_MIN ? Math.round(amt * 100) / 100 : null;
   if (Deposit.current) {
     Deposit.current = null;
     Deposit.setPixCode(null);
     Deposit.setStatus("Valor alterado. Gere um novo PIX.");
   }
-  Deposit.setButton(selectedDepositAmount ? `Gerar PIX de ${formatCurrency(selectedDepositAmount)}` : "Escolha um valor", !selectedDepositAmount);
+  Deposit.setButton(selectedDepositAmount ? `Gerar PIX de ${formatCurrency(selectedDepositAmount)}`
+    : amt > 0 ? `Minimo ${formatCurrency(DEPOSIT_MIN)}` : "Escolha um valor", !selectedDepositAmount);
 }
 
 function selectDepositPreset(amt, btnEl) {
@@ -1064,7 +845,7 @@ function errorMessage(err) {
   if (typeof err === "string") return err;
   if (err?.message) return err.message;
   if (err?.detail?.message) return err.detail.message;
-  return "verifique se a API esta rodando e configurada com as chaves BullsCash";
+  return "verifique se a API esta rodando e configurada com as chaves Pix";
 }
 
 // ==========================================================================
@@ -1214,7 +995,8 @@ const Auth = {
     syncSessionCookie(this.current?.email || null);
     loadBalance(); updateBalanceUI(false);
     this.render();
-    setTimeout(() => { if (!this.current) this.show("login"); }, 1300); // depois da animação do logo
+    // veio pelo link de alguém: abre direto no cadastro
+    setTimeout(() => { if (!this.current) this.show(Indicacoes.refGuardado() ? "register" : "login"); }, 1300); // depois da animação do logo
   },
 
   render() {
@@ -1285,6 +1067,7 @@ const Auth = {
     const novo = users[users.length - 1];
     this.startSession(novo, "Conta criada! Bem-vindo(a)");
     this.bonusCadastro(novo);
+    Indicacoes.registrar(novo);
   },
 
   // A API registra o bônus (um por CPF e por e-mail; aparece no painel e sai do lucro) e diz o valor.
@@ -1333,6 +1116,8 @@ const Auth = {
     loadBalance(); updateBalanceUI(false);
     this.render();
     Saques.sincronizar();
+    Deposit.sincronizar();
+    Indicacoes.sincronizar();
     ["login", "register"].forEach(k => closeModal("modal-" + k));
     Sounds.playCoin();
     showToast(`${msg}, ${State.username}!`, "🎉");
@@ -1388,6 +1173,108 @@ const Auth = {
 // aí este aparelho devolve o valor ao saldo. A API marca o estorno, então outro aparelho não devolve de novo.
 // ponytail: saldo ainda mora no aparelho; com carteira no servidor o débito/estorno passa a ser lá
 // ==========================================================================
+// ==========================================================================
+// INDIQUE E GANHE: link ?ref=CODIGO. O amigo cria a conta pelo link, deposita e joga; a API libera
+// e o valor (configurado no painel) entra no saldo de quem indicou, uma vez só por amigo.
+// ==========================================================================
+const Indicacoes = {
+  dados: null,
+  syncing: null,
+
+  // ?ref= fica guardado até a conta ser criada (a pessoa pode navegar antes de se cadastrar)
+  guardarRef() {
+    const r = new URLSearchParams(location.search).get("ref");
+    if (!r || !/^[A-Za-z0-9]{4,16}$/.test(r)) return;
+    try { localStorage.setItem("orama_ref", r.toUpperCase()); } catch {}
+    history.replaceState(null, "", location.pathname + location.hash);
+  },
+  refGuardado() {
+    try { return localStorage.getItem("orama_ref"); } catch { return null; }
+  },
+
+  conta() {
+    const u = Auth.current;
+    return u?.cpf ? { email: u.email, cpf: onlyDigits(u.cpf), nome: u.nome } : null;
+  },
+
+  async registrar(u) {
+    const codigo = this.refGuardado();
+    if (!codigo) return;
+    try { await apiFetch("/indicacoes", { method: "POST", body: JSON.stringify({ codigo, email: u.email, cpf: onlyDigits(u.cpf), nome: u.nome }) }); } catch {}
+    try { localStorage.removeItem("orama_ref"); } catch {} // link inválido ou já usado: não tenta de novo
+  },
+
+  sincronizar() {
+    return (this.syncing ??= this.syncAgora().finally(() => { this.syncing = null; }));
+  },
+  async syncAgora() {
+    const c = this.conta();
+    if (!c) return this.render();
+    const buscar = () => apiFetch(`/indicacoes/minhas?${new URLSearchParams(c)}`);
+    let d;
+    try { d = await buscar(); } catch { return; }
+    if (Auth.current?.email !== c.email) return; // trocou de conta no meio
+    let creditou = false;
+    for (const p of d.paraCreditar) {
+      let r;
+      try { r = await apiFetch(`/indicacoes/${encodeURIComponent(p.id)}/credito`, { method: "POST", body: JSON.stringify(c) }); } catch { continue; }
+      if (!r.creditar || Auth.current?.email !== c.email) continue;
+      creditou = true;
+      State.balance = Math.round((State.balance + r.valor) * 100) / 100;
+      updateBalanceUI();
+      Sounds.playCoin();
+      showToast(`Indicação liberada! +${formatCurrency(r.valor)} no seu saldo`, "🤝");
+    }
+    if (creditou) try { d = await buscar(); } catch {}
+    this.dados = d;
+    this.render();
+  },
+
+  link() {
+    return this.dados ? `${location.origin}${location.pathname}?ref=${this.dados.codigo}` : "";
+  },
+
+  render() {
+    const box = document.getElementById("indique");
+    if (!box) return;
+    const d = this.dados;
+    box.hidden = !d?.ativo || !Auth.current;
+    if (box.hidden) return;
+    const link = this.link();
+    document.getElementById("indique-valor").textContent = formatCurrency(d.valor);
+    document.getElementById("indique-regra").textContent =
+      `Seu amigo cria a conta pelo seu link, faz um depósito e joga${d.minRodadas > 1 ? ` ${d.minRodadas} rodadas` : ""}. Aí ${formatCurrency(d.valor)} caem no seu saldo.`;
+    document.getElementById("indique-link").value = link;
+    document.getElementById("indique-whats").href = `https://wa.me/?text=${encodeURIComponent(`Bora jogar no Orama Games! Cria sua conta pelo meu link: ${link}`)}`;
+    const recebidas = d.indicados.filter(i => i.status === "recebida").length;
+    document.getElementById("indique-resumo").textContent =
+      d.indicados.length ? `${d.indicados.length} indicado(s) · ${recebidas} pago(s) · você já ganhou ${formatCurrency(d.ganho)}` : "Você ainda não indicou ninguém.";
+    const lista = document.getElementById("indique-lista");
+    lista.replaceChildren(...d.indicados.slice(0, 20).map(i => {
+      const li = document.createElement("li");
+      const nome = document.createElement("span");
+      nome.textContent = i.nome; // vem do cadastro de outra pessoa: nunca como HTML
+      const st = document.createElement("span");
+      if (i.status === "recebida") { st.textContent = `+${formatCurrency(i.valor)}`; st.className = "ok"; }
+      else if (i.status === "liberada") { st.textContent = "Liberada"; st.className = "ok"; }
+      else st.textContent = !i.depositou ? "Falta depositar" : `Falta jogar (${i.rodadas}/${d.minRodadas})`;
+      li.append(nome, st);
+      return li;
+    }));
+  },
+
+  copiar() {
+    const link = this.link();
+    if (!link) return;
+    Sounds.playClick();
+    navigator.clipboard.writeText(link).then(() => showToast("Link de indicação copiado!", "📋"), () => {
+      document.getElementById("indique-link")?.select();
+      showToast("Selecione e copie o link.", "ℹ️");
+    });
+  },
+};
+Indicacoes.guardarRef();
+
 const Saques = {
   MIN: 10,
   avisados: new Set(), // aprovações já avisadas nesta sessão
@@ -1481,9 +1368,9 @@ const Saques = {
     if (document.getElementById("modal-withdraw").classList.contains("show")) document.getElementById("saque-disponivel").textContent = formatCurrency(State.balance);
   },
 };
-setInterval(() => Saques.sincronizar(), 30_000);
+setInterval(() => { Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); }, 30_000);
 
-document.addEventListener("DOMContentLoaded", () => { Auth.init(); Saques.sincronizar(); });
+document.addEventListener("DOMContentLoaded", () => { Auth.init(); Saques.sincronizar(); Deposit.sincronizar(); Indicacoes.sincronizar(); });
 
 // ==========================================================================
 // JOGO EM TELA CHEIA (iframe da mesma origem: o jogo lê/escreve State.balance)

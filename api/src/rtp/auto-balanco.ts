@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Injectable, OnModuleDestroy, OnModuleInit, Put, UseGuards } from '@nestjs/common';
-import { IsBoolean, IsIn, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
 import { AdminGuard } from '../auth/admin.guard.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import type { User } from '../generated/prisma/client.js';
@@ -52,8 +52,8 @@ export class AutoBalancoService implements OnModuleInit, OnModuleDestroy {
     const ok = (!c.autoBalanco || lucro > 0) && (!c.metaHoraAtiva || lucroHora >= c.metaHoraCentavos);
     if (!c.balancoAtivo && (porJanela || porHora)) await this.baixar(porJanela && porHora ? 'janela+hora' : porJanela ? 'janela' : 'hora');
     else if (c.balancoAtivo && ok) await this.restaurar();
-    const { metaHoraCentavos, bonusDiarioCentavos, saqueMinimoCentavos, ...resto } = await this.config();
-    return { ...resto, metaHora: metaHoraCentavos / 100, bonusDiario: bonusDiarioCentavos / 100, saqueMinimo: saqueMinimoCentavos / 100, lucroJanela: lucro / 100, lucroHora: lucroHora / 100 };
+    const { metaHoraCentavos, bonusDiarioCentavos, saqueMinimoCentavos, indicacaoCentavos, ...resto } = await this.config();
+    return { ...resto, metaHora: metaHoraCentavos / 100, bonusDiario: bonusDiarioCentavos / 100, saqueMinimo: saqueMinimoCentavos / 100, indicacao: indicacaoCentavos / 100, lucroJanela: lucro / 100, lucroHora: lucroHora / 100 };
   }
 
   private async baixar(motivo: string) {
@@ -95,6 +95,9 @@ class ConfigDto {
   @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(1, { message: 'O mínimo de saque tem que ser pelo menos R$ 1' }) @Max(50_000) saqueMinimo?: number;
   @IsOptional() @IsBoolean() bonusDiarioAtivo?: boolean;
   @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(0.01, { message: 'O bônus precisa ser maior que zero' }) @Max(1000, { message: 'Máximo R$ 1.000' }) bonusDiario?: number;
+  @IsOptional() @IsBoolean() indicacaoAtiva?: boolean;
+  @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(0.01, { message: 'O valor precisa ser maior que zero' }) @Max(1000, { message: 'Máximo R$ 1.000' }) indicacao?: number;
+  @IsOptional() @IsInt({ message: 'Número inteiro' }) @Min(0) @Max(1000) indicacaoMinRodadas?: number;
   @IsOptional() @IsNumber({}, { message: 'Meta inválida' }) @Min(0, { message: 'A meta não pode ser negativa' }) @Max(1_000_000) metaHora?: number;
 }
 
@@ -114,7 +117,7 @@ export class ConfigController {
   @Put()
   async set(@Body() dto: ConfigDto, @CurrentUser() user: User) {
     await this.auto.config();
-    const { metaHora, bonusDiario, saqueMinimo, ...resto } = dto;
+    const { metaHora, bonusDiario, saqueMinimo, indicacao, ...resto } = dto;
     await this.prisma.configuracao.update({
       where: { id: 1 },
       data: {
@@ -122,6 +125,7 @@ export class ConfigController {
         ...(metaHora != null && { metaHoraCentavos: Math.round(metaHora * 100) }),
         ...(bonusDiario != null && { bonusDiarioCentavos: Math.round(bonusDiario * 100) }),
         ...(saqueMinimo != null && { saqueMinimoCentavos: Math.round(saqueMinimo * 100) }),
+        ...(indicacao != null && { indicacaoCentavos: Math.round(indicacao * 100) }),
         atualizadoPor: user.email,
       },
     });

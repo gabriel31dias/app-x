@@ -110,16 +110,6 @@
         <span>Crash</span>
       </button>
 
-      <!-- 4. Roleta -->
-      <button class="cat-card" data-cat="Roleta" onclick="filterGames('Roleta')">
-        <svg viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-          <circle cx="12" cy="12" r="3" fill="currentColor"/>
-          <path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3" stroke="currentColor" stroke-width="1.5"/>
-        </svg>
-        <span>Roleta</span>
-      </button>
-
       <!-- 5. Cartas -->
       <button class="cat-card" data-cat="Cartas" onclick="filterGames('Cartas')">
         <svg viewBox="0 0 24 24">
@@ -167,33 +157,7 @@
           </div>
         </div>
 
-        <!-- 2. Fortuna Tigre -->
-        <div class="game-card" onclick="launchGame('fortuna_tigre')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_feat_tigre.png" alt="Fortuna Tigre" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'fortuna_tigre')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Fortuna Tigre</span>
-            <span class="game-category">Slots</span>
-          </div>
-        </div>
 
-        <!-- 3. Dragão Dourado -->
-        <div class="game-card" onclick="launchGame('dragao_dourado')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_feat_dragao.png" alt="Dragão Dourado" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'dragao_dourado')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Dragão Dourado</span>
-            <span class="game-category">Slots</span>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -211,7 +175,6 @@
         <button class="chip active" data-cat="Todos" onclick="filterGames('Todos')">Todos</button>
         <button class="chip" data-cat="Slots" onclick="filterGames('Slots')">Slots</button>
         <button class="chip" data-cat="Crash" onclick="filterGames('Crash')">Crash</button>
-        <button class="chip" data-cat="Roleta" onclick="filterGames('Roleta')">Roleta</button>
         <button class="chip" data-cat="Cartas" onclick="filterGames('Cartas')">Cartas</button>
         <button class="chip" data-cat="Outros" onclick="filterGames('Outros')">Outros</button>
         <button class="chip-filter-btn" onclick="openModal('modal-search')" aria-label="Filtros">
@@ -399,103 +362,9 @@
           </div>
         </div>
 
-        <!-- 2. Tigre Sortudo -->
-        <div class="game-card" data-cat="Slots" onclick="launchGame('tigre_sortudo')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_grid_tigre_sortudo.png" alt="Tigre Sortudo" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'tigre_sortudo')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Tigre Sortudo</span>
-            <span class="game-category">Slots</span>
-          </div>
-        </div>
 
-        <!-- 3. Coelho da Sorte -->
-        <div class="game-card" data-cat="Slots" onclick="launchGame('coelho_sorte')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_grid_coelho.png" alt="Coelho da Sorte" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'coelho_sorte')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Coelho da Sorte</span>
-            <span class="game-category">Slots</span>
-          </div>
-        </div>
 
-        <!-- 4. Dragão Dourado -->
-        <div class="game-card" data-cat="Slots" onclick="launchGame('dragao_dourado')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_grid_dragao.png" alt="Dragão Dourado" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'dragao_grid')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Dragão Dourado</span>
-            <span class="game-category">Slots</span>
-          </div>
-        </div>
 
-        <!-- 5. Mines -->
-        <div class="game-card" data-cat="Outros" onclick="launchGame('mines')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_grid_mines.png" alt="Mines" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'mines')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Mines</span>
-            <span class="game-category">Outros</span>
-          </div>
-        </div>
-
-        <!-- 6. Aviator -->
-        <div class="game-card" data-cat="Crash" onclick="launchGame('aviator')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_grid_aviator.png" alt="Aviator" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'aviator')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Aviator</span>
-            <span class="game-category">Crash</span>
-          </div>
-        </div>
-
-        <!-- 7. Roleta -->
-        <div class="game-card" data-cat="Cassino" onclick="launchGame('roleta')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_grid_roleta.png" alt="Roleta" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'roleta')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Roleta</span>
-            <span class="game-category">Cassino</span>
-          </div>
-        </div>
-
-        <!-- 8. Sweet Bonanza -->
-        <div class="game-card" data-cat="Slots" onclick="launchGame('sweet_bonanza')">
-          <div class="game-img-wrapper">
-            <img src="assets/card_grid_sweet_bonanza.png" alt="Sweet Bonanza" class="game-img">
-            <button class="btn-fav" onclick="toggleFav(event, 'sweet_bonanza')" aria-label="Favoritar">
-              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </button>
-          </div>
-          <div class="game-info">
-            <span class="game-title">Sweet Bonanza</span>
-            <span class="game-category">Slots</span>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -578,10 +447,10 @@
           <button class="btn-preset" onclick="selectDepositPreset(1000, this)">R$ 1.000</button>
         </div>
 
-        <input type="number" id="deposit-custom-val" class="deposit-custom-input" inputmode="decimal" min="1" step="0.01" placeholder="Outro valor (R$)" oninput="onDepositCustom(this)">
+        <input type="number" id="deposit-custom-val" class="deposit-custom-input" inputmode="decimal" min="2" step="0.01" placeholder="Outro valor (mín. R$ 2)" oninput="onDepositCustom(this)">
 
         <div class="pix-qr-box" id="pix-qr-box" hidden>
-          <!-- QR real gerado do "copia e cola" (pix_emv) da BullsCash -->
+          <!-- QR real gerado do "copia e cola" (pixEmv) do provedor -->
           <div class="pix-qr-img" id="pix-qr" aria-label="QR code do PIX">
             <span class="pix-qr-empty">O QR code aparece aqui depois de gerar o PIX</span>
           </div>
@@ -592,6 +461,11 @@
         </div>
 
         <p class="deposit-status" id="deposit-status">Apos gerar o PIX, o saldo sera creditado automaticamente quando o pagamento for confirmado.</p>
+
+        <a class="deposit-suporte" href="https://wa.me/5518930856060?text=Ol%C3%A1%2C%20paguei%20um%20PIX%20e%20o%20saldo%20n%C3%A3o%20caiu" target="_blank" rel="noopener">
+          <span>⚠️</span>
+          <span>Problemas para reconhecer o pagamento? <b>Chame no WhatsApp (18) 93085-6060</b></span>
+        </a>
 
         <button class="btn-submit-deposit" id="btn-confirm-deposit" onclick="confirmDeposit()" disabled>
           Escolha um valor
@@ -676,105 +550,6 @@
     </div>
   </div>
 
-  <!-- 3. MINES MINI-GAME MODAL -->
-  <div class="modal-overlay" id="modal-game-mines" onclick="if(event.target===this) closeModal('modal-game-mines')">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>💣</span>
-          <span>Mines - Campo Minado</span>
-        </div>
-        <button class="btn-close-modal" onclick="closeModal('modal-game-mines')">&times;</button>
-      </div>
-      <div class="modal-body" style="align-items: center;">
-        <div style="display:flex; justify-content:space-between; width:100%; font-weight:700;">
-          <span>Saldo: <b class="sync-balance" style="color:var(--neon-green-bright)">R$ 17,00</b></span>
-          <span>Multiplicador: <b id="mines-cashout-mult" style="color:var(--gold)">1.00x</b></span>
-        </div>
-
-        <div id="mines-board" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; width:100%; max-width:320px; aspect-ratio:1;">
-          <!-- Dynamically populated 5x5 tiles -->
-        </div>
-
-        <div style="width: 100%; display:flex; gap:8px;">
-          <button id="btn-mines-start" class="btn-submit-deposit" onclick="startMinesRound()">Começar Rodada (R$ 5,00)</button>
-          <button id="btn-mines-cashout" class="btn-submit-deposit" style="display:none; background: linear-gradient(180deg, #f5c542, #d9820a);" onclick="cashoutMines()">
-            Sacar <span id="mines-cashout-val">R$ 0,00</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 4. AVIATOR CRASH GAME MODAL -->
-  <div class="modal-overlay" id="modal-game-aviator" onclick="if(event.target===this) closeModal('modal-game-aviator')">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>✈️</span>
-          <span>Aviator Crash</span>
-        </div>
-        <button class="btn-close-modal" onclick="closeModal('modal-game-aviator')">&times;</button>
-      </div>
-      <div class="modal-body" style="align-items: center;">
-        <div style="width:100%; height:180px; background:radial-gradient(circle at 10% 90%, #2e081e 0%, #0c020b 100%); border:1px solid #ff2a7a; border-radius:14px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-          <div id="aviator-mult-display" style="font-size:38px; font-weight:900; color:#ff2a7a; text-shadow:0 0 15px #ff2a7a;">1.00x</div>
-          <div id="aviator-plane" style="position:absolute; bottom:20px; left:20px; font-size:32px; transition: transform 0.1s linear;">✈️</div>
-        </div>
-        <div style="width: 100%;">
-          <button id="btn-aviator-bet" class="btn-submit-deposit" style="background:linear-gradient(180deg, #ff2a7a, #990a42); border-color:#ff7aa8; color:#fff;" onclick="startAviatorFlight()">
-            Apostar R$ 5,00
-          </button>
-          <button id="btn-aviator-cashout" class="btn-submit-deposit" style="display:none; background:linear-gradient(180deg, #14cd5e, #0a823a);" onclick="cashoutAviator()">
-            Sacar Prêmio!
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 5. ROULETTE MODAL -->
-  <div class="modal-overlay" id="modal-game-roleta" onclick="if(event.target===this) closeModal('modal-game-roleta')">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>🎡</span>
-          <span>Roleta Europeia</span>
-        </div>
-        <button class="btn-close-modal" onclick="closeModal('modal-game-roleta')">&times;</button>
-      </div>
-      <div class="modal-body" style="align-items: center;">
-        <img id="roulette-wheel-img" src="assets/card_grid_roleta.png" alt="Roleta" style="width:160px; height:160px; border-radius:50%; border:3px solid var(--gold); transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);">
-        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:100%;">
-          <button class="btn-preset" style="background:#b31414; color:#fff;" onclick="spinRoulette('red')">Vermelho</button>
-          <button class="btn-preset" style="background:#148a30; color:#fff;" onclick="spinRoulette('green')">Verde (0)</button>
-          <button class="btn-preset" style="background:#1a1a1a; color:#fff;" onclick="spinRoulette('black')">Preto</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 6. GENERIC SLOT MODAL (Tigre, Dragão, Coelho, Sweet Bonanza) -->
-  <div class="modal-overlay" id="modal-generic-slot" onclick="if(event.target===this) closeModal('modal-generic-slot')">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>🎰</span>
-          <span id="generic-slot-title">Jogo Slot</span>
-        </div>
-        <button class="btn-close-modal" onclick="closeModal('modal-generic-slot')">&times;</button>
-      </div>
-      <div class="modal-body" style="align-items: center;">
-        <img id="generic-slot-img" src="assets/card_feat_tigre.png" alt="Slot" style="width:100%; max-width:260px; border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,0.6); transition: all 0.3s ease;">
-        <div style="width:100%; display:flex; justify-content:space-between; font-weight:700;">
-          <span>Saldo: <b class="sync-balance" style="color:var(--neon-green-bright)">R$ 17,00</b></span>
-          <span>Aposta: <b>R$ 5,00</b></span>
-        </div>
-        <button class="btn-submit-deposit" onclick="spinGenericSlot()">Girar Rodada (R$ 5,00)</button>
-      </div>
-    </div>
-  </div>
-
   <!-- 7. PROFILE & VIP LEVEL MODAL -->
   <div class="modal-overlay" id="modal-profile" onclick="if(event.target===this) closeModal('modal-profile')">
     <div class="modal-card">
@@ -814,6 +589,19 @@
             <li>Saques via PIX</li>
             <li>Suporte VIP 24/7 exclusivo</li>
           </ul>
+        </div>
+
+        <!-- INDIQUE E GANHE: valor e regras vêm do painel (Configurações) -->
+        <div class="indique" id="indique" hidden>
+          <div class="indique-titulo">🤝 Indique e ganhe <b id="indique-valor">R$ 0,00</b></div>
+          <p class="indique-regra" id="indique-regra"></p>
+          <div class="pix-code-container">
+            <input type="text" id="indique-link" readonly class="pix-code-input" aria-label="Seu link de indicação">
+            <button class="btn-copy-pix" onclick="Indicacoes.copiar()">Copiar</button>
+          </div>
+          <a class="indique-whats" id="indique-whats" target="_blank" rel="noopener">Enviar no WhatsApp</a>
+          <div class="indique-resumo" id="indique-resumo"></div>
+          <ul class="indique-lista" id="indique-lista"></ul>
         </div>
 
         <button class="btn-submit-deposit" onclick="closeModal('modal-profile'); openModal('modal-withdraw')">💸 Sacar saldo</button>
@@ -1033,6 +821,6 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-  <script src="app.js?v=36"></script>
+  <script src="app.js?v=37"></script>
 </body>
 </html>
