@@ -8,8 +8,9 @@ export type TokenPayload = { sub: string; v: number };
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly jwt: JwtService,
-    private readonly prisma: PrismaService,
+    protected readonly prisma: PrismaService,
   ) {}
+
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest();

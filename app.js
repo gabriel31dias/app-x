@@ -1187,15 +1187,20 @@ const Indicacoes = {
   dados: null,
   syncing: null,
 
-  // ?ref= fica guardado até a conta ser criada (a pessoa pode navegar antes de se cadastrar)
+  // ?ref= (amigo) e ?inf= (influencer) ficam guardados até a conta ser criada (a pessoa pode navegar antes)
   guardarRef() {
-    const r = new URLSearchParams(location.search).get("ref");
-    if (!r || !/^[A-Za-z0-9]{4,16}$/.test(r)) return;
-    try { localStorage.setItem("orama_ref", r.toUpperCase()); } catch {}
-    history.replaceState(null, "", location.pathname + location.hash);
+    const p = new URLSearchParams(location.search);
+    let achou = false;
+    for (const [param, chave] of [["ref", "orama_ref"], ["inf", "orama_inf"]]) {
+      const r = p.get(param);
+      if (!r || !/^[A-Za-z0-9]{4,16}$/.test(r)) continue;
+      try { localStorage.setItem(chave, r.toUpperCase()); } catch {}
+      achou = true;
+    }
+    if (achou) history.replaceState(null, "", location.pathname + location.hash);
   },
   refGuardado() {
-    try { return localStorage.getItem("orama_ref"); } catch { return null; }
+    try { return localStorage.getItem("orama_ref") || localStorage.getItem("orama_inf"); } catch { return null; }
   },
 
   conta() {
@@ -1204,10 +1209,18 @@ const Indicacoes = {
   },
 
   async registrar(u) {
-    const codigo = this.refGuardado();
-    if (!codigo) return;
-    try { await apiFetch("/indicacoes", { method: "POST", body: JSON.stringify({ codigo, email: u.email, cpf: onlyDigits(u.cpf), nome: u.nome }) }); } catch {}
-    try { localStorage.removeItem("orama_ref"); } catch {} // link inválido ou já usado: não tenta de novo
+    const conta = { email: u.email, cpf: onlyDigits(u.cpf), nome: u.nome };
+    const ler = k => { try { return localStorage.getItem(k); } catch { return null; } };
+    const ref = ler("orama_ref"), inf = ler("orama_inf");
+    // link inválido ou já usado: não tenta de novo
+    if (ref) {
+      try { await apiFetch("/indicacoes", { method: "POST", body: JSON.stringify({ codigo: ref, ...conta }) }); } catch {}
+      try { localStorage.removeItem("orama_ref"); } catch {}
+    }
+    if (inf) {
+      try { await apiFetch("/influencers/indicado", { method: "POST", body: JSON.stringify({ codigo: inf, ...conta }) }); } catch {}
+      try { localStorage.removeItem("orama_inf"); } catch {}
+    }
   },
 
   sincronizar() {

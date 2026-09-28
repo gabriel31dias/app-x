@@ -122,6 +122,10 @@ model Configuracao {
   indicacaoAtiva     Boolean @default(true) // programa "indique e ganhe" ligado
   indicacaoCentavos  Int     @default(500) // quanto o indicador ganha por indicado liberado
   indicacaoMinRodadas Int    @default(1) // rodadas com aposta que o indicado precisa jogar (além de 1 depósito pago)
+  infCadastroCentavos Int    @default(100) // influencer: por inscrição feita pelo link dele
+  infPrimeiroDepositoCentavos Int @default(500) // influencer: quando o inscrito faz o 1º depósito pago
+  infComissaoBp      Int     @default(100) // influencer: % de cada depósito pago dos inscritos, em centésimos de % (100 = 1%)
+  infSaqueMinimoCentavos Int @default(1000) // influencer: menor saque
   balancoAtivo  Boolean   @default(false) // RTPs estão baixados agora
   motivoBalanco String? // por que baixou: "janela" | "hora" | "janela+hora"
   rtpsAntes     String? // JSON { jogo: rtp | null } pra restaurar; null = estava no de fábrica
@@ -191,4 +195,61 @@ model Indicacao {
 
   @@index([indicador])
   @@index([criadoEm])
+}
+
+// influencer: parceiro com link próprio (?inf=) e login no painel, onde vê só as comissões dele
+model Influencer {
+  id       String   @id @default(cuid())
+  userId   String   @unique // conta de login (User) criada pelo admin
+  codigo   String   @unique
+  nome     String
+  email    String   @unique // minúsculo, o mesmo do login
+  cpf      String // só dígitos (barra o influencer se inscrever no próprio link)
+  chavePix String
+  ativo    Boolean  @default(true) // desativado: não loga no dashboard e o link para de valer
+  criadoPor String
+  criadoEm DateTime @default(now())
+}
+
+// conta do site criada pelo link de um influencer (uma vez por e-mail e por CPF)
+model InfluencerIndicado {
+  id           String   @id @default(cuid())
+  influencerId String
+  email        String   @unique
+  cpf          String   @unique
+  nome         String
+  criadoEm     DateTime @default(now())
+
+  @@index([influencerId, criadoEm])
+}
+
+// cada centavo que o influencer ganhou, com o valor de quando foi gerado (mudar a config não mexe no passado)
+model InfluencerComissao {
+  id           String   @id @default(cuid())
+  influencerId String
+  chave        String   @unique // "cadastro:<email>" | "primeiro:<email>" | "deposito:<id do depósito>": não duplica
+  tipo         String // cadastro | primeiro_deposito | deposito
+  indicado     String // e-mail do inscrito que gerou
+  depositoId   String?
+  baseCentavos Int? // valor do depósito (só no tipo deposito)
+  valorCentavos Int
+  criadoEm     DateTime @default(now())
+
+  @@index([influencerId, criadoEm])
+}
+
+// saque pedido pelo influencer no dashboard dele; o admin paga o PIX na mão e aprova, ou cancela
+model InfluencerSaque {
+  id            String    @id @default(cuid())
+  influencerId  String
+  valorCentavos Int
+  chavePix      String
+  status        String    @default("pendente") // pendente | pago | cancelado
+  motivo        String?
+  decididoPor   String?
+  decididoEm    DateTime?
+  criadoEm      DateTime  @default(now())
+
+  @@index([status, criadoEm])
+  @@index([influencerId])
 }

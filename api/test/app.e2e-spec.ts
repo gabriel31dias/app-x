@@ -382,6 +382,78 @@ describe('Auth + Perfil (e2e)', () => {
     await prisma.deposito.deleteMany({ where: { id: 'plg-caio-1' } });
   });
 
+  it('influencer: admin cria, link gera comissões (inscrição, 1º depósito e %), dashboard e saque aprovado pelo admin', async () => {
+    const { PrismaService } = await import('../src/prisma/prisma.service.js');
+    const prisma = app.get(PrismaService);
+    const dados = { nome: 'Lia Influencer', email: 'Lia@Insta.com', cpf: '246.813.579-28', celular: '(11) 98888-7777', chavePix: 'lia@insta.com', senha: 'Parceira2026' };
+
+    await api().post('/admin/influencers').send(dados).expect(401);
+    await api().post('/admin/influencers').set(adminAuth).send({ ...dados, senha: 'fraca' }).expect(400);
+    const { body: criado } = await api().post('/admin/influencers').set(adminAuth).send(dados).expect(201);
+    expect(criado.codigo).toMatch(/^[A-Z2-9]{6}$/);
+    await api().post('/admin/influencers').set(adminAuth).send(dados).expect(409); // e-mail/CPF já têm conta
+
+    // login no mesmo /auth/login; admin não é influencer e influencer não é admin
+    const { body: login } = await api().post('/auth/login').send({ login: 'lia@insta.com', senha: 'Parceira2026' }).expect(200);
+    const infAuth = { Authorization: `Bearer ${login.accessToken}` };
+    await api().get('/influencer/me').set(adminAuth).expect(403);
+    await api().get('/admin/influencers').set(infAuth).expect(403);
+
+    // inscrições pelo link: R$ 1 cada (padrão)
+    const rui = { email: 'rui.fa@x.com', cpf: '135.792.468-28', nome: 'Rui Fãzão Costa' };
+    const eva = { email: 'eva.fa@x.com', cpf: '864.209.753-10', nome: 'Eva Fã' };
+    await api().post('/influencers/indicado').send({ ...rui, codigo: 'NAOEXISTE' }).expect(400);
+    await api().post('/influencers/indicado').send({ ...dados, codigo: criado.codigo }).expect(400); // o próprio link
+    await api().post('/influencers/indicado').send({ ...rui, codigo: criado.codigo.toLowerCase() }).expect(200);
+    await api().post('/influencers/indicado').send({ ...eva, codigo: criado.codigo }).expect(200);
+    await api().post('/influencers/indicado').send({ ...rui, codigo: criado.codigo }).expect(409);
+
+    // Rui deposita R$ 200 e depois R$ 50: R$ 5 pelo 1º depósito + 1% de cada (R$ 2 + R$ 0,50)
+    const dep = (id: string, cents: number) => prisma.deposito.create({ data: { id, valorCentavos: cents, status: 'pago', statusBruto: 'paid', nome: 'Rui', documento: '13579246828', celular: '11987654321', email: 'rui.fa@x.com' } });
+    await dep('plg-rui-1', 20000);
+    await dep('plg-rui-2', 5000);
+    let { body: me } = await api().get('/influencer/me').set(infAuth).expect(200);
+    expect(me).toMatchObject({
+      nome: 'Lia Influencer', codigo: criado.codigo, inscritos: 2, depositaram: 1, totalDepositado: 250,
+      comissaoCadastro: 2, comissaoPrimeiroDeposito: 5, comissaoDepositos: 2.5, ganho: 9.5, disponivel: 9.5,
+      regras: { cadastro: 1, primeiroDeposito: 5, percentual: 1, saqueMinimo: 10 },
+    });
+    expect(me.comissoes.map((c: { inscrito: string }) => c.inscrito)).toContain('Rui C.'); // nome mascarado
+    // conciliar de novo não duplica
+    expect((await api().get('/influencer/me').set(infAuth).expect(200)).body.ganho).toBe(9.5);
+
+    const { body: insc } = await api().get('/influencer/inscritos').set(infAuth).expect(200);
+    expect(insc.total).toBe(2);
+    expect(insc.itens.find((i: { nome: string }) => i.nome === 'Rui C.')).toMatchObject({ depositou: true, depositado: 250, comissao: 8.5 });
+
+    // saque: mínimo R$ 10 e não passa do disponível
+    await api().post('/influencer/saques').set(infAuth).send({ valor: 9.5 }).expect(400);
+    await dep('plg-rui-3', 100000); // +1% = R$ 10
+    const { body: saque } = await api().post('/influencer/saques').set(infAuth).send({ valor: 15 }).expect(201);
+    await api().post('/influencer/saques').set(infAuth).send({ valor: 10 }).expect(400); // sobrou R$ 4,50
+    me = (await api().get('/influencer/me').set(infAuth).expect(200)).body;
+    expect(me).toMatchObject({ ganho: 19.5, saquePendente: 15, disponivel: 4.5 });
+
+    // admin: lista influencers com números, lista saques, aprova uma vez só
+    const { body: lista } = await api().get('/admin/influencers?q=lia').set(adminAuth).expect(200);
+    expect(lista[0]).toMatchObject({ nome: 'Lia Influencer', inscritos: 2, ganho: 19.5, saquePendente: 15, ativo: true });
+    const { body: sq } = await api().get('/admin/influencers/saques?status=pendente').set(adminAuth).expect(200);
+    expect(sq).toMatchObject({ total: 1, soma: { pendentes: 1, valorPendente: 15 } });
+    expect(sq.itens[0]).toMatchObject({ id: saque.id, influencer: 'Lia Influencer', chavePix: 'lia@insta.com', valor: 15 });
+    await api().put(`/admin/influencers/saques/${saque.id}/aprovar`).set(infAuth).expect(403);
+    await api().put(`/admin/influencers/saques/${saque.id}/aprovar`).set(adminAuth).expect(200);
+    await api().put(`/admin/influencers/saques/${saque.id}/cancelar`).set(adminAuth).send({ motivo: 'x' }).expect(409);
+    expect((await api().get('/influencer/me').set(infAuth).expect(200)).body).toMatchObject({ sacado: 15, saquePendente: 0, disponivel: 4.5 });
+
+    // config muda só o que vem depois; desativar derruba a sessão e o link
+    await api().put('/admin/config').set(adminAuth).send({ autoBalanco: false, janelaHoras: 24, infCadastro: 2, infPercentual: 2.5 }).expect(200);
+    await api().patch(`/admin/influencers/${criado.id}`).set(adminAuth).send({ ativo: false }).expect(200);
+    await api().get('/influencer/me').set(infAuth).expect(401);
+    await api().post('/influencers/indicado').send({ email: 'novo@x.com', cpf: '975.318.642-82', codigo: criado.codigo }).expect(400);
+    await api().put('/admin/config').set(adminAuth).send({ autoBalanco: false, janelaHoras: 24, infCadastro: 1, infPercentual: 1 }).expect(200);
+    await prisma.deposito.deleteMany({ where: { id: { startsWith: 'plg-rui-' } } });
+  });
+
   it('saldos: o site informa, o admin lista com soma, busca e ordem', async () => {
     await api().post('/saldos').send({ email: 'Zeca@X.com', nome: 'Zeca Paz', saldo: 50 }).expect(204);
     await api().post('/saldos').send({ email: 'zeca@x.com', nome: 'Zeca Paz', saldo: 72.35 }).expect(204); // mesma conta: atualiza

@@ -4,18 +4,18 @@ import { api } from "@/shared/lib/api";
 import { brl, dataHora } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Banknote, Clock, Gift, Handshake, Loader2, Scale } from "lucide-react";
+import { AlertTriangle, Banknote, Clock, Gift, Handshake, Loader2, Megaphone, Scale } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-export type Config = { saqueExigeDeposito: boolean; saqueMinimo: number; bonusDiarioAtivo: boolean; bonusDiario: number; indicacaoAtiva: boolean; indicacao: number; indicacaoMinRodadas: number; autoBalanco: boolean; janelaHoras: number; metaHoraAtiva: boolean; metaHora: number; lucroHora: number; motivoBalanco: string | null; balancoAtivo: boolean; ativadoEm: string | null; atualizadoPor: string | null; atualizadoEm: string; lucroJanela: number };
+export type Config = { saqueExigeDeposito: boolean; saqueMinimo: number; bonusDiarioAtivo: boolean; bonusDiario: number; indicacaoAtiva: boolean; indicacao: number; indicacaoMinRodadas: number; infCadastro: number; infPrimeiroDeposito: number; infPercentual: number; infSaqueMinimo: number; autoBalanco: boolean; janelaHoras: number; metaHoraAtiva: boolean; metaHora: number; lucroHora: number; motivoBalanco: string | null; balancoAtivo: boolean; ativadoEm: string | null; atualizadoPor: string | null; atualizadoEm: string; lucroJanela: number };
 const JANELAS = [{ h: 24, label: "Últimas 24 horas" }, { h: 168, label: "Últimos 7 dias" }, { h: 720, label: "Últimos 30 dias" }];
 
 export function ConfiguracoesPage() {
   const qc = useQueryClient();
   const { data: c, isLoading, error } = useQuery({ queryKey: ["config"], queryFn: () => api<Config>("/admin/config"), refetchInterval: 30_000 });
   const salvar = useMutation({
-    mutationFn: (dto: Partial<Pick<Config, "autoBalanco" | "janelaHoras" | "metaHoraAtiva" | "metaHora" | "saqueExigeDeposito" | "saqueMinimo" | "bonusDiarioAtivo" | "bonusDiario" | "indicacaoAtiva" | "indicacao" | "indicacaoMinRodadas">>) => api<Config>("/admin/config", { method: "PUT", body: JSON.stringify({ autoBalanco: c!.autoBalanco, janelaHoras: c!.janelaHoras, ...dto }) }),
+    mutationFn: (dto: Partial<Pick<Config, "autoBalanco" | "janelaHoras" | "metaHoraAtiva" | "metaHora" | "saqueExigeDeposito" | "saqueMinimo" | "bonusDiarioAtivo" | "bonusDiario" | "indicacaoAtiva" | "indicacao" | "indicacaoMinRodadas" | "infCadastro" | "infPrimeiroDeposito" | "infPercentual" | "infSaqueMinimo">>) => api<Config>("/admin/config", { method: "PUT", body: JSON.stringify({ autoBalanco: c!.autoBalanco, janelaHoras: c!.janelaHoras, ...dto }) }),
     onSuccess: (novo) => {
       qc.setQueryData(["config"], novo);
       qc.invalidateQueries({ queryKey: ["rtp"] });
@@ -35,6 +35,10 @@ export function ConfiguracoesPage() {
   useEffect(() => { if (c) setIndicacao(String(c.indicacao)); }, [c?.indicacao]);
   const [minRodadas, setMinRodadas] = useState("");
   useEffect(() => { if (c) setMinRodadas(String(c.indicacaoMinRodadas)); }, [c?.indicacaoMinRodadas]);
+  const [inf, setInf] = useState({ infCadastro: "", infPrimeiroDeposito: "", infPercentual: "", infSaqueMinimo: "" });
+  useEffect(() => {
+    if (c) setInf({ infCadastro: String(c.infCadastro), infPrimeiroDeposito: String(c.infPrimeiroDeposito), infPercentual: String(c.infPercentual), infSaqueMinimo: String(c.infSaqueMinimo) });
+  }, [c?.infCadastro, c?.infPrimeiroDeposito, c?.infPercentual, c?.infSaqueMinimo]);
   const [minSaque, setMinSaque] = useState("");
   useEffect(() => { if (c) setMinSaque(String(c.saqueMinimo)); }, [c?.saqueMinimo]);
 
@@ -125,6 +129,35 @@ export function ConfiguracoesPage() {
             className="h-9 px-5 rounded-full bg-[#9B5BF8] hover:bg-[#884BE0] text-white text-sm font-semibold disabled:opacity-50">Salvar</button>
         </form>
         <p className="mt-2 text-xs text-muted-foreground">Mudar o valor vale pras indicações liberadas daqui pra frente; as já liberadas mantêm o valor de quando liberaram.</p>
+      </Panel>
+
+      <Panel title="Influencers" icon={<Megaphone className="h-5 w-5" />}>
+        <p className="text-sm text-muted-foreground">
+          Quanto cada influencer ganha pelo link <code>?inf=</code>. As comissões ficam registradas com o valor da hora em que foram geradas: mudar aqui vale daqui pra frente.
+          Os influencers são criados na tela <b className="text-foreground">Influencers</b>.
+        </p>
+        <form className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-end"
+          onSubmit={(e) => { e.preventDefault(); salvar.mutate({ infCadastro: Number(inf.infCadastro), infPrimeiroDeposito: Number(inf.infPrimeiroDeposito), infPercentual: Number(inf.infPercentual), infSaqueMinimo: Number(inf.infSaqueMinimo) }); }}>
+          {([
+            ["infCadastro", "Por inscrição", "R$", 0, 1000, "0.01"],
+            ["infPrimeiroDeposito", "No 1º depósito do inscrito", "R$", 0, 1000, "0.01"],
+            ["infPercentual", "De cada depósito", "%", 0, 50, "0.01"],
+            ["infSaqueMinimo", "Saque mínimo", "R$", 1, 50000, "0.01"],
+          ] as const).map(([k, label, un, min, max, step]) => (
+            <label key={k} className="text-sm font-medium text-[#54052D] dark:text-foreground">
+              {label}
+              <div className="mt-1 flex items-center rounded-full border border-border bg-white dark:bg-transparent h-9 px-3 focus-within:border-primary">
+                {un === "R$" && <span className="text-sm text-muted-foreground mr-1">R$</span>}
+                <input type="number" min={min} max={max} step={step} inputMode="decimal" value={inf[k]} onChange={(e) => setInf({ ...inf, [k]: e.target.value })} className="w-full bg-transparent text-sm outline-none tabular-nums" />
+                {un === "%" && <span className="text-sm text-muted-foreground ml-1">%</span>}
+              </div>
+            </label>
+          ))}
+          <button type="submit"
+            disabled={salvar.isPending || Object.values(inf).some((v) => v === "" || !(Number(v) >= 0)) || Number(inf.infSaqueMinimo) < 1
+              || (Number(inf.infCadastro) === c.infCadastro && Number(inf.infPrimeiroDeposito) === c.infPrimeiroDeposito && Number(inf.infPercentual) === c.infPercentual && Number(inf.infSaqueMinimo) === c.infSaqueMinimo)}
+            className="h-9 px-5 rounded-full bg-[#9B5BF8] hover:bg-[#884BE0] text-white text-sm font-semibold disabled:opacity-50 sm:col-span-2 xl:col-span-4 justify-self-start">Salvar valores</button>
+        </form>
       </Panel>
 
       <Panel title="Auto-balanço do RTP" icon={<Scale className="h-5 w-5" />}>

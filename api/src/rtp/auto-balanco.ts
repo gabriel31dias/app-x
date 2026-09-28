@@ -52,8 +52,9 @@ export class AutoBalancoService implements OnModuleInit, OnModuleDestroy {
     const ok = (!c.autoBalanco || lucro > 0) && (!c.metaHoraAtiva || lucroHora >= c.metaHoraCentavos);
     if (!c.balancoAtivo && (porJanela || porHora)) await this.baixar(porJanela && porHora ? 'janela+hora' : porJanela ? 'janela' : 'hora');
     else if (c.balancoAtivo && ok) await this.restaurar();
-    const { metaHoraCentavos, bonusDiarioCentavos, saqueMinimoCentavos, indicacaoCentavos, ...resto } = await this.config();
-    return { ...resto, metaHora: metaHoraCentavos / 100, bonusDiario: bonusDiarioCentavos / 100, saqueMinimo: saqueMinimoCentavos / 100, indicacao: indicacaoCentavos / 100, lucroJanela: lucro / 100, lucroHora: lucroHora / 100 };
+    const { metaHoraCentavos, bonusDiarioCentavos, saqueMinimoCentavos, indicacaoCentavos, infCadastroCentavos, infPrimeiroDepositoCentavos, infComissaoBp, infSaqueMinimoCentavos, ...resto } = await this.config();
+    return { ...resto, metaHora: metaHoraCentavos / 100, bonusDiario: bonusDiarioCentavos / 100, saqueMinimo: saqueMinimoCentavos / 100, indicacao: indicacaoCentavos / 100,
+      infCadastro: infCadastroCentavos / 100, infPrimeiroDeposito: infPrimeiroDepositoCentavos / 100, infPercentual: infComissaoBp / 100, infSaqueMinimo: infSaqueMinimoCentavos / 100, lucroJanela: lucro / 100, lucroHora: lucroHora / 100 };
   }
 
   private async baixar(motivo: string) {
@@ -98,6 +99,10 @@ class ConfigDto {
   @IsOptional() @IsBoolean() indicacaoAtiva?: boolean;
   @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(0.01, { message: 'O valor precisa ser maior que zero' }) @Max(1000, { message: 'Máximo R$ 1.000' }) indicacao?: number;
   @IsOptional() @IsInt({ message: 'Número inteiro' }) @Min(0) @Max(1000) indicacaoMinRodadas?: number;
+  @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(0) @Max(1000) infCadastro?: number;
+  @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(0) @Max(1000) infPrimeiroDeposito?: number;
+  @IsOptional() @IsNumber({}, { message: 'Percentual inválido' }) @Min(0) @Max(50, { message: 'Máximo 50%' }) infPercentual?: number;
+  @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(1, { message: 'Mínimo R$ 1' }) @Max(50_000) infSaqueMinimo?: number;
   @IsOptional() @IsNumber({}, { message: 'Meta inválida' }) @Min(0, { message: 'A meta não pode ser negativa' }) @Max(1_000_000) metaHora?: number;
 }
 
@@ -117,7 +122,7 @@ export class ConfigController {
   @Put()
   async set(@Body() dto: ConfigDto, @CurrentUser() user: User) {
     await this.auto.config();
-    const { metaHora, bonusDiario, saqueMinimo, indicacao, ...resto } = dto;
+    const { metaHora, bonusDiario, saqueMinimo, indicacao, infCadastro, infPrimeiroDeposito, infPercentual, infSaqueMinimo, ...resto } = dto;
     await this.prisma.configuracao.update({
       where: { id: 1 },
       data: {
@@ -126,6 +131,10 @@ export class ConfigController {
         ...(bonusDiario != null && { bonusDiarioCentavos: Math.round(bonusDiario * 100) }),
         ...(saqueMinimo != null && { saqueMinimoCentavos: Math.round(saqueMinimo * 100) }),
         ...(indicacao != null && { indicacaoCentavos: Math.round(indicacao * 100) }),
+        ...(infCadastro != null && { infCadastroCentavos: Math.round(infCadastro * 100) }),
+        ...(infPrimeiroDeposito != null && { infPrimeiroDepositoCentavos: Math.round(infPrimeiroDeposito * 100) }),
+        ...(infPercentual != null && { infComissaoBp: Math.round(infPercentual * 100) }),
+        ...(infSaqueMinimo != null && { infSaqueMinimoCentavos: Math.round(infSaqueMinimo * 100) }),
         atualizadoPor: user.email,
       },
     });

@@ -12,6 +12,7 @@ export function AdminLayout() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   if (!session.token()) return <Navigate to="/login" replace />;
+  if (session.user()?.papel === "influencer") return <Navigate to="/influencer" replace />;
 
   const logout = () => {
     session.clear();

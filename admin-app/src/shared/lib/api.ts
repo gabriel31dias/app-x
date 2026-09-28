@@ -3,7 +3,8 @@ const API = "/api";
 const TOKEN = "orama_admin_token";
 const USER = "orama_admin_user";
 
-export type AdminUser = { nome: string; email: string; avatarUrl?: string | null };
+// papel: "admin" vê o painel inteiro; "influencer" só o próprio dashboard (/influencer)
+export type AdminUser = { nome: string; email: string; avatarUrl?: string | null; papel?: "admin" | "influencer" };
 
 export const session = {
   token: () => localStorage.getItem(TOKEN),

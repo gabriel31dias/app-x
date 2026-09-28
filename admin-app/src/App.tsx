@@ -3,6 +3,10 @@ import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { BonusPage } from "@/features/admin/bonus/BonusPage";
 import { IndicacoesPage } from "@/features/admin/indicacoes/IndicacoesPage";
+import { InfluencerSaquesPage } from "@/features/admin/influencers/InfluencerSaquesPage";
+import { InfluencersPage } from "@/features/admin/influencers/InfluencersPage";
+import { InfluencerDashboardPage } from "@/features/influencer/InfluencerDashboardPage";
+import { InfluencerLayout } from "@/shared/components/Layout/InfluencerLayout";
 import { ConfiguracoesPage } from "@/features/admin/config/ConfiguracoesPage";
 import { DashboardPage } from "@/features/admin/dashboard/DashboardPage";
 import { JogadoresPage } from "@/features/admin/jogadores/JogadoresPage";
@@ -29,9 +33,14 @@ export default function App() {
             <Route path="/rodadas" element={<RodadasPage />} />
             <Route path="/bonus" element={<BonusPage />} />
             <Route path="/indicacoes" element={<IndicacoesPage />} />
+            <Route path="/influencers" element={<InfluencersPage />} />
+            <Route path="/influencers/saques" element={<InfluencerSaquesPage />} />
             <Route path="/jogadores" element={<JogadoresPage />} />
             <Route path="/rtp" element={<RtpPage />} />
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          </Route>
+          <Route element={<InfluencerLayout />}>
+            <Route path="/influencer" element={<InfluencerDashboardPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

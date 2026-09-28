@@ -28,7 +28,7 @@ export function LoginPage() {
     return () => { root.className = antes; };
   }, []);
 
-  if (session.token()) return <Navigate to="/dashboard" replace />;
+  if (session.token()) return <Navigate to={session.user()?.papel === "influencer" ? "/influencer" : "/dashboard"} replace />;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,11 +38,15 @@ export function LoginPage() {
     try {
       const r = await api<{ accessToken: string; user: AdminUser }>("/auth/login", { method: "POST", body: JSON.stringify({ login, senha }) });
       session.save(r.accessToken, { nome: r.user.nome, email: r.user.email });
-      await api("/admin/rtp"); // 403 = conta existe mas não é admin
-      navigate("/dashboard", { replace: true });
+      // admin ou influencer? cada um tem a sua rota; 403 nas duas = conta sem acesso ao painel
+      const pode = (p: string) => api(p).then(() => true, (e) => { if ((e as { status?: number }).status === 403) return false; throw e; });
+      const papel = (await pode("/admin/rtp")) ? "admin" : (await pode("/influencer/me")) ? "influencer" : null;
+      if (!papel) throw Object.assign(new Error("Essa conta não tem acesso ao painel."), { status: 403 });
+      session.save(r.accessToken, { nome: r.user.nome, email: r.user.email, papel });
+      navigate(papel === "influencer" ? "/influencer" : "/dashboard", { replace: true });
     } catch (err) {
       session.clear();
-      setError((err as { status?: number }).status === 403 ? "Essa conta não tem acesso ao painel admin." : (err as Error).message);
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +75,7 @@ export function LoginPage() {
           </div>
           <div className="mb-9">
             <h1 className="text-3xl font-bold leading-tight text-[#1F1F24] sm:text-4xl">Faça login</h1>
-            <p className="mt-3 text-sm font-medium leading-6 text-[#73737D]">Área restrita aos administradores.</p>
+            <p className="mt-3 text-sm font-medium leading-6 text-[#73737D]">Área restrita a administradores e influencers parceiros.</p>
           </div>
 
           <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-[0_18px_60px_rgba(31,31,36,0.08)] sm:p-8">
