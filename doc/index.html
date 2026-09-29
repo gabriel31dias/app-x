@@ -70,7 +70,9 @@ code, pre { font-family: var(--mono); }
   padding: 8px 16px; border-radius: 999px;
 }
 .top .cta:hover { text-decoration: none; background: var(--green-2); }
+.menu-btn svg { width: 20px; height: 20px; }
 .menu-btn {
+  place-items: center;
   display: none; background: none; border: 1px solid var(--line-2); color: var(--text);
   border-radius: 10px; width: 40px; height: 40px; font-size: 18px; cursor: pointer;
 }
@@ -213,7 +215,7 @@ footer { padding: 30px 48px 50px; color: var(--muted); font-size: 13px; border-t
     transform: translateX(-100%); transition: transform .2s ease; border-right: 1px solid var(--line-2);
   }
   nav.side.open { transform: none; }
-  .menu-btn { display: block; }
+  .menu-btn { display: grid; }
   main { padding: 28px 16px 90px; }
   footer { padding: 24px 16px 40px; }
   h1 { font-size: 30px; }
@@ -230,7 +232,7 @@ footer { padding: 30px 48px 50px; color: var(--muted); font-size: 13px; border-t
 <body>
 
 <header class="top">
-  <button class="menu-btn" aria-label="Abrir menu" onclick="document.querySelector('nav.side').classList.toggle('open')">☰</button>
+  <button class="menu-btn" aria-label="Abrir menu" onclick="document.querySelector('nav.side').classList.toggle('open')"><i data-lucide="menu"></i></button>
   <a href="../b2b/"><img src="../assets/logo_orama.png" alt="Orama Games"></a>
   <span class="tag">API PARA OPERADORES</span>
   <span class="spacer"></span>
@@ -723,6 +725,7 @@ footer { padding: 30px 48px 50px; color: var(--muted); font-size: 13px; border-t
 
 <footer>© 2026 Orama Games · API v1.0 · Jogue com responsabilidade. Proibido para menores de 18 anos.</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/lucide@1.48.0/dist/umd/lucide.min.js"></script>
 <script src="../b2b/jogos.js"></script>
 <script>
 // catálogo: vem de b2b/jogos.js (o mesmo do site /b2b)
@@ -761,6 +764,7 @@ async function calcular() {
 }
 ['c-secret', 'c-ts', 'c-body'].forEach((id) => $(id).addEventListener('input', calcular));
 calcular();
+window.lucide?.createIcons();
 
 // menu: marca a seção visível e fecha no celular ao clicar
 const links = [...document.querySelectorAll('nav.side a')];

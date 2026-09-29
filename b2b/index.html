@@ -57,6 +57,9 @@ h2.title { font-size: clamp(30px, 4.2vw, 48px); line-height: 1.1; letter-spacing
   white-space: nowrap;
 }
 .btn:hover { transform: translateY(-2px); }
+.btn svg, .code-big .head svg { width: 18px; height: 18px; stroke-width: 2.4; }
+.code-big .head a { display: inline-flex; align-items: center; gap: 6px; }
+.code-big .head svg { width: 15px; height: 15px; }
 .btn-primary { background: var(--green); color: #022010; box-shadow: 0 10px 40px -10px rgba(0, 230, 118, .7); }
 .btn-primary:hover { background: var(--green-2); box-shadow: 0 16px 50px -10px rgba(0, 230, 118, .85); }
 .btn-ghost { border: 1px solid var(--line-2); color: var(--text); background: rgba(20, 205, 94, .05); }
@@ -96,7 +99,7 @@ header.nav.solid { background: rgba(3, 10, 6, .82); backdrop-filter: blur(14px);
 .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
 .trust { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 34px; color: var(--muted); font-size: 14px; font-weight: 600; }
 .trust span { display: inline-flex; align-items: center; gap: 8px; }
-.trust span::before { content: "✓"; color: var(--green-2); font-weight: 900; }
+.trust svg { width: 17px; height: 17px; color: var(--green-2); stroke-width: 2.5; }
 
 .stage { position: relative; height: 520px; }
 .card-float {
@@ -151,7 +154,7 @@ section.block { padding: 110px 0; position: relative; }
 }
 .feat:hover { border-color: var(--line-2); transform: translateY(-4px); }
 .feat .ic {
-  width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 22px;
+  width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; color: var(--green-2);
   background: rgba(20, 205, 94, .12); border: 1px solid var(--line-2); margin-bottom: 18px;
 }
 .feat h3 { font-size: 19px; margin-bottom: 8px; }
@@ -179,6 +182,8 @@ section.block { padding: 110px 0; position: relative; }
   position: absolute; top: 12px; left: 12px; font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
   background: rgba(3, 10, 6, .8); border: 1px solid var(--line-2); color: var(--green-2); padding: 4px 10px; border-radius: 999px; backdrop-filter: blur(6px);
 }
+.game .badge svg { width: 12px; height: 12px; }
+.game .badge { display: inline-flex; align-items: center; gap: 5px; }
 .game .badge.novo { left: auto; right: 12px; color: #231800; background: var(--gold); border-color: var(--gold); }
 .game .body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .game h3 { font-size: 18px; }
@@ -210,7 +215,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 8px rg
 .rtp-note { color: var(--muted); font-size: 13px; margin-top: 16px; }
 .checks { list-style: none; margin-top: 26px; display: grid; gap: 12px; }
 .checks li { display: flex; gap: 12px; color: var(--dim); }
-.checks li::before { content: "✓"; flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 900; color: #022010; background: var(--green); margin-top: 1px; }
+.checks .ok { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; color: #022010; background: var(--green); margin-top: 1px; }
+.checks .ok svg { width: 14px; height: 14px; stroke-width: 3; }
 .checks b { color: var(--text); }
 
 /* integração */
@@ -249,8 +255,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 8px rg
 .faq details[open] { border-color: var(--line-2); }
 .faq summary { cursor: pointer; list-style: none; padding: 20px 0; font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; gap: 16px; }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; color: var(--green-2); font-size: 22px; line-height: 1; transition: transform .2s; }
-.faq details[open] summary::after { transform: rotate(45deg); }
+.faq summary svg { flex: none; width: 20px; height: 20px; color: var(--green-2); transition: transform .2s; }
+.faq details[open] summary svg { transform: rotate(45deg); }
 .faq details p { color: var(--dim); padding-bottom: 20px; }
 
 /* cta final */
@@ -332,10 +338,10 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
       <h1>Jogos brasileiros que <span class="grad">prendem o jogador</span>. Integração em dias.</h1>
       <p class="sub">Coloque o catálogo original da Orama Games no seu cassino com uma API só. O saldo continua na sua plataforma, o sorteio roda no nosso servidor e você escolhe o RTP de cada jogo.</p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="#jogos">Ver os jogos →</a>
-        <a class="btn btn-ghost" href="../doc/">Ler a documentação</a>
+        <a class="btn btn-primary" href="#jogos">Ver os jogos <i data-lucide="arrow-right"></i></a>
+        <a class="btn btn-ghost" href="../doc/"><i data-lucide="book-open"></i>Ler a documentação</a>
       </div>
-      <div class="trust"><span>Carteira seamless</span><span>Feito para celular</span><span>Relatório de GGR</span></div>
+      <div class="trust"><span><i data-lucide="circle-check"></i>Carteira seamless</span><span><i data-lucide="circle-check"></i>Feito para celular</span><span><i data-lucide="circle-check"></i>Relatório de GGR</span></div>
     </div>
     <div class="stage" id="stage" aria-hidden="true"></div>
   </div>
@@ -377,12 +383,12 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
       <p class="sub reveal">Tudo o que o seu time técnico e o seu financeiro precisam, sem gambiarra.</p>
     </div>
     <div class="feats">
-      <div class="feat reveal"><div class="ic">🔒</div><h3>Sorteio no servidor</h3><p>O resultado é decidido e pago antes da animação. Nada no navegador muda o prêmio.</p></div>
-      <div class="feat reveal"><div class="ic">💳</div><h3>Carteira seamless</h3><p>O saldo fica com você. Pedimos débito e crédito a cada jogada, com assinatura e idempotência.</p></div>
-      <div class="feat reveal"><div class="ic">🎚️</div><h3>RTP por jogo</h3><p>Escolha o retorno de cada jogo no painel. A troca vale a partir da próxima rodada.</p></div>
-      <div class="feat reveal"><div class="ic">📱</div><h3>Mobile first</h3><p>Pensado para a tela do celular, que é onde o jogador brasileiro aposta. Abre em iframe ou em tela cheia.</p></div>
-      <div class="feat reveal"><div class="ic">🎮</div><h3>Modo demonstração</h3><p>Botão "Jogar grátis" com saldo fictício, sem tocar na sua carteira. Ótimo para conversão.</p></div>
-      <div class="feat reveal"><div class="ic">📊</div><h3>Relatórios e conciliação</h3><p>Histórico de cada rodada, GGR por jogo e por mês, e dados para resolver reclamação de jogador.</p></div>
+      <div class="feat reveal"><div class="ic"><i data-lucide="shield-check"></i></div><h3>Sorteio no servidor</h3><p>O resultado é decidido e pago antes da animação. Nada no navegador muda o prêmio.</p></div>
+      <div class="feat reveal"><div class="ic"><i data-lucide="wallet"></i></div><h3>Carteira seamless</h3><p>O saldo fica com você. Pedimos débito e crédito a cada jogada, com assinatura e idempotência.</p></div>
+      <div class="feat reveal"><div class="ic"><i data-lucide="sliders-horizontal"></i></div><h3>RTP por jogo</h3><p>Escolha o retorno de cada jogo no painel. A troca vale a partir da próxima rodada.</p></div>
+      <div class="feat reveal"><div class="ic"><i data-lucide="smartphone"></i></div><h3>Mobile first</h3><p>Pensado para a tela do celular, que é onde o jogador brasileiro aposta. Abre em iframe ou em tela cheia.</p></div>
+      <div class="feat reveal"><div class="ic"><i data-lucide="gamepad-2"></i></div><h3>Modo demonstração</h3><p>Botão "Jogar grátis" com saldo fictício, sem tocar na sua carteira. Ótimo para conversão.</p></div>
+      <div class="feat reveal"><div class="ic"><i data-lucide="chart-column"></i></div><h3>Relatórios e conciliação</h3><p>Histórico de cada rodada, GGR por jogo e por mês, e dados para resolver reclamação de jogador.</p></div>
     </div>
   </div>
 </section>
@@ -394,9 +400,9 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
       <h2 class="title reveal">Você decide quanto volta para o jogador</h2>
       <p class="sub reveal">Arraste para ver, a cada R$ 10.000 apostados, quanto volta em prêmios e quanto fica com a casa no longo prazo.</p>
       <ul class="checks reveal">
-        <li><span><b>Piso de 85%</b>, o mínimo exigido para jogo online no Brasil.</span></li>
-        <li><span><b>Limite de prêmio por rodada</b> para proteger o seu caixa.</span></li>
-        <li><span><b>Configuração por jogo</b>: um RTP no crash e outro nos slots.</span></li>
+        <li><span class="ok"><i data-lucide="check"></i></span><span><b>Piso de 85%</b>, o mínimo exigido para jogo online no Brasil.</span></li>
+        <li><span class="ok"><i data-lucide="check"></i></span><span><b>Limite de prêmio por rodada</b> para proteger o seu caixa.</span></li>
+        <li><span class="ok"><i data-lucide="check"></i></span><span><b>Configuração por jogo</b>: um RTP no crash e outro nos slots.</span></li>
       </ul>
     </div>
     <div class="rtp-box reveal">
@@ -425,7 +431,7 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
       <div class="step reveal"><h3>Homologue e vá ao ar</h3><p>Rodamos o checklist no sandbox, liberamos as chaves de produção e os jogos aparecem no seu lobby.</p></div>
     </div>
     <div class="code-big reveal">
-      <div class="head"><span>POST /b2b/v1/sessions</span><a href="../doc/#sessions">Ver na documentação →</a></div>
+      <div class="head"><span>POST /b2b/v1/sessions</span><a href="../doc/#sessions">Ver na documentação <i data-lucide="arrow-right"></i></a></div>
 <pre><span class="k">const</span> r = <span class="k">await</span> fetch(<span class="s">'https://api.oramagames.site/b2b/v1/sessions'</span>, {
   method: <span class="s">'POST'</span>,
   headers: { <span class="s">'X-Operator-Id'</span>: OPERATOR_ID, ...assinar(SECRET, corpo) },
@@ -466,12 +472,12 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
       <h2 class="title reveal">Perguntas frequentes</h2>
     </div>
     <div class="faq">
-      <details class="reveal"><summary>O saldo do jogador sai da minha plataforma?</summary><p>Não. É carteira seamless: o saldo fica sempre com você. A cada jogada pedimos o débito da aposta e depois o crédito do prêmio, os dois assinados e sem risco de cobrar duas vezes.</p></details>
-      <details class="reveal"><summary>Quanto tempo leva a integração?</summary><p>As chaves de sandbox saem no mesmo dia. O trabalho do seu lado é implementar quatro endpoints de carteira e uma chamada para abrir o jogo. Depois do checklist de homologação, liberamos a produção.</p></details>
-      <details class="reveal"><summary>Posso escolher quais jogos entram no meu cassino?</summary><p>Sim. Você libera jogo por jogo e define o RTP de cada um. Jogos novos ficam disponíveis e você decide se quer ativar.</p></details>
-      <details class="reveal"><summary>E se a minha carteira cair no meio de uma jogada?</summary><p>Se o débito não confirmar em 3 segundos, a jogada não acontece e mandamos um estorno. Se o crédito do prêmio falhar, repetimos com a mesma identificação por até 24 horas, até você confirmar.</p></details>
-      <details class="reveal"><summary>Como resolvo reclamação de jogador sobre um resultado?</summary><p>Toda rodada tem um identificador. Pela API você consulta a aposta, o prêmio, o resultado sorteado e os dados de verificação daquela rodada.</p></details>
-      <details class="reveal"><summary>Os jogos funcionam no celular?</summary><p>Todos foram desenhados primeiro para o celular, em modo retrato, e funcionam também no computador.</p></details>
+      <details class="reveal"><summary>O saldo do jogador sai da minha plataforma?<i data-lucide="plus"></i></summary><p>Não. É carteira seamless: o saldo fica sempre com você. A cada jogada pedimos o débito da aposta e depois o crédito do prêmio, os dois assinados e sem risco de cobrar duas vezes.</p></details>
+      <details class="reveal"><summary>Quanto tempo leva a integração?<i data-lucide="plus"></i></summary><p>As chaves de sandbox saem no mesmo dia. O trabalho do seu lado é implementar quatro endpoints de carteira e uma chamada para abrir o jogo. Depois do checklist de homologação, liberamos a produção.</p></details>
+      <details class="reveal"><summary>Posso escolher quais jogos entram no meu cassino?<i data-lucide="plus"></i></summary><p>Sim. Você libera jogo por jogo e define o RTP de cada um. Jogos novos ficam disponíveis e você decide se quer ativar.</p></details>
+      <details class="reveal"><summary>E se a minha carteira cair no meio de uma jogada?<i data-lucide="plus"></i></summary><p>Se o débito não confirmar em 3 segundos, a jogada não acontece e mandamos um estorno. Se o crédito do prêmio falhar, repetimos com a mesma identificação por até 24 horas, até você confirmar.</p></details>
+      <details class="reveal"><summary>Como resolvo reclamação de jogador sobre um resultado?<i data-lucide="plus"></i></summary><p>Toda rodada tem um identificador. Pela API você consulta a aposta, o prêmio, o resultado sorteado e os dados de verificação daquela rodada.</p></details>
+      <details class="reveal"><summary>Os jogos funcionam no celular?<i data-lucide="plus"></i></summary><p>Todos foram desenhados primeiro para o celular, em modo retrato, e funcionam também no computador.</p></details>
     </div>
   </div>
 </section>
@@ -481,8 +487,8 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
     <h2>Pronto para colocar a <span class="grad">Orama Games</span> no seu lobby?</h2>
     <p>Fale com o time comercial e receba as chaves de sandbox hoje mesmo.</p>
     <div class="hero-cta">
-      <a class="btn btn-primary" href="https://wa.me/558584382947?text=Quero%20integrar%20os%20jogos%20da%20Orama%20Games%20via%20API" target="_blank" rel="noopener">Falar no WhatsApp</a>
-      <a class="btn btn-ghost" href="../doc/">Ver a documentação</a>
+      <a class="btn btn-primary" href="https://wa.me/558584382947?text=Quero%20integrar%20os%20jogos%20da%20Orama%20Games%20via%20API" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>Falar no WhatsApp</a>
+      <a class="btn btn-ghost" href="../doc/"><i data-lucide="book-open"></i>Ver a documentação</a>
     </div>
   </div>
 </section>
@@ -499,6 +505,7 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/lucide@1.48.0/dist/umd/lucide.min.js"></script>
 <script src="jogos.js"></script>
 <script>
 const JOGOS = window.ORAMA_JOGOS || [];
@@ -532,7 +539,7 @@ function render(cat) {
   grid.innerHTML = JOGOS.filter((j) => !cat || j.categoria === cat).map((j) => `
     <article class="game">
       <div class="art"><img src="${img(j.id)}" alt="${esc(j.nome)}" loading="lazy">
-        <span class="badge">${esc(j.categoria)}</span>${j.novo ? '<span class="badge novo">Novo</span>' : ''}</div>
+        <span class="badge">${esc(j.categoria)}</span>${j.novo ? '<span class="badge novo"><i data-lucide="sparkles"></i>Novo</span>' : ''}</div>
       <div class="body"><h3>${esc(j.nome)}</h3><p>${esc(j.desc)}</p>
         <div class="meta"><code>${esc(j.id)}</code><span>RTP até <b>${pct(j.rtp)}</b></span></div></div>
     </article>`).join('');
@@ -543,8 +550,11 @@ filtros.addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
   filtros.querySelectorAll('button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); });
   render(b.dataset.c);
+  icones();
 });
 render('');
+const icones = () => window.lucide?.createIcons();
+icones();
 
 // simulador de RTP
 const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
