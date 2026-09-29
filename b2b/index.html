@@ -33,7 +33,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 * { scrollbar-width: none; }
 *::-webkit-scrollbar { display: none; }
-html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+html { scroll-behavior: smooth; scroll-padding-top: 96px; }
 body {
   font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
   background: var(--bg); color: var(--text); line-height: 1.6; font-size: 16px;
@@ -71,15 +71,15 @@ header.nav {
   border-bottom: 1px solid transparent;
 }
 header.nav.solid { background: rgba(3, 10, 6, .82); backdrop-filter: blur(14px); border-bottom-color: var(--line); }
-.nav-in { display: flex; align-items: center; gap: 28px; height: 72px; }
-.nav-in .logo img { height: 34px; }
+.nav-in { display: flex; align-items: center; gap: 28px; height: 88px; }
+.nav-in .logo img { height: 60px; }
 .nav-links { display: flex; gap: 26px; font-size: 14px; font-weight: 600; color: var(--dim); }
 .nav-links a:hover { color: var(--text); }
 .nav-in .spacer { flex: 1; }
 .nav-in .btn { padding: 10px 18px; font-size: 14px; }
 
 /* hero */
-.hero { position: relative; padding: 150px 0 90px; overflow: hidden; }
+.hero { position: relative; padding: 166px 0 90px; overflow: hidden; }
 .hero::before {
   content: ""; position: absolute; inset: -20% -10% auto -10%; height: 900px; z-index: -1;
   background:
@@ -270,7 +270,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 8px rg
 
 footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
 .foot { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; align-items: center; border-top: 1px solid var(--line); padding-top: 30px; }
-.foot img { height: 30px; opacity: .9; }
+.foot img { height: 52px; opacity: .9; }
 .foot nav { display: flex; gap: 22px; flex-wrap: wrap; }
 .foot nav a:hover { color: var(--text); }
 
@@ -293,7 +293,7 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
 @media (max-width: 640px) {
   .container { padding: 0 16px; }
   .nav-in { gap: 12px; }
-  .nav-in .logo img { height: 28px; }
+  .nav-in .logo img { height: 46px; }
   .nav-in .btn { padding: 9px 14px; font-size: 13px; }
   section.block { padding: 76px 0; }
   .feats, .steps { grid-template-columns: 1fr; }
