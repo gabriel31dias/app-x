@@ -231,7 +231,7 @@ footer { padding: 30px 48px 50px; color: var(--muted); font-size: 13px; border-t
 
 <header class="top">
   <button class="menu-btn" aria-label="Abrir menu" onclick="document.querySelector('nav.side').classList.toggle('open')">☰</button>
-  <a href="../"><img src="../assets/logo_orama.png" alt="Orama Games"></a>
+  <a href="../b2b/"><img src="../assets/logo_orama.png" alt="Orama Games"></a>
   <span class="tag">API PARA OPERADORES</span>
   <span class="spacer"></span>
   <span class="ver">v1.0</span>
@@ -276,7 +276,7 @@ footer { padding: 30px 48px 50px; color: var(--muted); font-size: 13px; border-t
   <h1 style="margin-top:14px">Coloque os jogos da <em>Orama Games</em> no seu cassino com uma integração.</h1>
   <p class="lead">A API da Orama Games entrega nosso catálogo de jogos originais para operadores. O saldo continua na sua plataforma: nós só pedimos para debitar a aposta e creditar o prêmio, com assinatura em cada chamada e idempotência de ponta a ponta.</p>
   <div class="hero-stats">
-    <div class="stat"><b>12</b><span>jogos originais</span></div>
+    <div class="stat"><b id="n-jogos">12</b><span>jogos originais</span></div>
     <div class="stat"><b>85–99%</b><span>RTP configurável por jogo</span></div>
     <div class="stat"><b>6</b><span>endpoints + 4 callbacks</span></div>
     <div class="stat"><b>BRL</b><span>PIX-ready, mobile first</span></div>
@@ -723,25 +723,14 @@ footer { padding: 30px 48px 50px; color: var(--muted); font-size: 13px; border-t
 
 <footer>© 2026 Orama Games · API v1.0 · Jogue com responsabilidade. Proibido para menores de 18 anos.</footer>
 
+<script src="../b2b/jogos.js"></script>
 <script>
-// catálogo: só os jogos que existem de verdade no site
-const JOGOS = [
-  ['capivara', 'Capivara da Sorte', 'Slot', 0.97],
-  ['gatinho', 'Gatinho Flash', 'Slot', 0.97],
-  ['papagaio', 'Papagaio Gay', 'Slot', 0.97],
-  ['macaco', 'Macaco Pelado', 'Slot com jackpot', 0.95],
-  ['bichos', 'Bichos da Sorte', 'Slot', 0.96],
-  ['raspa', 'Raspadinha Premiada', 'Raspadinha', 0.96],
-  ['crash', 'Galinha Angola Crash', 'Crash', 0.97],
-  ['sapo', 'Sapinho Pulador Crash', 'Crash', 0.96],
-  ['perereca', 'Perereca Suicida', 'Arcade', 0.96],
-  ['truco', 'Truco Aposta', 'Cartas', 0.96],
-  ['sinuca', 'Sinuca Aposta', 'Habilidade', 0.96],
-  ['velha', 'Jogo da Velha Aposta', 'Arcade', 0.96],
-];
+// catálogo: vem de b2b/jogos.js (o mesmo do site /b2b)
+const JOGOS = (window.ORAMA_JOGOS || []).map((j) => [j.id, j.nome, j.categoria, j.rtp]);
 document.getElementById('games-grid').innerHTML = JOGOS.map(([id, nome, cat, rtp]) =>
   `<div class="game"><img src="../assets/card_grid_${id}.png" alt="" loading="lazy">
    <div><b>${nome}</b><code>${id}</code><small>${cat} · RTP até ${Math.round(rtp * 100)}%</small></div></div>`).join('');
+document.getElementById('n-jogos').textContent = JOGOS.length;
 
 // abas dos blocos de código
 document.querySelectorAll('[data-tabs]').forEach((box) => {

@@ -1,0 +1,28 @@
+// Catálogo da API para operadores. É a fonte única do site /b2b e da doc /doc:
+// jogo novo no site (página + RTP no painel) entra aqui também.
+window.ORAMA_JOGOS = [
+  { id: 'capivara', nome: 'Capivara da Sorte', categoria: 'Slot', rtp: 0.97, novo: false,
+    desc: 'A capivara acorda em qualquer giro: trava os símbolos e gira de novo, grátis, até sair prêmio. Tela cheia paga x10.' },
+  { id: 'gatinho', nome: 'Gatinho Flash', categoria: 'Slot', rtp: 0.97, novo: false,
+    desc: 'Cascata que sobe o multiplicador até x5 e Sessão de Fotos com até 20 giros grátis e multiplicador x18.' },
+  { id: 'papagaio', nome: 'Papagaio Gay', categoria: 'Slot', rtp: 0.97, novo: false,
+    desc: 'Símbolos explodem em purpurina, cascata até x5 e Parada do Orgulho com até 20 giros grátis.' },
+  { id: 'macaco', nome: 'Macaco Pelado', categoria: 'Slot', rtp: 0.95, novo: false,
+    desc: 'Wild que expande na coluna e placar de jackpots MINI, MINOR, MAJOR e GRAND de até 1000x a aposta.' },
+  { id: 'perereca', nome: 'Perereca Suicida', categoria: 'Slot', rtp: 0.96, novo: false,
+    desc: 'Perereca de óculos como wild e o Pulo da Perereca: 3 coroas ou mais liberam giros grátis.' },
+  { id: 'bichos', nome: 'Bichos da Sorte', categoria: 'Loteria', rtp: 0.96, novo: false,
+    desc: 'O clássico brasileiro em versão instantânea: grupo, duque, terno e mais, com sorteio na hora.' },
+  { id: 'raspa', nome: 'Raspadinha Premiada', categoria: 'Raspadinha', rtp: 0.96, novo: false,
+    desc: 'Raspe as 9 casas com o dedo. Três prêmios iguais pagam até R$ 100 por real apostado.' },
+  { id: 'crash', nome: 'Galinha Angola Crash', categoria: 'Crash', rtp: 0.97, novo: false,
+    desc: 'O multiplicador sobe enquanto a galinha voa. Saque antes da queda, com auto cashout.' },
+  { id: 'sapo', nome: 'Sapinho Pulador Crash', categoria: 'Crash', rtp: 0.96, novo: false,
+    desc: 'Cada pulo aumenta o prêmio. Saque antes de o sapinho cair na água.' },
+  { id: 'truco', nome: 'Truco Aposta', categoria: 'Cartas', rtp: 0.96, novo: false,
+    desc: 'Truco em dupla com parceiro e adversários na mesa: peça truco, aumente a aposta e leve a rodada.' },
+  { id: 'sinuca', nome: 'Sinuca Aposta', categoria: 'Habilidade', rtp: 0.96, novo: false,
+    desc: 'Sinuca com física real: mire, ajuste a força e encaçape as suas bolas antes do rival.' },
+  { id: 'velha', nome: 'Jogo da Velha Aposta', categoria: 'Arcade', rtp: 0.96, novo: false,
+    desc: 'Rápido e viciante: vença o computador no jogo da velha e multiplique a aposta.' },
+];
