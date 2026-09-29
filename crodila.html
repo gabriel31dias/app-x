@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Crodila Transex</title>
+<link rel="preload" as="image" href="assets/crodila/bg.webp">
+<style>
+/* Tela sobre a arte (assets/crodila/bg.webp 1024x1536, gerada por tools/crodila_assets.py):
+   posições em % da imagem (x/10.24, y/15.36), textos em cqw. --cell = altura de uma linha dos rolos (211.7px da arte) */
+:root{--y:#ffd54a;--p:#ff3fa4}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#1a0620;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/crodila/bg.webp) center/cover;filter:blur(24px) brightness(.4);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 1024 / 1536);aspect-ratio:1024/1536;background:url(assets/crodila/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden;--cell:20.67cqw}
+.stage.shake{animation:shake .5s}
+.abs{position:absolute}
+.crop{position:absolute;background:url(assets/crodila/bg.webp) 0 0/100% 100%;pointer-events:none}
+/* luzinhas piscando por cima da arte */
+.glow{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 30% 10%,#ff6ad533,#0000 30%),radial-gradient(circle at 85% 30%,#ffd54a22,#0000 25%);animation:party 3s ease-in-out infinite alternate;mix-blend-mode:screen}
+@keyframes party{50%{opacity:.3}to{filter:hue-rotate(60deg)}}
+/* logo CRODILA TRANSEX pulsando: recorte do mockup (x 20–535, y 110–475), na frente da Crodila como na arte */
+.logo{left:1.95%;top:7.16%;width:50.29%;height:23.76%;z-index:4;background:url(assets/crodila/logo_art.webp) 0 0/100% 100%;pointer-events:none;transform-origin:50% 60%;animation:logo 3.2s ease-in-out infinite}
+@keyframes logo{50%{transform:scale(1.025)}}
+/* Crodila grande (x 430–1010, y 0–575): rebola, cabeça balança separada, manda beijo */
+.croc{left:41.99%;top:0;width:56.64%;height:37.43%;z-index:3;transform-origin:55% 100%;animation:sway 2.4s ease-in-out infinite;pointer-events:none}
+.croc i{position:absolute;inset:0;background:0 0/100% 100% no-repeat}
+.croc .body{background-image:url(assets/crodila/big_body.webp);transform-origin:50% 100%;animation:breathe 1.2s ease-in-out infinite alternate}
+.croc .head{background-image:url(assets/crodila/big_head.webp);transform-origin:37.9% 50.4%;animation:nod 3.6s ease-in-out infinite}
+.croc.shimmy{animation:shimmy .9s ease-in-out 2}
+.croc.shimmy .head{animation:nodFast .45s ease-in-out 4}
+.croc.pout .head{animation:kiss 1s ease-in-out}
+@keyframes sway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg) translateX(1%)}}
+@keyframes breathe{to{transform:scale(1.012,1.025)}}
+@keyframes nod{0%,100%{transform:rotate(0)}20%{transform:rotate(-4deg)}35%{transform:rotate(2deg)}55%{transform:rotate(-2deg) translateY(-1%)}75%{transform:rotate(5deg)}}
+@keyframes nodFast{50%{transform:rotate(-6deg) translateY(-2%)}}
+@keyframes kiss{0%,100%{transform:none}40%,60%{transform:rotate(-7deg) translate(3%,-1%) scale(1.04)}}
+@keyframes shimmy{0%,100%{transform:none}15%{transform:translateX(-3%) rotate(-3deg)}30%{transform:translateX(3%) rotate(3deg) translateY(-3%)}45%{transform:translateX(-3%) rotate(-2deg)}60%{transform:translateX(2%) rotate(2deg) translateY(-2%)}80%{transform:translateY(-4%) scale(1.03)}}
+/* rolos */
+.reel{position:absolute;top:37.43%;height:calc(var(--cell)*3);overflow:hidden}
+.reel.spinning .strip{filter:blur(2px) brightness(1.1)}
+.cell{position:relative;height:var(--cell);display:grid;place-items:center;padding:6%;transition:opacity .3s}
+.cell img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 .6cqw .6cqw #5a2a0088)}
+.cell.win{z-index:2}
+.cell.win img{animation:pulse .4s ease-in-out infinite alternate}
+.cell.win::after{content:"";position:absolute;inset:5%;border-radius:2cqw;box-shadow:0 0 0 .5cqw #fff3b0,0 0 4cqw var(--p);animation:pulse .4s ease-in-out infinite alternate;pointer-events:none}
+.cell.dim{opacity:.35}
+.cell.land img{animation:land .35s cubic-bezier(.3,1.8,.5,1)}
+.cell.wild img{animation:wildGlow 1.2s ease-in-out infinite alternate}
+.cell .anim{position:absolute;inset:6%;background-repeat:no-repeat;background-position-y:center;z-index:1}
+@keyframes land{from{transform:translateY(-12%) scale(1.15,.85)}}
+@keyframes wildGlow{to{filter:drop-shadow(0 0 2.5cqw var(--p)) brightness(1.15)}}
+.lines{position:absolute;left:5.66%;top:37.43%;width:88.57%;height:41.34%;pointer-events:none;z-index:3;overflow:visible}
+.lines polyline{fill:none;stroke:#fff27a;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px #ff3fa4);stroke-dasharray:1600;animation:draw .5s ease-out forwards}
+.spr{position:absolute;background-repeat:no-repeat;background-size:auto 100%;pointer-events:none}
+/* dinheiro pulando: notas e moedas (coordenadas em % do palco, animadas no JS) */
+.bill,.coin,.heart{position:absolute;pointer-events:none;z-index:7}
+.bill{width:9cqw;aspect-ratio:2.1;border-radius:.6cqw;background:linear-gradient(90deg,#1f7a2e,#3cb54a 20%,#7fe07a 50%,#3cb54a 80%,#1f7a2e);box-shadow:inset 0 0 0 .35cqw #155a20,inset 0 0 0 .7cqw #9ff09a55,0 .4cqw .8cqw #0006;display:grid;place-items:center}
+.bill::before{content:"$";width:3.2cqw;aspect-ratio:1;border-radius:50%;background:#e8ffd8;color:#1f7a2e;font:900 2.4cqw/3.2cqw system-ui;text-align:center}
+.bill i{position:absolute;inset:0;animation:wave .35s ease-in-out infinite alternate}
+.coin{width:6cqw;aspect-ratio:1;background:url(assets/crodila/coin.webp) center/contain no-repeat}
+.heart{width:5cqw;aspect-ratio:1;background:radial-gradient(circle at 30% 30%,#ffd0ea,#ff3fa4 45%,#b0105a);clip-path:polygon(50% 95%,5% 45%,5% 25%,20% 8%,38% 8%,50% 22%,62% 8%,80% 8%,95% 25%,95% 45%)}
+@keyframes wave{to{transform:skewY(6deg)}}
+/* controles */
+.hit{position:absolute;border-radius:50%;transition:background .15s,transform .1s,box-shadow .2s}
+.hit:active{transform:scale(.92);background:#fff3}
+#info{left:3.91%;top:85.61%;width:10.74%;aspect-ratio:1}
+#down{left:16.03%;top:85.61%;width:10.74%;aspect-ratio:1}
+#up{left:61.52%;top:85.61%;width:10.74%;aspect-ratio:1}
+#auto{left:73.24%;top:85.61%;width:10.74%;aspect-ratio:1}
+#menu{left:85.35%;top:85.61%;width:10.74%;aspect-ratio:1}
+#auto.on,#turbo.on{box-shadow:0 0 0 .6cqw var(--y),0 0 4cqw var(--p);background:#ffd54a22;animation:blinkOn 1s ease-in-out infinite alternate}
+@keyframes blinkOn{to{box-shadow:0 0 0 .6cqw #fff,0 0 6cqw var(--p)}}
+.spin{position:absolute;left:39.75%;top:80.34%;width:20.12%;aspect-ratio:1;border-radius:50%;overflow:hidden;filter:drop-shadow(0 0 2cqw #3cff6a88);z-index:2}
+.spin .crop{left:-197.57%;top:-599.03%;width:497.09%;height:745.63%}
+.spin:not(:disabled){animation:spinIdle 1.6s ease-in-out infinite}
+.spin.busy{animation:rot .45s linear infinite}
+/* giro grátis ganho tocando na Crodila: botão pisca com a etiqueta */
+.gift{position:absolute;left:50%;top:78.2%;translate:-50%;z-index:5;padding:.5cqw 2.5cqw;border-radius:3cqw;background:linear-gradient(#ffe36a,#ff9a1a);color:#5a0a3a;font:900 3cqw system-ui;box-shadow:0 0 3cqw #ffd54a;pointer-events:none;display:none;animation:pulse .5s ease-in-out infinite alternate}
+.stage.hasGift .gift{display:block}
+.stage.hasGift .spin{filter:drop-shadow(0 0 5cqw #ffd54a)}
+.spin:active{transform:scale(.94)}
+@keyframes spinIdle{50%{scale:1.07;filter:drop-shadow(0 0 5cqw var(--p))}}
+#msg{left:50%;translate:-50%;top:93.2%;max-width:92%;width:max-content;text-align:center;font:800 3.1cqw/1.2 system-ui;color:#fff;background:#2a0a2ef0;border:.3cqw solid #ff3fa4aa;border-radius:3cqw;padding:.4cqw 3cqw;z-index:8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud{left:2.5%;right:2.5%;top:96%;height:3.4%;display:flex;gap:1.5cqw;z-index:3}
+.hud div{flex:1;display:flex;align-items:center;justify-content:center;gap:1.2cqw;border-radius:3cqw;background:#2a0a2ee0;border:.3cqw solid #f5c542aa;font:800 2.3cqw system-ui;color:#ffc8e8;white-space:nowrap}
+.hud b{font-size:3.3cqw;color:#fff;font-variant-numeric:tabular-nums}
+.hud b.bump{animation:bump .4s}
+#turbo{flex:0 0 12cqw;display:grid;place-items:center;border-radius:3cqw;background:#2a0a2ee0;border:.3cqw solid #f5c542aa;font:900 2.6cqw system-ui;color:var(--y)}
+@keyframes bump{50%{transform:scale(1.3);color:var(--y)}}
+/* giros grátis */
+.free{left:5.66%;top:37.43%;width:88.57%;height:41.34%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;background:#3a0a3ae8;border-radius:2cqw;z-index:6;text-align:center}
+.free.show{display:flex;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.free img{width:34%;animation:hop 1s ease-in-out infinite}
+.free b{font:900 8.5cqw/1 system-ui;color:#ffe14a;-webkit-text-stroke:1cqw #5a0a3a;paint-order:stroke fill;text-shadow:0 .7cqw 0 #5a0a3a,0 0 3cqw #ff3fa4}
+.free span{font:800 4.4cqw system-ui}
+.stage.freespin .reel{box-shadow:inset 0 0 4cqw #ff3fa488}
+#freeTag{left:0;right:0;top:34.6%;text-align:center;font:900 3.6cqw system-ui;color:var(--y);text-shadow:0 0 2cqw var(--p),0 .3cqw 0 #000;display:none;z-index:4}
+.stage.freespin #freeTag{display:block}
+/* evento: a Crodila passa correndo pela tela jogando dinheiro */
+.banner{left:8%;top:36%;width:84%;z-index:9;pointer-events:none;background:#3a0a3af2;border:.5cqw solid #ffd54a;border-radius:4cqw;box-shadow:0 0 5cqw #ff3fa4aa;padding:2cqw 0 3cqw;display:flex;flex-direction:column;align-items:center;animation:bannerIn 2.4s cubic-bezier(.2,1.5,.4,1) forwards}
+.banner img{width:70%}
+.banner b{font:900 6.4cqw/1.05 system-ui;text-align:center;color:#ffe14a;-webkit-text-stroke:1cqw #5a0a3a;paint-order:stroke fill;text-shadow:0 .7cqw 0 #5a0a3a,0 0 3cqw #ff3fa4}
+@keyframes bannerIn{0%{transform:scale(0) rotate(-20deg);opacity:0}15%{transform:scale(1.12) rotate(3deg);opacity:1}22%{transform:scale(.96) rotate(-2deg)}30%,40%,50%,60%{transform:scale(1.03) rotate(-3deg)}35%,45%,55%{transform:scale(1) rotate(3deg)}80%{transform:scale(1);opacity:1}100%{transform:translateY(-60%) scale(.5);opacity:0}}
+.runner{z-index:8;pointer-events:auto;cursor:pointer}
+.pop{left:8%;top:36%;width:84%;z-index:10;display:flex;flex-direction:column;align-items:center;pointer-events:none;background:#3a0a3af2;border:.5cqw solid #ffd54a;border-radius:4cqw;box-shadow:0 0 5cqw #ff3fa4aa;padding:2cqw 0 3cqw;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.pop .spr{position:relative;width:48%}
+.pop b{font:900 7.5cqw/1.05 system-ui;color:#ffe14a;-webkit-text-stroke:1cqw #5a0a3a;paint-order:stroke fill;text-shadow:0 .7cqw 0 #5a0a3a,0 0 3cqw #ff3fa4;text-align:center}
+.flash{position:absolute;inset:0;z-index:9;pointer-events:none;background:radial-gradient(circle,#fff8,#0000 70%);animation:fade .6s reverse forwards}
+/* evento topless censurado: ela de costas joga o sutiã, vira de frente com a tarja */
+.tease{left:22%;top:31%;width:56%;z-index:9;pointer-events:none;transform-origin:50% 100%}
+.tease .spr{position:relative;width:100%}
+.tarja{position:absolute;left:4%;right:4%;top:31.5%;height:21%;background:#000;border:.5cqw solid #ff3fa4;border-radius:1cqw;display:grid;place-items:center;font:900 5.2cqw/1 system-ui;color:#fff;letter-spacing:.3cqw;transform:rotate(-6deg);box-shadow:0 0 4cqw #ff3fa4;animation:tarja .5s cubic-bezier(.2,1.8,.4,1),tarjaPulse .6s ease-in-out .5s infinite alternate}
+@keyframes tarja{from{transform:rotate(-40deg) scale(3);opacity:0}}
+@keyframes tarjaPulse{to{transform:rotate(-3deg) scale(1.06)}}
+.bra{position:absolute;width:30%;z-index:10;pointer-events:none}
+/* ganho grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle,#c0207acc,#1a0620f0);z-index:20;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .ray{position:absolute;width:200vmax;aspect-ratio:1;background:repeating-conic-gradient(#ffd54a22 0 10deg,#0000 10deg 20deg);animation:rot 8s linear infinite;pointer-events:none}
+.overlay .spr{position:relative;width:min(300px,62vw);animation:hop 1s ease-in-out infinite}
+.overlay h2{position:relative;font:900 clamp(34px,11vw,60px)/1 system-ui;color:#ffe14a;-webkit-text-stroke:7px #5a0a3a;paint-order:stroke fill;text-shadow:0 5px 0 #5a0a3a,0 0 20px #ff3fa4;animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{position:relative;font-size:clamp(38px,12vw,64px);font-weight:900;text-shadow:0 0 24px var(--p);font-variant-numeric:tabular-nums}
+.overlay small{position:relative}
+.rain{position:fixed;top:-60px;z-index:21;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid var(--y);border-radius:16px;background:#2a0a2e;color:#fff;padding:16px;font:14px/1.45 system-ui}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--y);text-align:center;margin-bottom:8px}
+.pay{display:grid;grid-template-columns:46px 1fr 1fr 1fr;align-items:center;gap:4px 8px;font-variant-numeric:tabular-nums}
+.pay img{width:46px;height:46px;object-fit:contain}
+.pay small{opacity:.7}
+dialog p{margin-top:10px;opacity:.9}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#3a0a20;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff18;color:#fff;border-radius:12px;padding:10px}
+@keyframes pulse{to{transform:scale(1.1)}}
+@keyframes hop{50%{transform:translateY(-8%) scale(1.04)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes draw{from{stroke-dashoffset:1600}to{stroke-dashoffset:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes shake{20%{translate:-1.2% .6%}40%{translate:1.2% -.6%}60%{translate:-.8% .4%}80%{translate:.8% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Crodila Transex</h1>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="abs croc" id="croc" aria-hidden="true"><i class="body"></i><i class="head"></i></div>
+  <div class="abs logo" aria-hidden="true"></div>
+  <div class="abs" id="freeTag"></div>
+  <div id="reels"></div>
+  <svg class="lines" id="lines" viewBox="58 575 907 635" preserveAspectRatio="none"></svg>
+  <div class="abs free" id="free"></div>
+  <button class="hit" id="info" aria-label="Tabela de pagamentos"></button>
+  <button class="hit" id="down" aria-label="Diminuir aposta"></button>
+  <button class="spin" id="spin" aria-label="Girar (espaço)"><div class="crop"></div></button>
+  <button class="hit" id="up" aria-label="Aumentar aposta"></button>
+  <button class="hit" id="auto" aria-label="Giro automático"></button>
+  <button class="hit" id="menu" aria-label="Menu"></button>
+  <div class="gift">🎁 GIRO GRÁTIS</div>
+  <div class="abs" id="msg" aria-live="polite">Toque na Crodila quando ela passar!</div>
+  <div class="abs hud"><div>SALDO <b id="bal">0,00</b></div><div>APOSTA <b id="bet">1,00</b></div><div>GANHO <b id="win">0,00</b></div><button id="turbo" aria-label="Turbo">⚡</button></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="ray"></div>
+  <div class="spr" id="ovFace"></div>
+  <h2 id="ovTitle">GRANDE GANHO!</h2>
+  <div class="amt" id="ovAmt">0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>10 linhas, da esquerda pra direita, a partir do 1º rolo. A <b>Crodila WILD</b> substitui qualquer símbolo, menos o SCATTER.<br><br>
+  <b>💋 Rodadas Grátis:</b> 3, 4 ou 5 SCATTER em qualquer lugar dão <b id="fsInfo"></b> giros grátis com todos os ganhos <b id="fsMult"></b>.<br><br>
+  <b>👠 Desfile:</b> de vez em quando a Crodila passa correndo jogando dinheiro — toque nela! De vez em quando (1 em 4) ela dá um <b>giro grátis</b> (até R$ 5,00).<br><br>
+  RTP (retorno médio ao jogador): <b id="rtpInfo"></b>. Prêmio máximo por rodada: <b id="maxInfo"></b> a aposta. Sorteio com gerador criptográfico do navegador.</p>
+  <button onclick="payDlg.close()">Fechar</button>
+</dialog>
+<dialog id="menuDlg">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mSfx">🔊 Som: ligado</button>
+    <button id="mMusic">🎵 Música: ligada</button>
+    <button id="mPay">📋 Tabela de pagamentos</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button onclick="menuDlg.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="crodila.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('crodila')</script><!-- admin assiste ao vivo -->
+<script>
+const { SYMBOLS, LINES, COLS, ROWS, WILD, SCATTER, FREE_SPINS, FREE_MULT, MAX_WIN, drawSymbol, playRound } = CR; // RTP: ler CR.RTP (muda ao vivo)
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const BETS = [0.5, 1, 2, 5, 10, 20, 50, 100], START = 20;
+// tiras de animação: [quadros, largura do quadro, altura] (saída do tools/crodila_assets.py)
+const SPR = {"walk":[8,209,320],"faces":[9,267,200]};
+const IMG = id => `assets/crodila/s_${id}.webp`;
+// colunas dos rolos na arte (x inicial, x final), janela y 575–1210
+const COLX = [[58, 230], [235, 418], [422, 600], [606, 786], [792, 965]];
+const Y0 = 575, CELL = 211.67;
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('crodila.saldo') || START; } catch {}
+let pending = 0; // prêmio já salvo no saldo mas ainda não mostrado
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('crodila.saldo', balance); } catch {}
+}
+
+// ---------- som (sintetizado) ----------
+let ac, sfxOn = true, musicOn = true, musicTimer;
+try { sfxOn = localStorage.getItem('crodila.sfx') !== 'off'; musicOn = localStorage.getItem('crodila.music') !== 'off'; } catch {}
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+function tone(f, t, d, { type = 'sine', vol = .2, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+function noise(t, d, vol = .15, freq = 2000) {
+  const a = audio(), b = a.createBuffer(1, a.sampleRate * d, a.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length) ** 3;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = b; f.type = 'bandpass'; f.frequency.value = freq; g.gain.value = vol;
+  s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+const now = () => audio().currentTime;
+const SFX = {
+  click() { tone(900, now(), .06, { type: 'triangle', vol: .08 }); },
+  tick() { tone(500 + Math.random() * 300, now(), .03, { type: 'triangle', vol: .03 }); },
+  stop() { tone(160, now(), .15, { vol: .25 }); },
+  coin() { const t = now(); tone(1800, t, .08, { type: 'square', vol: .03 }); tone(2400, t + .06, .12, { type: 'square', vol: .03 }); },
+  kiss() { const t = now(); noise(t, .08, .5, 3000); tone(900, t + .02, .12, { vol: .08, slide: 1600 }); },
+  heels() { const t = now(); for (let i = 0; i < 8; i++) noise(t + i * .16, .04, .35, 4500); },
+  whistle() { const t = now(); tone(1200, t, .25, { vol: .08, slide: 2400 }); tone(1100, t + .35, .45, { vol: .08, slide: 600 }); },
+  win(n) { const t = now(); [523, 659, 784, 1047, 1319].slice(0, 2 + n).forEach((f, i) => tone(f, t + i * .09, .25, { type: 'triangle', vol: .15 })); this.kiss(); },
+  big() { const t = now(); [523, 659, 784, 1047, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t + i * .11, .35, { type: 'square', vol: .08 })); },
+  star() { const t = now(); [1568, 2093, 2637].forEach((f, i) => tone(f, t + i * .06, .3, { vol: .1 })); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+// funk/pagode: bumbo, caixa e melodia
+const MEL = [784, 0, 784, 659, 0, 698, 784, 0, 880, 0, 784, 659, 587, 0, 659, 0];
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  let step = 0;
+  musicTimer = setInterval(() => {
+    const t = now(), n = MEL[step % MEL.length];
+    if (n) tone(n, t, .15, { type: 'square', vol: .025 });
+    if ([0, 3, 6, 8, 11].includes(step % 16)) tone(70, t, .2, { vol: .18, slide: 40 });
+    if (step % 8 === 4) noise(t, .1, .12, 1800);
+    if (step % 2) noise(t, .02, .04, 8000);
+    step++;
+  }, 140);
+}
+const stopMusic = () => { clearInterval(musicTimer); musicTimer = null; };
+
+// ---------- sprites ----------
+function sprite(el, name, ms, loop = true) {
+  const [n, w, h] = SPR[name];
+  Object.assign(el.style, { backgroundImage: `url(assets/crodila/${name}.webp)`, backgroundSize: `${n * 100}% 100%`, aspectRatio: `${w} / ${h}` });
+  el.animate([{ backgroundPositionX: '0%' }, { backgroundPositionX: '100%' }], { duration: ms, easing: `steps(${n}, jump-none)`, iterations: loop ? Infinity : 1, fill: 'forwards' });
+  return el;
+}
+function div(cls, css = {}) { const d = document.createElement('div'); d.className = cls; Object.assign(d.style, css); return d; }
+function img(src, cls, css) {
+  const e = document.createElement('img'); e.src = src; e.alt = ''; e.className = 'abs ' + cls;
+  Object.assign(e.style, css); stage.append(e); return e;
+}
+
+// ---------- dinheiro pulando (coordenadas em % do palco) ----------
+const KINDS = ['bill', 'bill', 'coin', 'heart'];
+function money(x, y, { kind = KINDS[Math.random() * 3 | 0], dx = rnd(-12, 12), up = rnd(8, 22), fall = rnd(6, 18), ms = rnd(900, 1500), size } = {}) {
+  const c = div(kind, { left: x + '%', top: y + '%' }); if (kind === 'bill') c.innerHTML = '<i></i>';
+  if (size) c.style.width = size + 'cqw';
+  stage.append(c);
+  const W = stage.clientWidth, H = stage.clientHeight, px = v => v * W / 100, py = v => v * H / 100, spin = kind === 'bill' ? 'rotateX' : 'rotate';
+  c.animate([
+    { transform: 'translate(-50%,-50%) scale(.6)', opacity: 1 },
+    { transform: `translate(calc(-50% + ${px(dx / 2)}px),calc(-50% - ${py(up)}px)) scale(1.1) ${spin}(${rnd(-300, 300)}deg)`, offset: .45, easing: 'ease-in' },
+    { transform: `translate(calc(-50% + ${px(dx)}px),calc(-50% + ${py(fall)}px)) scale(.9) ${spin}(${rnd(-600, 600)}deg)`, opacity: .9, offset: .9 },
+    { transform: `translate(calc(-50% + ${px(dx)}px),calc(-50% + ${py(fall - 1.5)}px)) scale(.8)`, opacity: 0 },
+  ], { duration: ms, easing: 'cubic-bezier(.3,.7,.6,1)', fill: 'forwards' }).onfinish = () => c.remove();
+}
+// voa de um ponto até outro (ganho indo pro saldo)
+function moneyTo(x0, y0, x1, y1, delay = 0, kind = 'bill') {
+  const c = div(kind, { left: x0 + '%', top: y0 + '%', opacity: 0 }); stage.append(c);
+  const W = stage.clientWidth, H = stage.clientHeight, dx = (x1 - x0) * W / 100, dy = (y1 - y0) * H / 100;
+  c.animate([
+    { transform: 'translate(-50%,-50%) scale(.5)', opacity: 1 },
+    { transform: `translate(calc(-50% + ${dx * .4}px),calc(-50% + ${dy * .4 - H * .1}px)) scale(1.2) rotate(200deg)`, offset: .45 },
+    { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.4) rotate(400deg)`, opacity: .8 },
+  ], { duration: 750, delay, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => { c.remove(); play('coin'); };
+}
+// beijinhos: corações saindo da boca da Crodila (boca ~ x 790, y 140 da arte)
+function kisses(n = 5) {
+  const c = $('#croc'); c.classList.remove('pout'); c.offsetHeight; c.classList.add('pout'); setTimeout(() => c.classList.remove('pout'), 1000);
+  play('kiss');
+  for (let k = 0; k < n; k++) setTimeout(() => money(77, 9, { kind: 'heart', dx: rnd(-30, 8), up: rnd(2, 8), fall: rnd(10, 30), ms: rnd(1400, 2200), size: rnd(3.5, 6) }), 250 + k * 90);
+}
+// ambiente: dinheiro pulando do monte em cima dos rolos, das flores e dos cantos
+const SPOTS = [[49, 34], [53, 33], [45, 35], [6, 80], [94, 80], [8, 93], [92, 93], [30, 94], [70, 94], [4, 50], [96, 50]];
+setInterval(() => {
+  if (document.hidden) return;
+  const [x, y] = SPOTS[Math.random() * SPOTS.length | 0];
+  money(x + rnd(-3, 3), y, { up: rnd(6, 14), fall: rnd(1, 5), size: rnd(4, 8) });
+}, 220);
+setInterval(() => { if (!document.hidden && !spinning) kisses(3); }, 7000);
+
+// ---------- rolos ----------
+const reels = COLX.map(([x0, x1]) => {
+  const r = document.createElement('div');
+  r.className = 'reel';
+  Object.assign(r.style, { left: x0 / 10.24 + '%', width: (x1 - x0) / 10.24 + '%' });
+  r.innerHTML = '<div class="strip"></div>';
+  $('#reels').append(r);
+  return r;
+});
+const cellHtml = (s, cls = '') => `<div class="cell${s === WILD ? ' wild' : ''}${cls}" data-s="${s}"><img src="${IMG(SYMBOLS[s].id)}" alt="${SYMBOLS[s].id}"></div>`;
+const col = (g, c) => [0, 1, 2].map(r => g[r * COLS + c]);
+const cellEl = i => reels[i % COLS].firstElementChild.children[(i / COLS) | 0];
+const cellXY = i => { const [x0, x1] = COLX[i % COLS]; return [(x0 + x1) / 2 / 10.24, (Y0 + ((i / COLS) | 0) * CELL + CELL / 2) / 15.36]; };
+let grid = Array.from({ length: 15 }, drawSymbol);
+reels.forEach((r, c) => r.firstElementChild.innerHTML = col(grid, c).map(s => cellHtml(s)).join(''));
+
+let turbo = false, auto = false;
+function spinReel(c, next) {
+  const reel = reels[c], strip = reel.firstElementChild;
+  const n = (turbo ? 6 : 12) + c * (turbo ? 2 : 4), dur = (turbo ? 380 : 800) + c * (turbo ? 110 : 260);
+  const final = col(next, c), filler = Array.from({ length: n }, drawSymbol);
+  strip.innerHTML = [...final, ...filler, ...col(grid, c)].map(s => cellHtml(s)).join('');
+  strip.style.transition = 'none';
+  strip.style.transform = `translateY(calc(var(--cell) * ${-(n + 3)}))`;
+  strip.offsetHeight;
+  reel.classList.add('spinning');
+  strip.style.transition = `transform ${dur}ms cubic-bezier(.25,.1,.3,1.06)`;
+  strip.style.transform = 'translateY(0)';
+  return new Promise(res => setTimeout(() => {
+    reel.classList.remove('spinning');
+    strip.style.transition = 'none';
+    strip.innerHTML = final.map(s => cellHtml(s, ' land')).join('');
+    play('stop');
+    // wild ou scatter caindo: espirra dinheiro
+    final.forEach((s, r) => { if (s === WILD || s === SCATTER) { const [x, y] = cellXY(r * COLS + c); for (let k = 0; k < 6; k++) money(x, y, { up: rnd(4, 10), fall: rnd(2, 8), kind: s === SCATTER ? 'heart' : undefined }); } });
+    res();
+  }, dur));
+}
+
+function clearWin() {
+  $('#lines').innerHTML = '';
+  for (let i = 0; i < 15; i++) { const c = cellEl(i); c.classList.remove('win', 'dim'); c.querySelector('.anim')?.remove(); }
+}
+function showWins(wins) {
+  const hit = new Set(wins.flatMap(w => w.cells));
+  for (let i = 0; i < 15; i++) {
+    const c = cellEl(i);
+    c.classList.add(hit.has(i) ? 'win' : 'dim');
+    // Crodila que paga (wild ou símbolo dela) troca de cara sem parar
+    const s = +c.dataset.s;
+    if (hit.has(i) && (s === WILD || SYMBOLS[s].id === 'crodila')) { const a = div('spr anim'); c.querySelector('img').style.opacity = 0; c.append(sprite(a, 'faces', 1300)); }
+  }
+  const pt = i => { const [x0, x1] = COLX[i % COLS]; return `${(x0 + x1) / 2},${Y0 + ((i / COLS) | 0) * CELL + CELL / 2}`; };
+  $('#lines').innerHTML = wins.map(w => `<polyline points="${LINES[w.line].map(pt).join(' ')}"/>`).join('');
+  // dinheiro pula das casas premiadas e voa pro "ganho"
+  [...hit].forEach((i, k) => {
+    const [x, y] = cellXY(i);
+    for (let j = 0; j < 4; j++) money(x, y, { up: rnd(6, 16), fall: rnd(0, 6) });
+    moneyTo(x, y, 67, 97.7, 150 + k * 60, k % 2 ? 'coin' : 'bill');
+  });
+}
+function scattersSpin(cells) {
+  cells.forEach(i => { const c = cellEl(i); c.classList.add('win'); c.querySelector('img').animate([{ transform: 'rotateY(0)' }, { transform: 'rotateY(720deg) scale(1.2)' }, { transform: 'rotateY(1080deg)' }], { duration: 1100 }); });
+  play('star');
+}
+
+// ---------- HUD ----------
+let betIdx = 1, spinning = false;
+const msg = t => $('#msg').textContent = t;
+const bump = el => { el.classList.remove('bump'); el.offsetHeight; el.classList.add('bump'); };
+function hud() {
+  $('#bal').textContent = brl(r2(balance - pending));
+  $('#bet').textContent = brl(BETS[betIdx]);
+}
+function countUp(el, to, ms = 800) {
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / ms); el.textContent = brl(to * k); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+function rain(n) {
+  for (let i = 0; i < n; i++) {
+    const kind = KINDS[Math.random() * 4 | 0], c = div(kind + ' rain', { left: Math.random() * 100 + 'vw', animationDuration: 1.6 + Math.random() * 1.8 + 's', animationDelay: Math.random() * 1.2 + 's' });
+    c.style.width = kind === 'bill' ? rnd(60, 90) + 'px' : rnd(30, 48) + 'px';
+    if (kind === 'bill') c.innerHTML = '<i></i>';
+    document.body.append(c); setTimeout(() => c.remove(), 4800);
+  }
+}
+function bigWin(total, bet, title) {
+  const ov = $('#overlay');
+  $('#ovTitle').textContent = title || (total >= bet * 50 ? 'MEGA GANHO!' : 'GRANDE GANHO!');
+  const f = $('#ovFace'); f.getAnimations().forEach(a => a.cancel()); sprite(f, 'faces', 1500);
+  ov.classList.add('show'); countUp($('#ovAmt'), total, 1800); rain(60); play('big'); kisses(8);
+  clearTimeout(ov.t); ov.t = setTimeout(() => ov.classList.remove('show'), 4600);
+}
+function crocDo(cls) { const c = $('#croc'); c.classList.remove(cls); c.offsetHeight; c.classList.add(cls); setTimeout(() => c.classList.remove(cls), 1900); }
+
+// ---------- evento: a Crodila passa correndo pela tela jogando dinheiro (só visual, não mexe no saldo) ----------
+let eventOn = false;
+async function desfile() {
+  if (eventOn || $('#overlay').classList.contains('show')) return;
+  eventOn = true;
+  stage.classList.remove('shake'); stage.offsetHeight; stage.classList.add('shake');
+  const ban = div('abs banner'); ban.innerHTML = '<img src="assets/crodila/logo.webp" alt=""><b>OLHA ELA PASSANDO!</b>';
+  stage.append(ban); setTimeout(() => ban.remove(), 2500);
+  play('whistle');
+  await sleep(1400);
+  msg('👠 Toque na Crodila antes que ela passe!');
+  const dur = turbo ? 3400 : 4600, y = rnd(38, 50), dir = Math.random() < .5 ? 1 : -1;
+  const run = sprite(div('spr runner', { width: '36%', top: y + '%' }), 'walk', 900);
+  if (dir < 0) run.style.scale = '-1 1';
+  stage.append(run); play('heels');
+  const heels = setInterval(() => play('heels'), 1300);
+  const move = run.animate([{ left: (dir > 0 ? -38 : 102) + '%' }, { left: (dir > 0 ? 102 : -38) + '%' }], { duration: dur, fill: 'both' });
+  run.animate([{ transform: 'translateY(0) rotate(-3deg)' }, { transform: 'translateY(-7%) rotate(3deg)' }], { duration: 230, iterations: Infinity, direction: 'alternate' });
+  // vai jogando dinheiro pro alto
+  const drop = setInterval(() => {
+    const r = run.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    money((r.left - s.left + r.width * .5) / s.width * 100, (r.top - s.top + r.height * .35) / s.height * 100, { dx: rnd(-14, 14), up: rnd(8, 18), fall: rnd(10, 24), kind: KINDS[Math.random() * 4 | 0] });
+  }, 70);
+  const caught = await new Promise(res => { run.onpointerdown = e => { e.stopPropagation(); res(true); }; move.onfinish = () => res(false); });
+  clearInterval(drop); clearInterval(heels);
+  if (caught) {
+    const r = run.getBoundingClientRect(), s = stage.getBoundingClientRect(), x = (r.left - s.left + r.width / 2) / s.width * 100;
+    run.getAnimations().forEach(a => a.pause());
+    run.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25) rotate(-8deg)' }, { transform: 'scale(1) rotate(6deg)' }, { transform: 'scale(1.1)' }], { duration: 700, fill: 'forwards' });
+    const f = div('flash'); stage.append(f); setTimeout(() => f.remove(), 700);
+    play('kiss'); setTimeout(() => play('kiss'), 250); play('big');
+    for (let k = 0; k < 40; k++) setTimeout(() => money(Math.min(90, Math.max(10, x)), y + 8, { up: rnd(10, 30), fall: rnd(4, 30), dx: rnd(-35, 35), kind: KINDS[k % 4] }), k * 25);
+    const b = img('assets/crodila/cash_burst.webp', '', { left: (x - 30) + '%', top: (y - 6) + '%', width: '60%', zIndex: 9 });
+    b.animate([{ transform: 'scale(.3) rotate(-30deg)', opacity: 0 }, { transform: 'scale(1.2)', opacity: 1, offset: .4 }, { transform: 'scale(1.5) rotate(15deg)', opacity: 0 }], { duration: 1300, fill: 'forwards' });
+    await sleep(800); run.remove();
+    // de vez em quando (1 em 4) o toque vale um giro grátis de verdade; guarda no máximo 1
+    const premio = gift === null && sorte(GIFT_CHANCE);
+    if (premio) { gift = Math.min(BETS[betIdx], GIFT_MAX); stage.classList.add('hasGift'); }
+    const pop = div('abs pop'); pop.innerHTML = `<div class="spr"></div><b>MUAH! 💋<br>${premio ? `🎁 GIRO GRÁTIS de R$ ${brl(gift)}!` : 'Chuva de dinheiro!'}</b>`;
+    stage.append(pop); sprite(pop.firstChild, 'faces', 1100); kisses(10);
+    msg(premio ? '🎁 Ganhou um giro grátis! Aperta o girar' : '💋 A Crodila mandou um beijo pra você!');
+    await sleep(2400); pop.remove(); b.remove();
+  } else {
+    run.remove();
+    msg('💨 Ela passou! Fica de olho na próxima…');
+    crocDo('shimmy');
+  }
+  await sleep(800);
+  eventOn = false;
+  if (!spinning) msg('Toque na Crodila quando ela passar!');
+}
+// ---------- evento: topless censurado (a tarja cobre o bikini da própria arte; nada aparece) ----------
+const BRA = '<svg viewBox="0 0 200 110"><defs><pattern id="onca" width="26" height="26" patternUnits="userSpaceOnUse"><rect width="26" height="26" fill="#ff4fb0"/><circle cx="8" cy="8" r="5" fill="#b0105a"/><circle cx="8" cy="8" r="2.5" fill="#ff9ad2"/><circle cx="20" cy="19" r="4" fill="#b0105a"/></pattern></defs><path d="M10 30 Q100 50 190 30" stroke="#ff4fb0" stroke-width="5" fill="none"/><path d="M100 40 Q60 10 45 2 L15 95 Q60 110 100 70 Z" fill="url(#onca)" stroke="#8a0a48" stroke-width="4"/><path d="M100 40 Q140 10 155 2 L185 95 Q140 110 100 70 Z" fill="url(#onca)" stroke="#8a0a48" stroke-width="4"/><circle cx="100" cy="55" r="9" fill="#ffd54a" stroke="#a86a00" stroke-width="3"/></svg>';
+async function topless() {
+  if (eventOn || $('#overlay').classList.contains('show')) return;
+  eventOn = true;
+  const t = div('abs tease'); t.innerHTML = '<div class="spr"></div>'; stage.append(t);
+  const f = t.firstChild, [n, w, h] = SPR.walk;
+  Object.assign(f.style, { backgroundImage: 'url(assets/crodila/walk.webp)', backgroundSize: `${n * 100}% 100%`, aspectRatio: `${w} / ${h}` });
+  new Image().src = 'assets/crodila/topless.webp'; // já baixa o quadro sem o sutiã
+  const frame = i => f.style.backgroundPosition = `${i / (n - 1) * 100}% 0`;
+  // 1) de costas, rebolando
+  frame(4); msg('👀 Epa… o que ela vai fazer?'); play('whistle');
+  t.animate([{ transform: 'translateY(40%) scale(.6)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+  const reb = t.animate([{ transform: 'rotate(-4deg) translateX(-3%)' }, { transform: 'rotate(4deg) translateX(3%)' }], { duration: 220, iterations: 8, direction: 'alternate', delay: 400 });
+  await sleep(1300);
+  // 2) joga o sutiã: voa girando pra cima da tela
+  const bra = div('bra'); bra.innerHTML = BRA; stage.append(bra);
+  bra.animate([
+    { left: '40%', top: '42%', transform: 'rotate(0) scale(.5)' },
+    { left: '60%', top: '12%', transform: 'rotate(540deg) scale(1.3)', offset: .5 },
+    { left: '20%', top: '-30%', transform: 'rotate(1080deg) scale(2.4)' },
+  ], { duration: 1600, easing: 'ease-out', fill: 'forwards' }).onfinish = () => bra.remove();
+  play('kiss'); await sleep(700);
+  // 3) vira de frente: tarja CENSURADO
+  reb.cancel(); Object.assign(f.style, { backgroundImage: 'url(assets/crodila/topless.webp)', backgroundSize: '100% 100%', backgroundPosition: '0 0' }); // de frente, sem a parte de cima (a tarja cobre)
+  const flash = div('flash'); stage.append(flash); setTimeout(() => flash.remove(), 700);
+  const tj = div('tarja'); tj.textContent = 'CENSURADO 🔞'; t.append(tj);
+  if (sfxOn) try { tone(1000, now(), 1.1, { type: 'sine', vol: .12 }); } catch {} // piiii
+  msg('🔞 Opa! Essa parte foi censurada 😂');
+  t.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06) rotate(-2deg)' }], { duration: 300, iterations: 6, direction: 'alternate' });
+  for (let k = 0; k < 16; k++) setTimeout(() => money(50 + rnd(-15, 15), 50, { kind: k % 2 ? 'heart' : 'bill', up: rnd(10, 25), fall: rnd(5, 25), dx: rnd(-30, 30) }), k * 60);
+  kisses(6); crocDo('shimmy');
+  await sleep(2300);
+  t.animate([{ opacity: 1 }, { transform: 'translateY(30%) scale(.5)', opacity: 0 }], { duration: 350, fill: 'forwards' });
+  await sleep(400); t.remove();
+  eventOn = false;
+  if (!spinning) msg('Toque na Crodila quando ela passar!');
+}
+(function agenda() { setTimeout(() => { if (!document.hidden && !stage.classList.contains('freespin')) (Math.random() < .35 ? topless : desfile)(); agenda(); }, rnd(16000, 28000)); })();
+
+// ---------- rodada ----------
+async function showSpin(s, bet, mult) {
+  clearWin();
+  const ticker = setInterval(() => play('tick'), 80);
+  await Promise.all(reels.map((_, c) => spinReel(c, s.grid)));
+  clearInterval(ticker);
+  grid = s.grid;
+  if (s.win > 0) {
+    showWins(s.wins); play('win', Math.min(3, s.wins.length)); crocDo('shimmy');
+    if (s.win >= bet * 3) kisses(6);
+    msg(`${mult > 1 ? `x${mult} · ` : ''}Ganhou R$ ${brl(s.win)} em ${s.wins.length} linha${s.wins.length > 1 ? 's' : ''}`);
+    await sleep(turbo ? 700 : 1300);
+  }
+}
+// giro grátis do toque na Crodila: valor travado na hora que ganhou (teto GIFT_MAX, senão era só subir a aposta antes de girar)
+const GIFT_CHANCE = 1 / 4, GIFT_MAX = 5;
+let gift = null;
+function sorte(p) { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] < p * 2 ** 32; }
+async function spin() {
+  if (spinning) return;
+  const free = gift, bet = free ?? BETS[betIdx];
+  if (free === null && balance < bet) {
+    setAuto(false);
+    if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (!host && balance < BETS[0]) { balance = START; save(); hud(); msg('Créditos recarregados: R$ ' + brl(START)); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').disabled = true; $('#spin').classList.add('busy');
+  play('click'); msg('Boa sorte, amor!'); $('#win').textContent = '0,00';
+  if (free !== null) { gift = null; stage.classList.remove('hasGift'); msg(`🎁 Giro grátis de R$ ${brl(bet)}!`); }
+  else balance = r2(balance - bet);
+  save(); hud();
+
+  const res = playRound(bet);
+  balance = r2(balance + res.total); pending = res.total; save(); reportarRodada('crodila', free === null ? bet : 0, res.total); // o prêmio já vai pro saldo; a tela só anima
+  await showSpin(res.base, bet, 1);
+  let shown = res.base.win;
+  if (res.free.length) {
+    scattersSpin(res.base.scatters); msg(`💋 ${res.base.scatters.length} SCATTER!`);
+    await sleep(1200);
+    const fr = $('#free');
+    fr.innerHTML = `<img src="assets/crodila/bonus.webp" alt=""><b>RODADAS GRÁTIS!</b><span>${res.free.length} giros grátis · ganhos x${FREE_MULT}</span>`;
+    fr.classList.add('show'); kisses(10); crocDo('shimmy'); await sleep(2200); fr.classList.remove('show');
+    stage.classList.add('freespin');
+    for (let k = 0; k < res.free.length; k++) {
+      $('#freeTag').textContent = `GIRO GRÁTIS ${k + 1}/${res.free.length} · x${FREE_MULT} · R$ ${brl(shown - res.base.win)}`;
+      await showSpin(res.free[k], bet, FREE_MULT);
+      shown += res.free[k].win;
+      await sleep(turbo ? 150 : 350);
+    }
+    stage.classList.remove('freespin');
+  }
+  pending = 0; hud(); bump($('#bal'));
+  countUp($('#win'), res.total); if (res.total) bump($('#win'));
+  if (res.free.length) bigWin(res.total, bet, res.total ? 'RODADAS GRÁTIS!' : 'FIM DOS GIROS');
+  else if (res.total >= bet * 15) bigWin(res.total, bet);
+  if (res.total > 0) msg(`${res.capped ? `Prêmio máximo (${MAX_WIN}x)! ` : ''}Total: R$ ${brl(res.total)}`);
+  else {
+    msg(['Quase, amor!', 'Ai, não foi dessa vez 💅', 'Gira de novo, bebê!', 'Nada… mas ela tá de olho em você 😘'][Math.random() * 4 | 0]);
+    if (Math.random() < .12) setTimeout(desfile, 900);
+  }
+  spinning = false; $('#spin').disabled = false; $('#spin').classList.remove('busy');
+  if (auto) setTimeout(() => auto && !$('#overlay').classList.contains('show') ? spin() : auto && setTimeout(spin, 4700), turbo ? 250 : 600);
+}
+
+// ---------- botões ----------
+function setAuto(on) { auto = on; $('#auto').classList.toggle('on', on); }
+$('#spin').onclick = spin;
+$('#up').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); hud(); bump($('#bet')); };
+$('#down').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); hud(); bump($('#bet')); };
+$('#turbo').onclick = () => { turbo = !turbo; $('#turbo').classList.toggle('on', turbo); play('click'); msg(turbo ? '⚡ Turbo ligado' : 'Turbo desligado'); };
+$('#auto').onclick = () => { setAuto(!auto); play('click'); msg(auto ? '🔁 Giro automático ligado' : 'Giro automático desligado'); if (auto) spin(); };
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+function renderPay() {
+  const lb = BETS[betIdx] / LINES.length;
+  $('#payTable').innerHTML = '<span></span><small>3</small><small>4</small><small>5</small>' + SYMBOLS.map((s, i) =>
+    `<img src="${IMG(s.id)}" alt="${s.id}">` + (i === SCATTER ? `<span style="grid-column:span 3">3+ = giros grátis</span>` : s.pays.map(p => `<b>${brl(lb * p)}</b>`).join(''))).join('');
+  $('#fsInfo').textContent = Object.values(FREE_SPINS).join(', ');
+  $('#fsMult').textContent = 'x' + FREE_MULT;
+  $('#rtpInfo').textContent = (CR.RTP * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+  $('#maxInfo').textContent = MAX_WIN + 'x';
+}
+function openPay() { renderPay(); payDlg.showModal(); }
+$('#info').onclick = openPay;
+const menuTxt = () => { $('#mSfx').textContent = `🔊 Som: ${sfxOn ? 'ligado' : 'desligado'}`; $('#mMusic').textContent = `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`; };
+$('#menu').onclick = () => { menuTxt(); menuDlg.showModal(); };
+$('#mSfx').onclick = () => { sfxOn = !sfxOn; try { localStorage.setItem('crodila.sfx', sfxOn ? 'on' : 'off'); } catch {} menuTxt(); };
+$('#mMusic').onclick = () => { musicOn = !musicOn; try { localStorage.setItem('crodila.music', musicOn ? 'on' : 'off'); } catch {} musicOn ? startMusic() : stopMusic(); menuTxt(); };
+$('#mPay').onclick = () => { menuDlg.close(); openPay(); };
+$('#mExit').onclick = () => { if (spinning) return; host ? host.closeGame() : (location.href = 'index.html'); };
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !payDlg.open && !menuDlg.open) { e.preventDefault(); spin(); } });
+document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
+hud();
+setTimeout(desfile, 3500); // primeira passada logo no começo
+// RTP mudou no painel: aplica entre giros e redesenha a tabela
+rtpAoVivo('crodila', CR, { ocupado: () => spinning, depois: renderPay });
+</script>
+</body>
+</html>

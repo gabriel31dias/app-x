@@ -391,6 +391,10 @@ function launchGame(gameId) {
     openGame('sapo.html?v=1');
   } else if (gameId === 'perereca') {
     openGame('perereca.html?v=9');
+  } else if (gameId === 'lulinha') {
+    openGame('lulinha.html?v=1');
+  } else if (gameId === 'crodila') {
+    openGame('crodila.html?v=7');
   } else if (gameId === 'velha') {
     openGame('velha.html?v=5');
   } else if (gameId === 'bichos') {

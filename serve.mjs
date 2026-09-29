@@ -6,7 +6,7 @@ import { connect } from 'node:net';
 import { extname, join, normalize } from 'node:path';
 
 const ROOT = import.meta.dirname, PORT = 8765, API = { host: '127.0.0.1', port: 3100 };
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.mp3': 'audio/mpeg' };
 
 createServer((req, res) => {
   if (req.url.startsWith('/api/')) {

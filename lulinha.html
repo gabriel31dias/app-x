@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Lulinha</title>
+<link rel="preload" as="image" href="assets/lulinha/bg.webp">
+<style>
+/* Tela sobre a arte (assets/lulinha/bg.webp 941x1672, gerada por tools/lulinha_assets.py):
+   posições em % da imagem (x/9.41, y/16.72), textos em cqw. --cell = altura de uma linha dos rolos (164.9px da arte) */
+:root{--y:#ffd54a;--g:#1fbf4a}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#07130c;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/lulinha/bg.webp) center/cover;filter:blur(24px) brightness(.4);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/lulinha/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden;--cell:17.52cqw}
+.stage.shake{animation:shake .5s}
+.abs{position:absolute}
+.crop{position:absolute;background:url(assets/lulinha/bg.webp) 0 0/100% 100%;pointer-events:none}
+.piece{position:absolute;background:0 0/100% 100% no-repeat;pointer-events:none}
+/* logo LULINHA pulsando: recorte da própria arte (x 25–590, y 330–560) */
+.logo{left:2.66%;top:19.74%;width:60.04%;height:13.76%;overflow:hidden;z-index:1;animation:logo 2.4s ease-in-out infinite;-webkit-mask:linear-gradient(90deg,#0000,#000 5%,#000 95%,#0000),linear-gradient(#0000,#000 6%,#000 94%,#0000);-webkit-mask-composite:source-in;mask:linear-gradient(90deg,#0000,#000 5%,#000 95%,#0000),linear-gradient(#0000,#000 6%,#000 94%,#0000);mask-composite:intersect}
+.logo .crop{left:-4.42%;top:-143.48%;width:166.55%;height:726.96%}
+@keyframes logo{0%,100%{transform:none}25%{transform:scale(1.05) rotate(-1.5deg)}50%{transform:scale(.98)}75%{transform:scale(1.04) rotate(1.2deg)}}
+/* Lula grande com o saco (x 262–766, y 4–430): corre sem sair do lugar, olha pros lados, pula quando ganha */
+.lula{left:27.84%;top:.24%;width:53.56%;height:25.48%;z-index:2;transform-origin:60% 95%;animation:jog .55s ease-in-out infinite alternate}
+.lula i{position:absolute;inset:0;background:url(assets/lulinha/big.webp) 0 0/100% 100%;animation:sway 3.2s ease-in-out infinite}
+.lula.hop{animation:hop .8s cubic-bezier(.3,1.6,.5,1) 2}
+.lula.grab{animation:grab 1s ease-in-out}
+@keyframes jog{from{transform:translateY(0) rotate(-1deg) scale(1,1)}to{transform:translateY(-3.5%) rotate(1.5deg) scale(.985,1.02)}}
+@keyframes sway{0%,100%{transform:none}30%{transform:rotate(-3deg) translateX(-1.5%)}60%{transform:rotate(2.5deg) translateX(1.5%)}}
+@keyframes hop{0%,100%{transform:none}35%{transform:translateY(-16%) scale(.95,1.07) rotate(-4deg)}60%{transform:translateY(0) scale(1.08,.92)}80%{transform:translateY(-5%) rotate(2deg)}}
+@keyframes grab{0%,100%{transform:none}30%{transform:translate(-4%,10%) rotate(-8deg) scale(1.06)}55%{transform:translate(-2%,6%) rotate(-4deg) scale(1.1)}}
+/* federal correndo atrás (x 672–868, y 312–540) */
+.pf{left:71.41%;top:18.66%;width:20.83%;height:13.64%;z-index:2;transform-origin:50% 100%;animation:jog .42s ease-in-out infinite alternate-reverse,lunge 4.5s ease-in-out infinite}
+@keyframes lunge{0%,70%,100%{translate:0}78%{translate:-18% -6%}86%{translate:-6% 0}}
+.heli{left:7.86%;top:.12%;width:20.62%;height:6.22%;z-index:2;animation:hover 3s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:none}25%{transform:translate(6%,18%) rotate(-3deg)}50%{transform:translate(14%,4%) rotate(2deg)}75%{transform:translate(4%,-10%) rotate(-1deg)}}
+.beam{position:absolute;left:55%;top:80%;width:100%;height:230%;z-index:-1;background:linear-gradient(#fff9d0aa,#fff9d000);clip-path:polygon(40% 0,60% 0,100% 100%,0 100%);transform-origin:50% 0;mix-blend-mode:screen;animation:beam 3s ease-in-out infinite;pointer-events:none}
+@keyframes beam{0%,100%{transform:rotate(12deg)}50%{transform:rotate(-22deg) translateX(14%)}}
+/* placa RODADAS GRÁTIS (x 752–938, y 0–250) balança pendurada */
+.sign{left:79.91%;top:0;width:19.77%;height:14.95%;z-index:2;transform-origin:52% 4%;animation:swing 2.8s ease-in-out infinite}
+.sign.bang{animation:swing .35s ease-in-out 6}
+@keyframes swing{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+/* rolos */
+.reel{position:absolute;top:37.08%;height:calc(var(--cell)*3);overflow:hidden}
+.reel.spinning .strip{filter:blur(2px) brightness(1.2)}
+.cell{position:relative;height:var(--cell);display:grid;place-items:center;padding:5%;transition:opacity .3s}
+.cell img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 .5cqw .6cqw #000a)}
+.cell.win{z-index:2}
+.cell.win img{animation:pulse .4s ease-in-out infinite alternate}
+.cell.win::after{content:"";position:absolute;inset:4%;border-radius:2cqw;box-shadow:0 0 0 .5cqw #fff3b0,0 0 3.5cqw #ffd54a;animation:pulse .4s ease-in-out infinite alternate;pointer-events:none}
+.cell.dim{opacity:.35}
+.cell.land img{animation:land .35s cubic-bezier(.3,1.8,.5,1)}
+@keyframes land{from{transform:translateY(-12%) scale(1.15,.85)}}
+.cell.wild img{animation:wildGlow 1.4s ease-in-out infinite alternate}
+@keyframes wildGlow{to{filter:drop-shadow(0 0 2.5cqw #ffd54a) brightness(1.15)}}
+.lines{position:absolute;left:5.53%;top:37.08%;width:89.05%;height:29.59%;pointer-events:none;z-index:3;overflow:visible}
+.lines polyline{fill:none;stroke:#fff27a;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px #1fbf4a);stroke-dasharray:1400;animation:draw .5s ease-out forwards}
+/* sprites (tiras de quadros): quadros e tamanho vêm do JS (SPR) */
+.spr{position:absolute;background-repeat:no-repeat;background-size:auto 100%;pointer-events:none}
+/* moedas pulando */
+.coin{position:absolute;width:5.5cqw;aspect-ratio:1;border-radius:50%;pointer-events:none;z-index:7;background:radial-gradient(circle at 35% 30%,#fffbd0,#ffd23a 40%,#e09a10 70%,#9a5a00);box-shadow:inset 0 0 0 .45cqw #f7b52a,inset 0 0 0 .7cqw #a8660a,0 .4cqw .8cqw #0007;display:grid;place-items:center;font:900 3cqw/1 system-ui;color:#9a5a00}
+.coin::before{content:"$"}
+.coin i{position:absolute;inset:0;border-radius:50%;animation:flip .5s linear infinite;background:inherit;box-shadow:inherit}
+.coin i::before{content:"$";position:absolute;inset:0;display:grid;place-items:center}
+@keyframes flip{50%{transform:scaleX(.15)}}
+/* controles */
+.hit{position:absolute;border-radius:50%;transition:background .15s,transform .1s,box-shadow .2s}
+.hit:active{transform:scale(.92);background:#fff2}
+#menu{left:5.63%;top:79.43%;width:12.11%;aspect-ratio:1}
+#info{left:19.98%;top:79.43%;width:12.11%;aspect-ratio:1}
+#auto{left:67.8%;top:79.43%;width:12.11%;aspect-ratio:1}
+#turbo{left:82.15%;top:79.43%;width:12.11%;aspect-ratio:1}
+#auto.on,#turbo.on{box-shadow:0 0 0 .6cqw var(--y),0 0 4cqw var(--y);background:#ffd54a22;animation:blinkOn 1s ease-in-out infinite alternate}
+@keyframes blinkOn{to{box-shadow:0 0 0 .6cqw #fff,0 0 6cqw var(--y)}}
+#down{left:35.6%;top:71.17%;width:5.63%;aspect-ratio:1;border-radius:1.2cqw}
+#up{left:58.98%;top:71.17%;width:5.63%;aspect-ratio:1;border-radius:1.2cqw}
+.val{top:71.3%;height:3.11%;display:grid;place-items:center;font:900 4.4cqw system-ui;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 .3cqw 0 #000,0 0 1.5cqw #0008;white-space:nowrap}
+#bal{left:7.44%;width:21.79%}
+#bet{left:41.66%;width:16.58%;font-size:4cqw}
+#win{left:73.33%;width:20.19%}
+.val.bump{animation:bump .4s}
+@keyframes bump{50%{transform:scale(1.25);color:var(--y)}}
+.spin{position:absolute;left:37.41%;top:76.08%;width:25.08%;aspect-ratio:1;border-radius:50%;overflow:hidden;filter:drop-shadow(0 0 2cqw #1fbf4a88)}
+.spin .crop{left:-149.15%;top:-538.98%;width:398.73%;height:708.47%}
+.spin:not(:disabled){animation:spinIdle 1.8s ease-in-out infinite}
+.spin.busy{animation:rot .5s linear infinite}
+.spin:active{transform:scale(.94)}
+@keyframes spinIdle{50%{scale:1.06;filter:drop-shadow(0 0 5cqw #ffd54a)}}
+#msg{left:0;right:0;top:93%;text-align:center;font:900 3.8cqw/1.1 system-ui;text-shadow:0 0 1.5cqw #000,0 .3cqw 0 #000;color:#fff8d0;z-index:3;padding:0 4%}
+/* giros grátis */
+.free{left:5.53%;top:37.08%;width:89.05%;height:29.59%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;background:#06200fe6;border-radius:2cqw;z-index:6;text-align:center}
+.free.show{display:flex;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.free b{font:900 8.5cqw/1 system-ui;background:linear-gradient(#fff6b0,#ffd54a 45%,#ff7a1a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .6cqw 0 #0a3a1a)}
+.free span{font:800 4.4cqw system-ui}
+.stage.freespin .reel{box-shadow:inset 0 0 4cqw #ffd54a66}
+#freeTag{left:0;right:0;top:34.3%;text-align:center;font:900 3.8cqw system-ui;color:var(--y);text-shadow:0 0 2cqw #1fbf4a,0 .3cqw 0 #000;display:none;z-index:3}
+.stage.freespin #freeTag{display:block}
+/* evento "Não deixe o Lulinha roubar suas moedas" */
+.banner{left:4%;top:36%;width:92%;z-index:9;pointer-events:none;animation:bannerIn 2.6s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes bannerIn{0%{transform:scale(0) rotate(-20deg);opacity:0}15%{transform:scale(1.12) rotate(3deg);opacity:1}22%{transform:scale(.96) rotate(-2deg)}30%,38%,46%,54%,62%{transform:scale(1.03) rotate(-2.5deg)}34%,42%,50%,58%{transform:scale(1) rotate(2.5deg)}80%{transform:scale(1);opacity:1}100%{transform:translateY(-60%) scale(.5);opacity:0}}
+.runner{z-index:8;pointer-events:auto;cursor:pointer}
+.chaser,.car,.flyer{z-index:8}
+.pop{left:10%;top:32%;width:80%;z-index:10;background:radial-gradient(#06200fee 40%,#06200f00 72%);padding:2cqw 0 4cqw;display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.pop img{width:60%}
+.pop b{font:900 8cqw/1 system-ui;background:linear-gradient(#fff6b0,#ffd54a 45%,#ff7a1a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .6cqw 0 #0a3a1a);text-align:center}
+.flash{position:absolute;inset:0;z-index:9;pointer-events:none;background:radial-gradient(circle,#fff8,#0000 70%);animation:fade .6s reverse forwards}
+/* ganho grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle,#1f8a3acc,#07130cf0);z-index:20;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .ray{position:absolute;width:200vmax;aspect-ratio:1;background:repeating-conic-gradient(#ffd54a22 0 10deg,#0000 10deg 20deg);animation:rot 8s linear infinite;pointer-events:none}
+.overlay img{position:relative;width:min(300px,62vw);animation:hop 1s ease-in-out infinite}
+.overlay h2{position:relative;font:900 clamp(34px,11vw,60px)/1 system-ui;background:linear-gradient(#fffbe0,var(--y) 50%,#ff7a1a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #0a3a1a);animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{position:relative;font-size:clamp(38px,12vw,64px);font-weight:900;text-shadow:0 0 24px var(--y);font-variant-numeric:tabular-nums}
+.overlay small{position:relative}
+.rain{position:fixed;top:-60px;width:40px;aspect-ratio:1;z-index:21;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid var(--y);border-radius:16px;background:#0c2a16;color:#fff;padding:16px;font:14px/1.45 system-ui}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--y);text-align:center;margin-bottom:8px}
+.pay{display:grid;grid-template-columns:46px 1fr 1fr 1fr;align-items:center;gap:4px 8px;font-variant-numeric:tabular-nums}
+.pay img{width:46px;height:46px;object-fit:contain}
+.pay small{opacity:.7}
+dialog p{margin-top:10px;opacity:.9}
+dialog button{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#0a3a1a;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff18;color:#fff;border-radius:12px;padding:10px}
+@keyframes pulse{to{transform:scale(1.1)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes draw{from{stroke-dashoffset:1400}to{stroke-dashoffset:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes shake{20%{translate:-1.2% .6%}40%{translate:1.2% -.6%}60%{translate:-.8% .4%}80%{translate:.8% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Lulinha</h1>
+  <div class="piece heli" style="background-image:url(assets/lulinha/heli_big.webp)" aria-hidden="true"><i class="beam"></i></div>
+  <div class="abs logo" aria-hidden="true"><div class="crop"></div></div>
+  <div class="piece sign" id="sign" style="background-image:url(assets/lulinha/sign.webp)" aria-hidden="true"></div>
+  <div class="piece pf" style="background-image:url(assets/lulinha/pf_big.webp)" aria-hidden="true"></div>
+  <div class="abs lula" id="lula" aria-hidden="true"><i></i></div>
+  <div class="abs" id="freeTag"></div>
+  <div id="reels"></div>
+  <svg class="lines" id="lines" viewBox="52 620 838 494" preserveAspectRatio="none"></svg>
+  <div class="abs free" id="free"></div>
+  <b class="abs val" id="bal">0,00</b>
+  <button class="hit" id="down" aria-label="Diminuir aposta"></button>
+  <b class="abs val" id="bet">R$ 1,00</b>
+  <button class="hit" id="up" aria-label="Aumentar aposta"></button>
+  <b class="abs val" id="win">0,00</b>
+  <button class="hit" id="menu" aria-label="Menu"></button>
+  <button class="hit" id="info" aria-label="Tabela de pagamentos"></button>
+  <button class="spin" id="spin" aria-label="Girar (espaço)"><div class="crop"></div></button>
+  <button class="hit" id="auto" aria-label="Giro automático"></button>
+  <button class="hit" id="turbo" aria-label="Turbo"></button>
+  <div class="abs" id="msg" aria-live="polite">Não deixe o Lulinha roubar suas moedas!</div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="ray"></div>
+  <img id="ovImg" src="assets/lulinha/face.webp" alt="">
+  <h2 id="ovTitle">GRANDE GANHO!</h2>
+  <div class="amt" id="ovAmt">0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>10 linhas, da esquerda pra direita, a partir do 1º rolo. O <b>Lula WILD</b> substitui qualquer símbolo, menos a estrela.<br><br>
+  <b>⭐ Rodadas Grátis:</b> 3, 4 ou 5 estrelas em qualquer lugar dão <b id="fsInfo"></b> giros grátis com todos os ganhos <b id="fsMult"></b>.<br><br>
+  <b>🚓 Lulinha fujão:</b> de vez em quando ele passa correndo com o saco — toque nele pra Federal pegar! (só diversão, não mexe no saldo)<br><br>
+  RTP (retorno médio ao jogador): <b id="rtpInfo"></b>. Prêmio máximo por rodada: <b id="maxInfo"></b> a aposta. Sorteio com gerador criptográfico do navegador.</p>
+  <button onclick="payDlg.close()">Fechar</button>
+</dialog>
+<dialog id="menuDlg">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mSfx">🔊 Som: ligado</button>
+    <button id="mMusic">🎵 Música: ligada</button>
+    <button id="mPay">📋 Tabela de pagamentos</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button onclick="menuDlg.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="lulinha.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('lulinha')</script><!-- admin assiste ao vivo -->
+<script>
+const { SYMBOLS, LINES, COLS, ROWS, WILD, SCATTER, FREE_SPINS, FREE_MULT, MAX_WIN, drawSymbol, playRound } = LU; // RTP: ler LU.RTP (muda ao vivo)
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const BETS = [0.5, 1, 2, 5, 10, 20, 50, 100], START = 20;
+// tiras de animação: [quadros, largura do quadro, altura] (saída do tools/lulinha_assets.py)
+const SPR = {"run":[5,261,220],"pf_run":[8,229,200],"car":[4,290,160]};
+const IMG = id => `assets/lulinha/s_${id}.webp`;
+// colunas dos rolos na arte (x inicial, x final), janela y 620–1114
+const COLX = [[52, 215], [218, 387], [390, 558], [562, 730], [733, 890]];
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('lulinha.saldo') || START; } catch {}
+let pending = 0; // prêmio já salvo no saldo mas ainda não mostrado
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('lulinha.saldo', balance); } catch {}
+}
+
+// ---------- som: efeitos sintetizados + "feijão puro" (assets/lulinha/feijao.mp3) ----------
+let ac, sfxOn = true, musicOn = true, musicTimer, voice;
+try { sfxOn = localStorage.getItem('lulinha.sfx') !== 'off'; musicOn = localStorage.getItem('lulinha.music') !== 'off'; } catch {}
+function audio() {
+  if (!ac) {
+    ac = new AudioContext();
+    fetch('assets/lulinha/feijao.mp3').then(r => r.arrayBuffer()).then(b => ac.decodeAudioData(b)).then(b => voice = b).catch(() => {});
+  }
+  if (ac.state === 'suspended') ac.resume();
+  return ac;
+}
+// trechos da fala (segundos no mp3): "...feijão puro, feijão puro, feijão puro..."
+const FALA = { puro1: [2.05, .9], puro2: [2.05, 1.55], puro5: [2.05, 3.6], toda: [1.0, 8.0] };
+let falando;
+function fala(k) {
+  if (!sfxOn || !voice) return;
+  try { falando?.stop(); } catch {}
+  const a = audio(), s = a.createBufferSource(), g = a.createGain();
+  s.buffer = voice; g.gain.value = 1.1; s.connect(g).connect(a.destination);
+  s.start(0, ...FALA[k]); falando = s;
+}
+function tone(f, t, d, { type = 'sine', vol = .2, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+const now = () => audio().currentTime;
+const SFX = {
+  click() { tone(900, now(), .06, { type: 'triangle', vol: .08 }); },
+  tick() { tone(500 + Math.random() * 300, now(), .03, { type: 'triangle', vol: .03 }); },
+  stop() { tone(160, now(), .15, { vol: .25 }); },
+  coin() { const t = now(); tone(1800, t, .08, { type: 'square', vol: .03 }); tone(2400, t + .06, .12, { type: 'square', vol: .03 }); },
+  siren() { const t = now(); for (let i = 0; i < 4; i++) { tone(700, t + i * .5, .25, { type: 'sawtooth', vol: .05, slide: 1000 }); tone(1000, t + i * .5 + .25, .25, { type: 'sawtooth', vol: .05, slide: 700 }); } },
+  win(n) { const t = now(); [523, 659, 784, 1047, 1319].slice(0, 2 + n).forEach((f, i) => tone(f, t + i * .09, .25, { type: 'triangle', vol: .15 })); },
+  big() { const t = now(); [523, 659, 784, 1047, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t + i * .11, .35, { type: 'square', vol: .08 })); },
+  star() { const t = now(); [1568, 2093, 2637].forEach((f, i) => tone(f, t + i * .06, .3, { vol: .1 })); },
+  caught() { const t = now(); tone(200, t, .3, { type: 'square', vol: .1, slide: 80 }); [784, 988, 1175, 1568].forEach((f, i) => tone(f, t + .3 + i * .08, .2, { type: 'triangle', vol: .12 })); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+// sambinha: baixo no surdo + cavaco
+const MEL = [659, 0, 784, 659, 0, 587, 523, 0, 587, 0, 659, 784, 880, 0, 784, 0];
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  let step = 0;
+  musicTimer = setInterval(() => {
+    const t = now(), n = MEL[step % MEL.length];
+    if (n) tone(n, t, .18, { type: 'triangle', vol: .045 });
+    if (step % 4 === 0) tone(82, t, .25, { vol: .1 });
+    if (step % 4 === 2) tone(110, t, .12, { vol: .06 });
+    if (step % 2) tone(6000, t, .02, { type: 'square', vol: .008 });
+    step++;
+  }, 150);
+}
+const stopMusic = () => { clearInterval(musicTimer); musicTimer = null; };
+
+// ---------- sprites ----------
+function sprite(el, name, ms, loop = true) {
+  const [n, w, h] = SPR[name];
+  Object.assign(el.style, { backgroundImage: `url(assets/lulinha/${name}.webp)`, backgroundSize: `${n * 100}% 100%`, aspectRatio: `${w} / ${h}` });
+  el.animate([{ backgroundPositionX: '0%' }, { backgroundPositionX: '100%' }], { duration: ms, easing: `steps(${n}, jump-none)`, iterations: loop ? Infinity : 1, fill: 'forwards' });
+  return el;
+}
+function img(src, cls, css) {
+  const e = document.createElement('img'); e.src = src; e.alt = ''; e.className = 'abs ' + cls;
+  Object.assign(e.style, css); stage.append(e); return e;
+}
+
+// ---------- moedas pulando (coordenadas em % do palco) ----------
+function coin(x, y, { dx = rnd(-12, 12), up = rnd(8, 22), fall = rnd(6, 18), ms = rnd(800, 1400), size } = {}) {
+  const c = document.createElement('div'); c.className = 'coin'; c.innerHTML = '<i></i>';
+  Object.assign(c.style, { left: x + '%', top: y + '%' }); if (size) c.style.width = size + 'cqw';
+  stage.append(c);
+  const W = stage.clientWidth, H = stage.clientHeight, px = v => v * W / 100, py = v => v * H / 100;
+  c.animate([
+    { transform: 'translate(-50%,-50%) scale(.6)', opacity: 1 },
+    { transform: `translate(calc(-50% + ${px(dx / 2)}px),calc(-50% - ${py(up)}px)) scale(1.1) rotate(${rnd(-200, 200)}deg)`, offset: .45, easing: 'ease-in' },
+    { transform: `translate(calc(-50% + ${px(dx)}px),calc(-50% + ${py(fall)}px)) scale(.9) rotate(${rnd(-400, 400)}deg)`, opacity: .9, offset: .9 },
+    { transform: `translate(calc(-50% + ${px(dx)}px),calc(-50% + ${py(fall - 1.5)}px)) scale(.8)`, opacity: 0 },
+  ], { duration: ms, easing: 'cubic-bezier(.3,.7,.6,1)', fill: 'forwards' }).onfinish = () => c.remove();
+}
+// moedas que voam de um ponto até outro (ganho indo pro saldo, aposta indo pro saco do Lula)
+function coinTo(x0, y0, x1, y1, delay = 0) {
+  const c = document.createElement('div'); c.className = 'coin'; c.innerHTML = '<i></i>';
+  Object.assign(c.style, { left: x0 + '%', top: y0 + '%', opacity: 0 }); stage.append(c);
+  const W = stage.clientWidth, H = stage.clientHeight, dx = (x1 - x0) * W / 100, dy = (y1 - y0) * H / 100;
+  c.animate([
+    { transform: 'translate(-50%,-50%) scale(.5)', opacity: 1 },
+    { transform: `translate(calc(-50% + ${dx * .4}px),calc(-50% + ${dy * .4 - H * .12}px)) scale(1.2)`, offset: .45 },
+    { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.5)`, opacity: .8 },
+  ], { duration: 700, delay, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => { c.remove(); play('coin'); };
+}
+// ambiente: moedas pulando das pilhas de baixo, caindo do saco do Lula e dos lados da moldura
+const SPOTS = [[8, 88], [20, 95], [32, 90], [70, 90], [84, 95], [94, 86], [4, 70], [96, 70], [50, 98], [62, 96]];
+setInterval(() => {
+  if (document.hidden) return;
+  const [x, y] = SPOTS[Math.random() * SPOTS.length | 0];
+  coin(x + rnd(-3, 3), y, { up: rnd(6, 14), fall: rnd(1, 4), size: rnd(3.5, 6) });
+  if (Math.random() < .5) coin(rnd(38, 60), rnd(4, 10), { dx: rnd(-10, 6), up: rnd(2, 6), fall: rnd(14, 24), size: rnd(3.5, 5.5) }); // escapando do saco
+}, 260);
+
+// ---------- rolos ----------
+const reels = COLX.map(([x0, x1]) => {
+  const r = document.createElement('div');
+  r.className = 'reel';
+  Object.assign(r.style, { left: x0 / 9.41 + '%', width: (x1 - x0) / 9.41 + '%' });
+  r.innerHTML = '<div class="strip"></div>';
+  $('#reels').append(r);
+  return r;
+});
+const cellHtml = (s, cls = '') => `<div class="cell${s === WILD ? ' wild' : ''}${cls}" data-s="${s}"><img src="${IMG(SYMBOLS[s].id)}" alt="${SYMBOLS[s].id}"></div>`;
+const col = (g, c) => [0, 1, 2].map(r => g[r * COLS + c]);
+const cellEl = i => reels[i % COLS].firstElementChild.children[(i / COLS) | 0];
+const cellXY = i => { const [x0, x1] = COLX[i % COLS]; return [(x0 + x1) / 2 / 9.41, (620 + ((i / COLS) | 0) * 164.9 + 82.4) / 16.72]; };
+let grid = Array.from({ length: 15 }, drawSymbol);
+reels.forEach((r, c) => r.firstElementChild.innerHTML = col(grid, c).map(s => cellHtml(s)).join(''));
+
+let turbo = false, auto = false;
+function spinReel(c, next) {
+  const reel = reels[c], strip = reel.firstElementChild;
+  const n = (turbo ? 6 : 12) + c * (turbo ? 2 : 4), dur = (turbo ? 380 : 800) + c * (turbo ? 110 : 260);
+  const final = col(next, c), filler = Array.from({ length: n }, drawSymbol);
+  strip.innerHTML = [...final, ...filler, ...col(grid, c)].map(s => cellHtml(s)).join('');
+  strip.style.transition = 'none';
+  strip.style.transform = `translateY(calc(var(--cell) * ${-(n + 3)}))`;
+  strip.offsetHeight;
+  reel.classList.add('spinning');
+  strip.style.transition = `transform ${dur}ms cubic-bezier(.25,.1,.3,1.06)`;
+  strip.style.transform = 'translateY(0)';
+  return new Promise(res => setTimeout(() => {
+    reel.classList.remove('spinning');
+    strip.style.transition = 'none';
+    strip.innerHTML = final.map(s => cellHtml(s, ' land')).join('');
+    play('stop');
+    // wild ou estrela caindo: espirra moeda
+    final.forEach((s, r) => { if (s === WILD || s === SCATTER) { const [x, y] = cellXY(r * COLS + c); for (let k = 0; k < 5; k++) coin(x, y, { up: rnd(4, 10), fall: rnd(2, 8) }); } });
+    res();
+  }, dur));
+}
+
+function clearWin() {
+  $('#lines').innerHTML = '';
+  for (let i = 0; i < 15; i++) cellEl(i).classList.remove('win', 'dim');
+}
+function showWins(wins) {
+  const hit = new Set(wins.flatMap(w => w.cells));
+  for (let i = 0; i < 15; i++) cellEl(i).classList.add(hit.has(i) ? 'win' : 'dim');
+  const pt = i => { const [x0, x1] = COLX[i % COLS]; return `${(x0 + x1) / 2},${620 + ((i / COLS) | 0) * 164.9 + 82.4}`; };
+  $('#lines').innerHTML = wins.map(w => `<polyline points="${LINES[w.line].map(pt).join(' ')}"/>`).join('');
+  // moedas pulam das casas premiadas e voam pro "último ganho"
+  [...hit].forEach((i, k) => {
+    const [x, y] = cellXY(i);
+    for (let j = 0; j < 3; j++) coin(x, y, { up: rnd(6, 14), fall: rnd(0, 6) });
+    coinTo(x, y, 83.4, 72.8, 150 + k * 60);
+  });
+}
+function starsSpin(cells) {
+  cells.forEach(i => { const c = cellEl(i); c.classList.add('win'); c.querySelector('img').animate([{ transform: 'rotateY(0)' }, { transform: 'rotateY(720deg) scale(1.2)' }, { transform: 'rotateY(1080deg)' }], { duration: 1100 }); });
+  play('star');
+}
+
+// ---------- HUD ----------
+let betIdx = 1, spinning = false;
+const msg = t => $('#msg').textContent = t;
+const bump = el => { el.classList.remove('bump'); el.offsetHeight; el.classList.add('bump'); };
+function hud() {
+  $('#bal').textContent = brl(r2(balance - pending));
+  $('#bet').textContent = 'R$ ' + brl(BETS[betIdx]);
+}
+function countUp(el, to, ms = 800) {
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / ms); el.textContent = brl(to * k); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+function rain(n) {
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div'); c.className = 'coin rain'; c.innerHTML = '<i></i>';
+    c.style.left = Math.random() * 100 + 'vw'; c.style.animationDuration = 1.6 + Math.random() * 1.8 + 's'; c.style.animationDelay = Math.random() * 1.2 + 's';
+    c.style.width = rnd(28, 48) + 'px'; c.style.fontSize = '20px';
+    document.body.append(c); setTimeout(() => c.remove(), 4800);
+  }
+}
+function bigWin(total, bet, title) {
+  const ov = $('#overlay');
+  $('#ovTitle').textContent = title || (total >= bet * 50 ? 'MEGA GANHO!' : 'GRANDE GANHO!');
+  ov.classList.add('show'); countUp($('#ovAmt'), total, 1800); rain(50); play('big'); fala('puro5');
+  clearTimeout(ov.t); ov.t = setTimeout(() => ov.classList.remove('show'), 4600);
+}
+function lulaDo(cls) { const l = $('#lula'); l.classList.remove('hop', 'grab'); l.offsetHeight; l.classList.add(cls); setTimeout(() => l.classList.remove(cls), 1700); }
+
+// ---------- evento: "Não deixe o Lulinha roubar suas moedas!" (só visual, não mexe no saldo) ----------
+let eventOn = false;
+async function lulinhaFoge() {
+  if (eventOn || $('#overlay').classList.contains('show')) return;
+  eventOn = true;
+  stage.classList.remove('shake'); stage.offsetHeight; stage.classList.add('shake');
+  const ban = img('assets/lulinha/banner.webp', 'banner'); setTimeout(() => ban.remove(), 2700);
+  play('siren'); fala('puro2');
+  await sleep(1500);
+  msg('🚨 Toque no Lulinha antes que ele fuja!');
+  const dur = turbo ? 3200 : 4200, y = rnd(40, 52);
+  // Lula correndo com o saco, largando moedas; federal, viatura e helicóptero atrás
+  const run = sprite(Object.assign(document.createElement('div'), { className: 'spr runner' }), 'run', 420); run.style.width = '34%'; run.style.top = y + '%';
+  const pf1 = sprite(Object.assign(document.createElement('div'), { className: 'spr chaser' }), 'pf_run', 560); pf1.style.width = '20%'; pf1.style.top = (y + 4) + '%';
+  const pf2 = sprite(Object.assign(document.createElement('div'), { className: 'spr chaser' }), 'pf_run', 520); pf2.style.width = '18%'; pf2.style.top = (y + 7) + '%';
+  const car = sprite(Object.assign(document.createElement('div'), { className: 'spr car' }), 'car', 320); car.style.width = '36%'; car.style.top = '66%';
+  const fly = img('assets/lulinha/heli.webp', 'flyer', { width: '30%', top: '26%' });
+  stage.append(run, pf1, pf2, car);
+  const across = (el, from, to, ms, delay = 0) => el.animate([{ left: from + '%' }, { left: to + '%' }], { duration: ms, delay, fill: 'both', easing: 'linear' });
+  const anims = [across(run, -36, 104, dur), across(pf1, -60, 110, dur * 1.05, 250), across(pf2, -85, 110, dur * 1.1, 450), across(car, -110, 110, dur * 1.15, 300), across(fly, -40, 110, dur * 1.1)];
+  run.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-6%)' }], { duration: 210, iterations: Infinity, direction: 'alternate' });
+  const drop = setInterval(() => { const r = run.getBoundingClientRect(), s = stage.getBoundingClientRect(); coin((r.left - s.left + r.width * .3) / s.width * 100, (r.top - s.top + r.height * .3) / s.height * 100, { dx: rnd(-8, 2), up: rnd(4, 10), fall: rnd(8, 16) }); }, 90);
+  const caught = await new Promise(res => { run.onpointerdown = e => { e.stopPropagation(); res(true); }; anims[0].onfinish = () => res(false); });
+  clearInterval(drop);
+  if (caught) {
+    const r = run.getBoundingClientRect(), s = stage.getBoundingClientRect(), x = (r.left - s.left) / s.width * 100;
+    [run, pf1, pf2].forEach(e => e.remove());
+    const c = img('assets/lulinha/catch.webp', '', { left: Math.max(0, Math.min(62, x)) + '%', top: y + '%', width: '38%', zIndex: 8 });
+    c.animate([{ transform: 'translateX(-40%) scale(.8)' }, { transform: 'none' }], { duration: 250, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+    play('caught');
+    const [bx, by] = [x + 18, y + 6]; for (let k = 0; k < 24; k++) coin(Math.min(90, bx), by, { up: rnd(10, 26), fall: rnd(4, 20), dx: rnd(-25, 25) });
+    await sleep(900); c.remove();
+    const f = Object.assign(document.createElement('div'), { className: 'flash' }); stage.append(f); setTimeout(() => f.remove(), 700);
+    const pop = document.createElement('div'); pop.className = 'abs pop';
+    pop.innerHTML = '<img src="assets/lulinha/jail.webp" alt=""><b>PRESO!<br>Moedas salvas!</b>';
+    stage.append(pop); fala('puro1'); msg('👮 A Federal pegou o Lulinha! Suas moedas estão salvas.');
+    const b = img('assets/lulinha/burst.webp', '', { left: '15%', top: '36%', width: '70%', zIndex: 9 });
+    b.animate([{ transform: 'scale(.3) rotate(-30deg)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: .4 }, { transform: 'scale(1.3) rotate(10deg)', opacity: 0 }], { duration: 1400, fill: 'forwards' });
+    await sleep(2200); pop.remove(); b.remove();
+  } else {
+    [run].forEach(e => e.remove());
+    msg('😱 O Lulinha fugiu com o saco! Fica de olho na próxima…');
+    lulaDo('hop');
+  }
+  await sleep(1200);
+  [pf1, pf2, car, fly].forEach(e => e.remove());
+  eventOn = false;
+  if (!spinning) msg('Não deixe o Lulinha roubar suas moedas!');
+}
+(function agenda() { setTimeout(() => { if (!document.hidden && !stage.classList.contains('freespin')) lulinhaFoge(); agenda(); }, rnd(18000, 32000)); })();
+
+// ---------- rodada ----------
+async function showSpin(s, bet, mult) {
+  clearWin();
+  const ticker = setInterval(() => play('tick'), 80);
+  await Promise.all(reels.map((_, c) => spinReel(c, s.grid)));
+  clearInterval(ticker);
+  grid = s.grid;
+  if (s.win > 0) {
+    showWins(s.wins); play('win', Math.min(3, s.wins.length)); lulaDo('hop');
+    if (s.win >= bet * 3) fala(s.win >= bet * 8 ? 'puro2' : 'puro1');
+    msg(`${mult > 1 ? `x${mult} · ` : ''}Ganhou R$ ${brl(s.win)} em ${s.wins.length} linha${s.wins.length > 1 ? 's' : ''}`);
+    await sleep(turbo ? 700 : 1300);
+  }
+}
+async function spin() {
+  if (spinning) return;
+  const bet = BETS[betIdx];
+  if (balance < bet) {
+    setAuto(false);
+    if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (!host && balance < BETS[0]) { balance = START; save(); hud(); msg('Créditos recarregados: R$ ' + brl(START)); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').disabled = true; $('#spin').classList.add('busy');
+  play('click'); msg('Boa sorte!'); $('#win').textContent = '0,00';
+  balance = r2(balance - bet); save(); hud();
+
+  const res = playRound(bet);
+  balance = r2(balance + res.total); pending = res.total; save(); reportarRodada('lulinha', bet, res.total); // o prêmio já vai pro saldo; a tela só anima
+  await showSpin(res.base, bet, 1);
+  let shown = res.base.win;
+  if (res.free.length) {
+    starsSpin(res.base.scatters); msg(`⭐ ${res.base.scatters.length} estrelas!`);
+    $('#sign').classList.add('bang'); setTimeout(() => $('#sign').classList.remove('bang'), 2200);
+    await sleep(1200);
+    const fr = $('#free');
+    fr.innerHTML = `<b>RODADAS GRÁTIS!</b><span>${res.free.length} giros grátis · ganhos x${FREE_MULT}</span>`;
+    fr.classList.add('show'); fala('puro5'); rain(25); await sleep(2200); fr.classList.remove('show');
+    stage.classList.add('freespin');
+    for (let k = 0; k < res.free.length; k++) {
+      $('#freeTag').textContent = `GIRO GRÁTIS ${k + 1}/${res.free.length} · x${FREE_MULT} · R$ ${brl(shown - res.base.win)}`;
+      await showSpin(res.free[k], bet, FREE_MULT);
+      shown += res.free[k].win;
+      await sleep(turbo ? 150 : 350);
+    }
+    stage.classList.remove('freespin');
+  }
+  pending = 0; hud(); bump($('#bal'));
+  countUp($('#win'), res.total); if (res.total) bump($('#win'));
+  if (res.free.length) bigWin(res.total, bet, res.total ? 'RODADAS GRÁTIS!' : 'FIM DOS GIROS');
+  else if (res.total >= bet * 15) bigWin(res.total, bet);
+  if (res.total > 0) msg(`${res.capped ? `Prêmio máximo (${MAX_WIN}x)! ` : ''}Total: R$ ${brl(res.total)}`);
+  else {
+    // perdeu: a aposta voa pro saco do Lula
+    for (let k = 0; k < 6; k++) coinTo(rnd(45, 55), 72.8, rnd(40, 52), 8, k * 70);
+    lulaDo('grab');
+    msg(['O Lulinha passou a mão!', 'Faz o L… de Lá se vai a moeda', 'Gira de novo, não deixa ele levar tudo!', 'Nada dessa vez'][Math.random() * 4 | 0]);
+    if (Math.random() < .12) setTimeout(lulinhaFoge, 900);
+  }
+  spinning = false; $('#spin').disabled = false; $('#spin').classList.remove('busy');
+  if (auto) setTimeout(() => auto && !$('#overlay').classList.contains('show') ? spin() : auto && setTimeout(spin, 4700), turbo ? 250 : 600);
+}
+
+// ---------- botões ----------
+function setAuto(on) { auto = on; $('#auto').classList.toggle('on', on); }
+$('#spin').onclick = spin;
+$('#up').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); hud(); bump($('#bet')); };
+$('#down').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); hud(); bump($('#bet')); };
+$('#turbo').onclick = () => { turbo = !turbo; $('#turbo').classList.toggle('on', turbo); play('click'); msg(turbo ? '⚡ Turbo ligado' : 'Turbo desligado'); };
+$('#auto').onclick = () => { setAuto(!auto); play('click'); msg(auto ? '🔁 Giro automático ligado' : 'Giro automático desligado'); if (auto) spin(); };
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+function renderPay() {
+  const lb = BETS[betIdx] / LINES.length;
+  $('#payTable').innerHTML = '<span></span><small>3</small><small>4</small><small>5</small>' + SYMBOLS.map((s, i) =>
+    `<img src="${IMG(s.id)}" alt="${s.id}">` + (i === SCATTER ? `<span style="grid-column:span 3">3+ = giros grátis</span>` : s.pays.map(p => `<b>${brl(lb * p)}</b>`).join(''))).join('');
+  $('#fsInfo').textContent = Object.values(FREE_SPINS).join(', ');
+  $('#fsMult').textContent = 'x' + FREE_MULT;
+  $('#rtpInfo').textContent = (LU.RTP * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+  $('#maxInfo').textContent = MAX_WIN + 'x';
+}
+function openPay() { renderPay(); payDlg.showModal(); }
+$('#info').onclick = openPay;
+const menuTxt = () => { $('#mSfx').textContent = `🔊 Som: ${sfxOn ? 'ligado' : 'desligado'}`; $('#mMusic').textContent = `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`; };
+$('#menu').onclick = () => { menuTxt(); menuDlg.showModal(); };
+$('#mSfx').onclick = () => { sfxOn = !sfxOn; try { localStorage.setItem('lulinha.sfx', sfxOn ? 'on' : 'off'); } catch {} menuTxt(); };
+$('#mMusic').onclick = () => { musicOn = !musicOn; try { localStorage.setItem('lulinha.music', musicOn ? 'on' : 'off'); } catch {} musicOn ? startMusic() : stopMusic(); menuTxt(); };
+$('#mPay').onclick = () => { menuDlg.close(); openPay(); };
+$('#mExit').onclick = () => { if (spinning) return; host ? host.closeGame() : (location.href = 'index.html'); };
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !payDlg.open && !menuDlg.open) { e.preventDefault(); spin(); } });
+document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
+hud();
+setTimeout(lulinhaFoge, 4000); // primeira aparição logo no começo
+// RTP mudou no painel: aplica entre giros e redesenha a tabela
+rtpAoVivo('lulinha', LU, { ocupado: () => spinning, depois: renderPay });
+</script>
+</body>
+</html>
