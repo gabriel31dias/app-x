@@ -274,6 +274,36 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
 .foot nav { display: flex; gap: 22px; flex-wrap: wrap; }
 .foot nav a:hover { color: var(--text); }
 
+/* logo animado: brilho pulsando, reflexo passando e estrelinhas piscando */
+.logo { position: relative; display: inline-block; line-height: 0; }
+.logo img { animation: logo-glow 3.2s ease-in-out infinite; }
+.logo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .9) 50%, transparent 62%) no-repeat;
+  background-size: 260% 100%;
+  -webkit-mask: url(../assets/logo_orama.png) center / contain no-repeat;
+  mask: url(../assets/logo_orama.png) center / contain no-repeat;
+  animation: logo-shine 4s ease-in-out infinite;
+}
+.logo .tw {
+  position: absolute; width: 12px; height: 12px; pointer-events: none;
+  background: #fff6c8; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  filter: drop-shadow(0 0 4px #f5c542); opacity: 0; animation: logo-tw 2.6s ease-in-out infinite;
+}
+.logo .tw:nth-of-type(1) { top: -4px; right: 6%; }
+.logo .tw:nth-of-type(2) { bottom: 8%; left: -6px; width: 9px; height: 9px; animation-delay: -.9s; }
+.logo .tw:nth-of-type(3) { top: 30%; right: -8px; width: 8px; height: 8px; animation-delay: -1.7s; }
+@keyframes logo-glow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(0, 230, 118, .25)); }
+  50% { filter: drop-shadow(0 0 14px rgba(245, 197, 66, .6)) brightness(1.08); }
+}
+@keyframes logo-shine { 0% { background-position: 130% 0; } 55%, 100% { background-position: -30% 0; } }
+@keyframes logo-tw { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+
+/* brilhos caindo no fundo */
+#brilhos { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+main, footer { position: relative; z-index: 1; }
+
 /* entrada ao rolar */
 .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
 .reveal.in { opacity: 1; transform: none; }
@@ -315,7 +345,7 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
 
 <header class="nav" id="nav">
   <div class="container nav-in">
-    <a class="logo" href="#topo" aria-label="Orama Games"><img src="../assets/logo_orama.png" alt="Orama Games"></a>
+    <a class="logo" href="#topo" aria-label="Orama Games"><img src="../assets/logo_orama.png" alt="Orama Games"><span class="tw"></span><span class="tw"></span><span class="tw"></span></a>
     <nav class="nav-links" aria-label="Seções">
       <a href="#jogos">Jogos</a>
       <a href="#recursos">Recursos</a>
@@ -328,6 +358,8 @@ footer { padding: 60px 0 50px; color: var(--muted); font-size: 14px; }
     <a class="btn btn-primary" href="#contato">Quero integrar</a>
   </div>
 </header>
+
+<canvas id="brilhos" aria-hidden="true"></canvas>
 
 <main id="topo">
 
@@ -574,6 +606,56 @@ r.addEventListener('input', rtp); rtp();
 const nav = document.getElementById('nav');
 const onScroll = () => nav.classList.toggle('solid', scrollY > 20);
 addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+// brilhos dourados caindo no fundo (desliga com "reduzir movimento")
+(() => {
+  const cv = document.getElementById('brilhos');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { cv.remove(); return; }
+  const ctx = cv.getContext('2d');
+  const CORES = ['#f5c542', '#ffe89a', '#fff6c8', '#f5c542', '#00e676'];
+  let W, H, dpr, parts = [];
+  const novo = (topo) => ({
+    x: Math.random() * W, y: topo ? -20 : Math.random() * H,
+    r: 0.8 + Math.random() * 2.6, v: 0.35 + Math.random() * 1.1,
+    fase: Math.random() * Math.PI * 2, balanco: 0.3 + Math.random() * 0.8,
+    cor: CORES[(Math.random() * CORES.length) | 0], gira: Math.random() * Math.PI,
+  });
+  function tamanho() {
+    dpr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.round(Math.min(90, (W * H) / 16000));
+    while (parts.length < n) parts.push(novo(false));
+    parts.length = n;
+  }
+  function estrela(p, a) {
+    const s = p.r * 3.2;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.gira); ctx.globalAlpha = a;
+    ctx.fillStyle = p.cor; ctx.shadowColor = p.cor; ctx.shadowBlur = 10;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const ang = (i * Math.PI) / 4, raio = i % 2 ? s * 0.28 : s;
+      ctx.lineTo(Math.cos(ang) * raio, Math.sin(ang) * raio);
+    }
+    ctx.fill(); ctx.restore();
+  }
+  let t = 0;
+  function quadro() {
+    t += 0.016; ctx.clearRect(0, 0, W, H);
+    for (const p of parts) {
+      p.y += p.v; p.x += Math.sin(t * p.balanco + p.fase) * 0.35; p.gira += 0.01;
+      if (p.y > H + 20) Object.assign(p, novo(true));
+      const a = 0.35 + 0.65 * Math.abs(Math.sin(t * 2 + p.fase)); // pisca
+      if (p.r > 2.2) estrela(p, a);
+      else {
+        ctx.globalAlpha = a * 0.9; ctx.fillStyle = p.cor; ctx.shadowColor = p.cor; ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    requestAnimationFrame(quadro);
+  }
+  addEventListener('resize', tamanho); tamanho(); requestAnimationFrame(quadro);
+})();
 
 // entrada suave dos blocos
 const io = new IntersectionObserver((es) => es.forEach((e) => {
