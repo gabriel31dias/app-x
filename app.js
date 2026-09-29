@@ -567,7 +567,7 @@ function showBigWinCelebration(amount) {
 // ==========================================================================
 let selectedDepositAmount = null; // nada marcado: a pessoa escolhe antes de gerar
 const DEPOSIT_TEXT_INICIAL = "Apos gerar o PIX, o saldo sera creditado automaticamente quando o pagamento for confirmado.";
-const DEPOSIT_MIN = 2; // R$ — a API recusa abaixo disso também
+const DEPOSIT_MIN = 20; // R$ — a API recusa abaixo disso também
 const DEPOSIT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // PIX esquecido sai da fila depois de 1 dia
 const Deposit = {
   current: null, // PIX mostrado no modal agora

@@ -256,26 +256,26 @@ describe('Auth + Perfil (e2e)', () => {
     const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status });
     const uuid = '3f9c1a2e-1111-4222-8333-444455556666';
     const fetchMock = vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 1500, platform_tax: 60, liquid_amount: 1440, pix: { emv: '000201-pluggou' } } }, 201));
-    const { body: dep } = await api().post('/depositos').send({ amountCents: 1500, buyerName: 'Rita Luz', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(201);
+      .mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 2000, platform_tax: 80, liquid_amount: 1920, pix: { emv: '000201-pluggou' } } }, 201));
+    const { body: dep } = await api().post('/depositos').send({ amountCents: 2000, buyerName: 'Rita Luz', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(201);
     expect(dep).toMatchObject({ id: `plg-${uuid}`, status: 'pending', pixEmv: '000201-pluggou', source: 'pluggou' });
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://api.pluggoutech.com/api/transactions');
     expect((init.headers as Record<string, string>)['X-Secret-Key']).toBe('sk');
-    expect(JSON.parse(init.body as string)).toMatchObject({ payment_method: 'pix', amount: 1500, buyer: { buyer_document: '52998224725' } });
+    expect(JSON.parse(init.body as string)).toMatchObject({ payment_method: 'pix', amount: 2000, buyer: { buyer_document: '52998224725' } });
 
-    fetchMock.mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 1500, status: 'pending' } }));
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 2000, status: 'pending' } }));
     expect((await api().get(`/depositos/${dep.id}`).expect(200)).body.status).toBe('pending');
     expect(fetchMock.mock.calls[1][0]).toBe(`https://api.pluggoutech.com/api/transactions/${uuid}`);
 
-    fetchMock.mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 1500, liquid_amount: 1440, status: 'paid' } }));
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: { id: uuid, amount: 2000, liquid_amount: 1920, status: 'paid' } }));
     expect((await api().get(`/depositos/${dep.id}`).expect(200)).body.status).toBe('paid');
     const v = await api().get('/admin/vendas?q=rita').set(adminAuth).expect(200);
-    expect(v.body.itens[0]).toMatchObject({ status: 'pago', liquido: 14.4 });
+    expect(v.body.itens[0]).toMatchObject({ status: 'pago', liquido: 19.2 });
 
-    // abaixo de R$ 2,00 nem chega na Pluggou
+    // abaixo de R$ 20,00 nem chega na Pluggou
     const antes = fetchMock.mock.calls.length;
-    await api().post('/depositos').send({ amountCents: 199, buyerName: 'Rita Luz', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(400);
+    await api().post('/depositos').send({ amountCents: 1999, buyerName: 'Rita Luz', buyerDocument: '52998224725', buyerPhone: '11987654321' }).expect(400);
     expect(fetchMock.mock.calls.length).toBe(antes);
 
     // erro de regra da Pluggou chega com a mensagem dela

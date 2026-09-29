@@ -2,7 +2,7 @@ import { IsEmail, IsInt, IsOptional, IsString, Matches, Max, Min, MinLength } fr
 
 export class CreatePixDepositDto {
   @IsInt()
-  @Min(200, { message: 'O depósito mínimo é de R$ 2,00' })
+  @Min(2000, { message: 'O depósito mínimo é de R$ 20,00' })
   @Max(500_000_00)
   amountCents: number;
 
