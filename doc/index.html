@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orama Games API</title>
+<meta name="description" content="Documentação da API B2B da Orama Games: integre nossos jogos ao seu cassino com carteira seamless.">
+<link rel="icon" href="../assets/logo_orama.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #040e08;
+  --bg-2: #07170d;
+  --panel: rgba(9, 32, 18, 0.72);
+  --line: rgba(20, 205, 94, 0.16);
+  --line-2: rgba(20, 205, 94, 0.32);
+  --green: #14cd5e;
+  --green-2: #00e676;
+  --gold: #f5c542;
+  --red: #ff5a6a;
+  --blue: #5ab0ff;
+  --text: #eaf5ee;
+  --dim: #9bb5a3;
+  --muted: #62806b;
+  --code-bg: #020904;
+  --radius: 14px;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+body {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 70% -10%, #0c331a 0%, transparent 55%);
+  background-attachment: fixed;
+  color: var(--text);
+  line-height: 1.65;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--green-2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre { font-family: var(--mono); }
+:not(pre) > code {
+  background: rgba(20, 205, 94, 0.1); color: #b9f5cf;
+  padding: 1px 6px; border-radius: 6px; font-size: 0.88em; word-break: break-word;
+}
+
+/* topo */
+.top {
+  position: sticky; top: 0; z-index: 20; height: 64px;
+  display: flex; align-items: center; gap: 16px; padding: 0 24px;
+  background: rgba(4, 14, 8, 0.86); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.top img { height: 30px; }
+.top .tag {
+  font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--green-2);
+  border: 1px solid var(--line-2); padding: 3px 10px; border-radius: 999px;
+}
+.top .spacer { flex: 1; }
+.top .ver { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.top .cta {
+  background: var(--green); color: #032010; font-weight: 800; font-size: 13px;
+  padding: 8px 16px; border-radius: 999px;
+}
+.top .cta:hover { text-decoration: none; background: var(--green-2); }
+.menu-btn {
+  display: none; background: none; border: 1px solid var(--line-2); color: var(--text);
+  border-radius: 10px; width: 40px; height: 40px; font-size: 18px; cursor: pointer;
+}
+
+/* layout */
+.wrap { display: grid; grid-template-columns: 260px minmax(0, 1fr); max-width: 1320px; margin: 0 auto; }
+nav.side {
+  position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto;
+  padding: 28px 16px 40px 24px; border-right: 1px solid var(--line);
+}
+nav.side h4 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+  margin: 22px 0 8px 10px;
+}
+nav.side h4:first-child { margin-top: 0; }
+nav.side a {
+  display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 14px;
+  padding: 6px 10px; border-radius: 8px;
+}
+nav.side a:hover { color: var(--text); background: rgba(20, 205, 94, 0.07); text-decoration: none; }
+nav.side a.on { color: var(--green-2); background: rgba(20, 205, 94, 0.1); }
+.m {
+  font-family: var(--mono); font-size: 10px; font-weight: 600; border-radius: 5px;
+  padding: 1px 5px; min-width: 38px; text-align: center;
+}
+.m.get { color: var(--blue); background: rgba(90, 176, 255, .12); }
+.m.post { color: var(--green-2); background: rgba(0, 230, 118, .12); }
+.m.cb { color: var(--gold); background: rgba(245, 197, 66, .12); }
+
+main { padding: 40px 48px 120px; min-width: 0; }
+section { padding: 36px 0; border-bottom: 1px solid var(--line); }
+section:last-child { border-bottom: 0; }
+h1 { font-size: 40px; line-height: 1.15; letter-spacing: -.02em; font-weight: 800; }
+h1 em { font-style: normal; color: var(--green-2); }
+h2 { font-size: 26px; letter-spacing: -.01em; margin-bottom: 12px; font-weight: 800; }
+h3 { font-size: 17px; margin: 26px 0 10px; font-weight: 700; }
+p { color: var(--dim); margin-bottom: 12px; max-width: 760px; }
+p strong, li strong { color: var(--text); }
+ul.list { color: var(--dim); padding-left: 20px; margin-bottom: 12px; max-width: 760px; }
+ul.list li { margin: 4px 0; }
+.lead { font-size: 17px; max-width: 700px; margin-top: 14px; }
+
+.hero-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 28px; max-width: 820px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.stat b { display: block; font-size: 24px; color: var(--text); }
+.stat span { font-size: 13px; color: var(--dim); }
+
+/* endpoint */
+.ep {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 14px; margin: 6px 0 16px; font-family: var(--mono); font-size: 14px;
+}
+.ep .m { font-size: 12px; padding: 3px 8px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+
+/* tabela */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); margin: 8px 0 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: rgba(20, 205, 94, .04); }
+tr:last-child td { border-bottom: 0; }
+td { color: var(--dim); }
+td:first-child code { color: #d5ffe4; }
+.req { color: var(--gold); font-size: 11px; font-weight: 700; margin-left: 6px; }
+.typ { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+
+/* código */
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; margin: 8px 0 18px; }
+.code-head {
+  display: flex; align-items: center; gap: 4px; padding: 6px 8px 0 8px;
+  border-bottom: 1px solid var(--line); background: rgba(20, 205, 94, .04);
+}
+.code-head .t {
+  background: none; border: 0; color: var(--muted); font: 600 12px Inter, sans-serif;
+  padding: 7px 10px 8px; cursor: pointer; border-bottom: 2px solid transparent;
+}
+.code-head .t.on { color: var(--green-2); border-bottom-color: var(--green-2); }
+.code-head .lbl { color: var(--muted); font-size: 12px; font-weight: 600; padding: 7px 6px 8px; }
+.code-head .copy {
+  margin-left: auto; margin-bottom: 6px; background: none; border: 1px solid var(--line-2); color: var(--dim);
+  font: 600 11px Inter, sans-serif; padding: 4px 10px; border-radius: 7px; cursor: pointer;
+}
+.code-head .copy:hover { color: var(--text); }
+pre { padding: 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; color: #cfe9d8; }
+pre[hidden] { display: none; }
+.k { color: #7fd8ff; } .s { color: #b6f09c; } .n { color: #ffb86b; } .c { color: #5e7766; font-style: italic; }
+
+/* avisos */
+.note {
+  border: 1px solid var(--line-2); border-left: 3px solid var(--green); background: rgba(20, 205, 94, .06);
+  padding: 12px 16px; border-radius: 10px; margin: 12px 0 18px; color: var(--dim); max-width: 820px; font-size: 14px;
+}
+.note.warn { border-color: rgba(245, 197, 66, .35); border-left-color: var(--gold); background: rgba(245, 197, 66, .06); }
+.note b { color: var(--text); }
+
+/* fluxo */
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0 8px; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; position: relative; }
+.step .num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: #032010;
+  font-weight: 800; font-size: 13px; display: grid; place-items: center; margin-bottom: 10px;
+}
+.step b { display: block; margin-bottom: 4px; }
+.step p { font-size: 13px; margin: 0; }
+
+/* catálogo */
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin: 16px 0 22px; }
+.game { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.game img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: #0a2413; }
+.game div { padding: 10px 12px 12px; }
+.game b { display: block; font-size: 14px; line-height: 1.3; }
+.game code { font-size: 11px !important; }
+.game small { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+/* calculadora */
+.calc { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; max-width: 820px; }
+.calc label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 10px 0 6px; }
+.calc input, .calc textarea {
+  width: 100%; background: var(--code-bg); border: 1px solid var(--line-2); color: var(--text);
+  border-radius: 10px; padding: 10px 12px; font: 13px var(--mono); resize: vertical;
+}
+.calc input:focus, .calc textarea:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+.calc output {
+  display: block; margin-top: 12px; background: var(--code-bg); border: 1px dashed var(--line-2);
+  border-radius: 10px; padding: 12px; font: 13px var(--mono); color: var(--green-2); word-break: break-all; min-height: 44px;
+}
+
+.pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--dim); }
+footer { padding: 30px 48px 50px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); }
+
+@media (max-width: 1080px) {
+  .cols { grid-template-columns: 1fr; gap: 0; }
+  .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: 1fr; }
+  nav.side {
+    position: fixed; top: 64px; left: 0; width: 280px; z-index: 15; background: var(--bg-2);
+    transform: translateX(-100%); transition: transform .2s ease; border-right: 1px solid var(--line-2);
+  }
+  nav.side.open { transform: none; }
+  .menu-btn { display: block; }
+  main { padding: 28px 16px 90px; }
+  footer { padding: 24px 16px 40px; }
+  h1 { font-size: 30px; }
+  .top { padding: 0 16px; gap: 10px; }
+  .top .ver, .top .tag { display: none; }
+  .hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .flow { grid-template-columns: 1fr; }
+  .top .cta { padding: 7px 12px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="menu-btn" aria-label="Abrir menu" onclick="document.querySelector('nav.side').classList.toggle('open')">☰</button>
+  <a href="../"><img src="../assets/logo_orama.png" alt="Orama Games"></a>
+  <span class="tag">API PARA OPERADORES</span>
+  <span class="spacer"></span>
+  <span class="ver">v1.0</span>
+  <a class="cta" href="#contato">Quero integrar</a>
+</header>
+
+<div class="wrap">
+<nav class="side" aria-label="Seções">
+  <h4>Começando</h4>
+  <a href="#visao-geral">Visão geral</a>
+  <a href="#fluxo">Como funciona</a>
+  <a href="#ambientes">Ambientes</a>
+  <a href="#autenticacao">Autenticação e assinatura</a>
+  <a href="#convencoes">Convenções</a>
+  <h4>Sua integração chama</h4>
+  <a href="#games"><span class="m get">GET</span> /games</a>
+  <a href="#sessions"><span class="m post">POST</span> /sessions</a>
+  <a href="#demo"><span class="m post">POST</span> /sessions/demo</a>
+  <a href="#rounds"><span class="m get">GET</span> /rounds</a>
+  <a href="#round"><span class="m get">GET</span> /rounds/:id</a>
+  <a href="#reports"><span class="m get">GET</span> /reports/ggr</a>
+  <h4>Nós chamamos você (carteira)</h4>
+  <a href="#wallet">Carteira seamless</a>
+  <a href="#cb-balance"><span class="m cb">CB</span> /balance</a>
+  <a href="#cb-bet"><span class="m cb">CB</span> /bet</a>
+  <a href="#cb-win"><span class="m cb">CB</span> /win</a>
+  <a href="#cb-rollback"><span class="m cb">CB</span> /rollback</a>
+  <h4>Referência</h4>
+  <a href="#catalogo">Catálogo de jogos</a>
+  <a href="#rtp">RTP e fairness</a>
+  <a href="#erros">Códigos de erro</a>
+  <a href="#frontend">Abrir o jogo no site</a>
+  <a href="#comercial">Modelo comercial</a>
+  <a href="#checklist">Checklist de homologação</a>
+  <a href="#contato">Contato</a>
+</nav>
+
+<main>
+
+<section id="visao-geral">
+  <span class="pill">Orama Games · Provedor de jogos</span>
+  <h1 style="margin-top:14px">Coloque os jogos da <em>Orama Games</em> no seu cassino com uma integração.</h1>
+  <p class="lead">A API da Orama Games entrega nosso catálogo de jogos originais para operadores. O saldo continua na sua plataforma: nós só pedimos para debitar a aposta e creditar o prêmio, com assinatura em cada chamada e idempotência de ponta a ponta.</p>
+  <div class="hero-stats">
+    <div class="stat"><b>12</b><span>jogos originais</span></div>
+    <div class="stat"><b>85–99%</b><span>RTP configurável por jogo</span></div>
+    <div class="stat"><b>6</b><span>endpoints + 4 callbacks</span></div>
+    <div class="stat"><b>BRL</b><span>PIX-ready, mobile first</span></div>
+  </div>
+</section>
+
+<section id="fluxo">
+  <h2>Como funciona</h2>
+  <p>A integração segue o padrão <strong>seamless wallet</strong>: o jogador nunca transfere saldo para a Orama Games. Cada jogada vira um débito e um crédito na carteira que você já tem.</p>
+  <div class="flow">
+    <div class="step"><div class="num">1</div><b>Abrir sessão</b><p>Seu back-end chama <code>POST /sessions</code> com o jogador e o jogo.</p></div>
+    <div class="step"><div class="num">2</div><b>Carregar o jogo</b><p>Você recebe uma <code>launchUrl</code> e abre em iframe ou nova aba.</p></div>
+    <div class="step"><div class="num">3</div><b>Jogada</b><p>Chamamos <code>/bet</code> na sua carteira, sorteamos no nosso servidor e chamamos <code>/win</code>.</p></div>
+    <div class="step"><div class="num">4</div><b>Conciliação</b><p>Tudo fica em <code>GET /rounds</code> e no relatório de GGR do mês.</p></div>
+  </div>
+  <div class="note"><b>O resultado é sempre sorteado no servidor da Orama Games.</b> O jogo no navegador só mostra a animação do resultado que já foi decidido e pago, então não há como alterar prêmio pelo cliente.</div>
+</section>
+
+<section id="ambientes">
+  <h2>Ambientes</h2>
+  <div class="tbl"><table>
+    <tr><th>Ambiente</th><th>URL base</th><th>Uso</th></tr>
+    <tr><td><strong>Sandbox</strong></td><td><code>https://api.oramagames.site/b2b/sandbox/v1</code></td><td>Homologação. Chaves começam com <code>sk_test_</code>. Nenhum valor real.</td></tr>
+    <tr><td><strong>Produção</strong></td><td><code>https://api.oramagames.site/b2b/v1</code></td><td>Liberado após o checklist de homologação. Chaves <code>sk_live_</code>.</td></tr>
+  </table></div>
+  <p>Suas URLs de callback precisam de <strong>HTTPS</strong> e devem responder em até <strong>3 segundos</strong>. Para o tráfego que sai de nós, libere os IPs informados no seu painel de operador.</p>
+</section>
+
+<section id="autenticacao">
+  <h2>Autenticação e assinatura</h2>
+  <p>Você recebe duas credenciais no cadastro: o <code>operatorId</code> e o <code>secret</code>. O <code>secret</code> nunca trafega; ele só é usado para assinar.</p>
+  <p>Toda requisição, <strong>nas duas direções</strong>, leva estes cabeçalhos:</p>
+  <div class="tbl"><table>
+    <tr><th>Cabeçalho</th><th>Valor</th></tr>
+    <tr><td><code>X-Operator-Id</code></td><td>Seu identificador, ex.: <code>op_7Hq2mK</code></td></tr>
+    <tr><td><code>X-Timestamp</code></td><td>Unix em segundos. Recusamos diferenças maiores que 300 s.</td></tr>
+    <tr><td><code>X-Signature</code></td><td><code>hex(HMAC-SHA256(secret, timestamp + "." + corpo))</code>. Em GET, o corpo é a query string sem o <code>?</code>.</td></tr>
+    <tr><td><code>Content-Type</code></td><td><code>application/json</code></td></tr>
+  </table></div>
+
+  <div class="code" data-tabs>
+    <div class="code-head"><button class="t on">Node.js</button><button class="t">PHP</button><button class="t">Python</button><button class="copy">Copiar</button></div>
+<pre><span class="k">import</span> crypto <span class="k">from</span> <span class="s">'node:crypto'</span>;
+
+<span class="k">function</span> assinar(secret, corpo) {
+  <span class="k">const</span> ts = Math.floor(Date.now() / <span class="n">1000</span>).toString();
+  <span class="k">const</span> sig = crypto.createHmac(<span class="s">'sha256'</span>, secret).update(<span class="s">`${ts}.${corpo}`</span>).digest(<span class="s">'hex'</span>);
+  <span class="k">return</span> { <span class="s">'X-Timestamp'</span>: ts, <span class="s">'X-Signature'</span>: sig };
+}
+
+<span class="c">// validar um callback recebido da Orama Games (compare em tempo constante)</span>
+<span class="k">function</span> valido(secret, ts, corpoBruto, sig) {
+  <span class="k">if</span> (Math.abs(Date.now() / <span class="n">1000</span> - Number(ts)) > <span class="n">300</span>) <span class="k">return false</span>;
+  <span class="k">const</span> esperado = crypto.createHmac(<span class="s">'sha256'</span>, secret).update(<span class="s">`${ts}.${corpoBruto}`</span>).digest();
+  <span class="k">return</span> crypto.timingSafeEqual(esperado, Buffer.from(sig, <span class="s">'hex'</span>));
+}</pre>
+<pre hidden><span class="k">function</span> assinar(<span class="k">string</span> $secret, <span class="k">string</span> $corpo): <span class="k">array</span> {
+    $ts = (<span class="k">string</span>) time();
+    $sig = hash_hmac(<span class="s">'sha256'</span>, $ts . <span class="s">'.'</span> . $corpo, $secret);
+    <span class="k">return</span> [<span class="s">'X-Timestamp: '</span> . $ts, <span class="s">'X-Signature: '</span> . $sig];
+}
+
+<span class="k">function</span> valido(<span class="k">string</span> $secret, <span class="k">string</span> $ts, <span class="k">string</span> $corpoBruto, <span class="k">string</span> $sig): <span class="k">bool</span> {
+    <span class="k">if</span> (abs(time() - (<span class="k">int</span>) $ts) > <span class="n">300</span>) <span class="k">return false</span>;
+    <span class="k">return</span> hash_equals(hash_hmac(<span class="s">'sha256'</span>, $ts . <span class="s">'.'</span> . $corpoBruto, $secret), $sig);
+}</pre>
+<pre hidden><span class="k">import</span> hmac, hashlib, time
+
+<span class="k">def</span> assinar(secret: str, corpo: str) -> dict:
+    ts = str(int(time.time()))
+    sig = hmac.new(secret.encode(), f<span class="s">"{ts}.{corpo}"</span>.encode(), hashlib.sha256).hexdigest()
+    <span class="k">return</span> {<span class="s">"X-Timestamp"</span>: ts, <span class="s">"X-Signature"</span>: sig}
+
+<span class="k">def</span> valido(secret: str, ts: str, corpo_bruto: str, sig: str) -> bool:
+    <span class="k">if</span> abs(time.time() - int(ts)) > <span class="n">300</span>: <span class="k">return False</span>
+    esperado = hmac.new(secret.encode(), f<span class="s">"{ts}.{corpo_bruto}"</span>.encode(), hashlib.sha256).hexdigest()
+    <span class="k">return</span> hmac.compare_digest(esperado, sig)</pre>
+  </div>
+
+  <h3>Teste sua assinatura</h3>
+  <p>Calcule aqui para comparar com o que o seu código gera. Tudo roda no seu navegador; nada é enviado.</p>
+  <div class="calc">
+    <label for="c-secret">Secret</label>
+    <input id="c-secret" value="sk_test_exemplo123" autocomplete="off" spellcheck="false">
+    <label for="c-ts">X-Timestamp</label>
+    <input id="c-ts" value="1790000000" spellcheck="false">
+    <label for="c-body">Corpo (exatamente como enviado)</label>
+    <textarea id="c-body" rows="3" spellcheck="false">{"transactionId":"tx_01J8Z3","playerId":"u_1029","amount":500}</textarea>
+    <label>X-Signature</label>
+    <output id="c-out" aria-live="polite">…</output>
+  </div>
+</section>
+
+<section id="convencoes">
+  <h2>Convenções</h2>
+  <ul class="list">
+    <li><strong>Valores em centavos</strong>, sempre inteiros: <code>500</code> = R$ 5,00. Nunca use ponto flutuante para dinheiro.</li>
+    <li><strong>Moeda</strong> no padrão ISO 4217. Hoje: <code>BRL</code>.</li>
+    <li><strong>Datas</strong> em ISO 8601 UTC: <code>2026-09-29T14:03:11Z</code>.</li>
+    <li><strong>Idempotência:</strong> todo débito e crédito tem um <code>transactionId</code> único. Se ele chegar de novo, responda com o mesmo resultado da primeira vez, sem mover saldo.</li>
+    <li><strong>playerId</strong> é o identificador do jogador na <em>sua</em> plataforma. Não pedimos nem guardamos CPF, e-mail ou nome.</li>
+    <li>Respostas de erro seguem sempre o formato <code>{"error": {"code": "...", "message": "..."}}</code>.</li>
+  </ul>
+</section>
+
+<section id="games">
+  <h2>Listar jogos</h2>
+  <div class="ep"><span class="m get">GET</span>/games</div>
+  <p>Devolve os jogos liberados para o seu operador, com o RTP ativo e os limites de aposta.</p>
+  <div class="code" data-tabs>
+    <div class="code-head"><span class="lbl">Resposta 200</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"games"</span>: [
+    {
+      <span class="s">"gameId"</span>: <span class="s">"crash"</span>,
+      <span class="s">"name"</span>: <span class="s">"Galinha Angola Crash"</span>,
+      <span class="s">"category"</span>: <span class="s">"crash"</span>,
+      <span class="s">"rtp"</span>: <span class="n">0.96</span>,
+      <span class="s">"rtpOptions"</span>: [<span class="n">0.92</span>, <span class="n">0.94</span>, <span class="n">0.96</span>, <span class="n">0.97</span>],
+      <span class="s">"minBet"</span>: <span class="n">100</span>,
+      <span class="s">"maxBet"</span>: <span class="n">100000</span>,
+      <span class="s">"maxWin"</span>: <span class="n">5000000</span>,
+      <span class="s">"thumbnail"</span>: <span class="s">"https://jogos.oramagames.site/assets/card_grid_crash.png"</span>,
+      <span class="s">"orientation"</span>: <span class="s">"portrait"</span>,
+      <span class="s">"hasDemo"</span>: <span class="k">true</span>
+    }
+  ]
+}</pre>
+  </div>
+</section>
+
+<section id="sessions">
+  <h2>Abrir sessão de jogo</h2>
+  <div class="ep"><span class="m post">POST</span>/sessions</div>
+  <div class="cols">
+  <div>
+    <p>Cria uma sessão para um jogador e devolve o link do jogo. O token do link é de <strong>uso único</strong> e expira em <strong>60 segundos</strong> se não for aberto. Depois de aberto, a sessão vale por 4 horas de inatividade.</p>
+    <div class="tbl"><table>
+      <tr><th>Campo</th><th>Descrição</th></tr>
+      <tr><td><code>playerId</code><span class="req">obrigatório</span><div class="typ">string</div></td><td>ID do jogador na sua plataforma.</td></tr>
+      <tr><td><code>gameId</code><span class="req">obrigatório</span><div class="typ">string</div></td><td>Um dos IDs do <a href="#catalogo">catálogo</a>.</td></tr>
+      <tr><td><code>currency</code><span class="req">obrigatório</span><div class="typ">string</div></td><td><code>BRL</code></td></tr>
+      <tr><td><code>lang</code><div class="typ">string</div></td><td><code>pt-BR</code> (padrão), <code>en</code>, <code>es</code>.</td></tr>
+      <tr><td><code>nickname</code><div class="typ">string</div></td><td>Nome exibido no ranking ao vivo. Até 20 caracteres.</td></tr>
+      <tr><td><code>returnUrl</code><div class="typ">string</div></td><td>Para onde o botão "Sair" leva o jogador.</td></tr>
+      <tr><td><code>device</code><div class="typ">string</div></td><td><code>mobile</code> ou <code>desktop</code>.</td></tr>
+    </table></div>
+  </div>
+  <div>
+    <div class="code" data-tabs>
+      <div class="code-head"><button class="t on">cURL</button><button class="t">Node.js</button><button class="copy">Copiar</button></div>
+<pre>curl -X POST https://api.oramagames.site/b2b/v1/sessions \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -H <span class="s">"X-Operator-Id: op_7Hq2mK"</span> \
+  -H <span class="s">"X-Timestamp: 1790000000"</span> \
+  -H <span class="s">"X-Signature: 3f1c…a9"</span> \
+  -d <span class="s">'{"playerId":"u_1029","gameId":"crash","currency":"BRL","lang":"pt-BR","nickname":"Mari"}'</span></pre>
+<pre hidden><span class="k">const</span> corpo = JSON.stringify({ playerId: <span class="s">'u_1029'</span>, gameId: <span class="s">'crash'</span>, currency: <span class="s">'BRL'</span> });
+<span class="k">const</span> r = <span class="k">await</span> fetch(<span class="s">'https://api.oramagames.site/b2b/v1/sessions'</span>, {
+  method: <span class="s">'POST'</span>,
+  headers: { <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span>, <span class="s">'X-Operator-Id'</span>: OPERATOR_ID, ...assinar(SECRET, corpo) },
+  body: corpo,
+});
+<span class="k">const</span> { launchUrl } = <span class="k">await</span> r.json();</pre>
+    </div>
+    <div class="code">
+      <div class="code-head"><span class="lbl">Resposta 201</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"sessionId"</span>: <span class="s">"ses_01J8Z2QK4T"</span>,
+  <span class="s">"launchUrl"</span>: <span class="s">"https://play.oramagames.site/crash?t=ot_9f2c…"</span>,
+  <span class="s">"expiresAt"</span>: <span class="s">"2026-09-29T14:04:11Z"</span>
+}</pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section id="demo">
+  <h2>Sessão de demonstração</h2>
+  <div class="ep"><span class="m post">POST</span>/sessions/demo</div>
+  <p>Mesmo corpo de <code>/sessions</code>, sem <code>playerId</code>. O jogo abre com R$ 1.000,00 fictícios e <strong>não chama a sua carteira</strong>. Use para o botão "Jogar grátis" na vitrine do seu cassino.</p>
+</section>
+
+<section id="rounds">
+  <h2>Histórico de rodadas</h2>
+  <div class="ep"><span class="m get">GET</span>/rounds?from=2026-09-01T00:00:00Z&amp;to=2026-09-30T23:59:59Z&amp;playerId=u_1029&amp;cursor=</div>
+  <p>Lista paginada (até 500 por página) de todas as rodadas do seu operador. Use para conciliar com a sua carteira todo dia.</p>
+  <div class="code">
+    <div class="code-head"><span class="lbl">Resposta 200</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"rounds"</span>: [
+    {
+      <span class="s">"roundId"</span>: <span class="s">"rnd_01J8Z3M7"</span>,
+      <span class="s">"playerId"</span>: <span class="s">"u_1029"</span>,
+      <span class="s">"gameId"</span>: <span class="s">"crash"</span>,
+      <span class="s">"bet"</span>: <span class="n">500</span>,
+      <span class="s">"win"</span>: <span class="n">1150</span>,
+      <span class="s">"status"</span>: <span class="s">"settled"</span>,
+      <span class="s">"betTransactionId"</span>: <span class="s">"tx_01J8Z3"</span>,
+      <span class="s">"winTransactionId"</span>: <span class="s">"tx_01J8Z4"</span>,
+      <span class="s">"createdAt"</span>: <span class="s">"2026-09-29T14:03:11Z"</span>
+    }
+  ],
+  <span class="s">"nextCursor"</span>: <span class="s">"eyJpZCI6InJuZF8wMUo4WjNNNyJ9"</span>
+}</pre>
+  </div>
+  <p><code>status</code> pode ser <code>open</code> (aposta debitada, resultado em andamento), <code>settled</code> (pago) ou <code>rolledback</code> (estornada).</p>
+</section>
+
+<section id="round">
+  <h2>Detalhe da rodada</h2>
+  <div class="ep"><span class="m get">GET</span>/rounds/:roundId</div>
+  <p>Traz a rodada completa com o resultado sorteado e os dados de verificação. É o que você manda para o jogador quando ele reclama de um resultado.</p>
+  <div class="code">
+    <div class="code-head"><span class="lbl">Resposta 200</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"roundId"</span>: <span class="s">"rnd_01J8Z3M7"</span>,
+  <span class="s">"gameId"</span>: <span class="s">"crash"</span>,
+  <span class="s">"bet"</span>: <span class="n">500</span>,
+  <span class="s">"win"</span>: <span class="n">1150</span>,
+  <span class="s">"outcome"</span>: { <span class="s">"crashAt"</span>: <span class="n">3.41</span>, <span class="s">"cashoutAt"</span>: <span class="n">2.30</span> },
+  <span class="s">"rtp"</span>: <span class="n">0.96</span>,
+  <span class="s">"fairness"</span>: {
+    <span class="s">"serverSeedHash"</span>: <span class="s">"b1946ac92492d2347c6235b4d2611184…"</span>,
+    <span class="s">"serverSeed"</span>: <span class="s">"revelada após a rotação da seed"</span>,
+    <span class="s">"nonce"</span>: <span class="n">48213</span>
+  },
+  <span class="s">"replayUrl"</span>: <span class="s">"https://play.oramagames.site/replay/rnd_01J8Z3M7"</span>
+}</pre>
+  </div>
+</section>
+
+<section id="reports">
+  <h2>Relatório de GGR</h2>
+  <div class="ep"><span class="m get">GET</span>/reports/ggr?month=2026-09</div>
+  <p>Totais do mês por jogo. É a base da fatura (veja <a href="#comercial">Modelo comercial</a>).</p>
+  <div class="code">
+    <div class="code-head"><span class="lbl">Resposta 200</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"month"</span>: <span class="s">"2026-09"</span>,
+  <span class="s">"currency"</span>: <span class="s">"BRL"</span>,
+  <span class="s">"games"</span>: [
+    { <span class="s">"gameId"</span>: <span class="s">"crash"</span>, <span class="s">"rounds"</span>: <span class="n">184220</span>, <span class="s">"bets"</span>: <span class="n">92110000</span>, <span class="s">"wins"</span>: <span class="n">88425600</span>, <span class="s">"ggr"</span>: <span class="n">3684400</span> }
+  ],
+  <span class="s">"totalGgr"</span>: <span class="n">3684400</span>,
+  <span class="s">"feeBp"</span>: <span class="n">1200</span>,
+  <span class="s">"fee"</span>: <span class="n">442128</span>
+}</pre>
+  </div>
+</section>
+
+<section id="wallet">
+  <h2>Carteira seamless: os callbacks</h2>
+  <p>Estes são os endpoints que <strong>você</strong> implementa. Nós chamamos em <code>{callbackUrl}/balance</code>, <code>/bet</code>, <code>/win</code> e <code>/rollback</code>, sempre por <code>POST</code> e com os cabeçalhos de <a href="#autenticacao">assinatura</a>. Valide a assinatura antes de mexer em qualquer saldo.</p>
+  <div class="note warn"><b>Regras de ouro:</b> (1) mesmo <code>transactionId</code> → mesma resposta, sem mover saldo de novo; (2) responda em até 3 s; (3) um <code>/win</code> ou <code>/rollback</code> nunca pode ser recusado por saldo; (4) um <code>/rollback</code> de uma aposta que você não conhece deve responder <code>200</code> (nada a desfazer).</div>
+  <p>Toda resposta de sucesso devolve o saldo atualizado:</p>
+  <div class="code">
+    <div class="code-head"><span class="lbl">Resposta padrão 200</span><button class="copy">Copiar</button></div>
+<pre>{ <span class="s">"balance"</span>: <span class="n">12350</span>, <span class="s">"currency"</span>: <span class="s">"BRL"</span> }</pre>
+  </div>
+</section>
+
+<section id="cb-balance">
+  <h2>/balance</h2>
+  <div class="ep"><span class="m cb">POST</span>{callbackUrl}/balance</div>
+  <p>Chamado quando o jogo abre e a cada 30 s de inatividade, para exibir o saldo.</p>
+  <div class="code"><div class="code-head"><span class="lbl">Corpo enviado</span><button class="copy">Copiar</button></div>
+<pre>{ <span class="s">"sessionId"</span>: <span class="s">"ses_01J8Z2QK4T"</span>, <span class="s">"playerId"</span>: <span class="s">"u_1029"</span>, <span class="s">"currency"</span>: <span class="s">"BRL"</span> }</pre></div>
+</section>
+
+<section id="cb-bet">
+  <h2>/bet</h2>
+  <div class="ep"><span class="m cb">POST</span>{callbackUrl}/bet</div>
+  <p>Debita a aposta. <strong>Só sorteamos depois que você responder 200.</strong> Se você recusar, a jogada não acontece. Se não responder a tempo, mandamos um <code>/rollback</code> dessa aposta.</p>
+  <div class="cols">
+    <div class="code"><div class="code-head"><span class="lbl">Corpo enviado</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"transactionId"</span>: <span class="s">"tx_01J8Z3"</span>,
+  <span class="s">"roundId"</span>: <span class="s">"rnd_01J8Z3M7"</span>,
+  <span class="s">"sessionId"</span>: <span class="s">"ses_01J8Z2QK4T"</span>,
+  <span class="s">"playerId"</span>: <span class="s">"u_1029"</span>,
+  <span class="s">"gameId"</span>: <span class="s">"crash"</span>,
+  <span class="s">"amount"</span>: <span class="n">500</span>,
+  <span class="s">"currency"</span>: <span class="s">"BRL"</span>
+}</pre></div>
+    <div class="code"><div class="code-head"><span class="lbl">Saldo insuficiente → 402</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"error"</span>: {
+    <span class="s">"code"</span>: <span class="s">"INSUFFICIENT_FUNDS"</span>,
+    <span class="s">"message"</span>: <span class="s">"Saldo insuficiente"</span>
+  }
+}</pre></div>
+  </div>
+</section>
+
+<section id="cb-win">
+  <h2>/win</h2>
+  <div class="ep"><span class="m cb">POST</span>{callbackUrl}/win</div>
+  <p>Credita o prêmio e fecha a rodada. É enviado <strong>mesmo quando o prêmio é zero</strong> (<code>amount: 0</code>), para você saber que a rodada terminou. Se falhar, tentamos de novo com o mesmo <code>transactionId</code> por até 24 h (1 s, 5 s, 30 s, 2 min, depois a cada 10 min).</p>
+  <div class="code"><div class="code-head"><span class="lbl">Corpo enviado</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"transactionId"</span>: <span class="s">"tx_01J8Z4"</span>,
+  <span class="s">"betTransactionId"</span>: <span class="s">"tx_01J8Z3"</span>,
+  <span class="s">"roundId"</span>: <span class="s">"rnd_01J8Z3M7"</span>,
+  <span class="s">"playerId"</span>: <span class="s">"u_1029"</span>,
+  <span class="s">"gameId"</span>: <span class="s">"crash"</span>,
+  <span class="s">"amount"</span>: <span class="n">1150</span>,
+  <span class="s">"currency"</span>: <span class="s">"BRL"</span>,
+  <span class="s">"roundClosed"</span>: <span class="k">true</span>
+}</pre></div>
+</section>
+
+<section id="cb-rollback">
+  <h2>/rollback</h2>
+  <div class="ep"><span class="m cb">POST</span>{callbackUrl}/rollback</div>
+  <p>Desfaz uma aposta cujo <code>/bet</code> deu erro de rede ou passou do tempo. Devolva o valor debitado, se houver. Se a aposta nunca chegou, responda 200 do mesmo jeito.</p>
+  <div class="code"><div class="code-head"><span class="lbl">Corpo enviado</span><button class="copy">Copiar</button></div>
+<pre>{
+  <span class="s">"transactionId"</span>: <span class="s">"tx_01J8Z5"</span>,
+  <span class="s">"betTransactionId"</span>: <span class="s">"tx_01J8Z3"</span>,
+  <span class="s">"roundId"</span>: <span class="s">"rnd_01J8Z3M7"</span>,
+  <span class="s">"playerId"</span>: <span class="s">"u_1029"</span>,
+  <span class="s">"amount"</span>: <span class="n">500</span>,
+  <span class="s">"currency"</span>: <span class="s">"BRL"</span>
+}</pre></div>
+
+  <h3>Exemplo de implementação (Node.js + Postgres)</h3>
+  <div class="code"><div class="code-head"><span class="lbl">/bet idempotente</span><button class="copy">Copiar</button></div>
+<pre>app.post(<span class="s">'/orama/bet'</span>, <span class="k">async</span> (req, res) => {
+  <span class="k">if</span> (!valido(SECRET, req.get(<span class="s">'X-Timestamp'</span>), req.rawBody, req.get(<span class="s">'X-Signature'</span>)))
+    <span class="k">return</span> res.status(<span class="n">401</span>).json({ error: { code: <span class="s">'INVALID_SIGNATURE'</span> } });
+
+  <span class="k">const</span> { transactionId, playerId, amount } = req.body;
+  <span class="k">const</span> r = <span class="k">await</span> db.tx(<span class="k">async</span> (t) => {
+    <span class="k">const</span> ja = <span class="k">await</span> t.oneOrNone(<span class="s">'select resposta from orama_tx where id = $1'</span>, [transactionId]);
+    <span class="k">if</span> (ja) <span class="k">return</span> ja.resposta;                          <span class="c">// repetido: mesma resposta</span>
+    <span class="k">const</span> u = <span class="k">await</span> t.one(<span class="s">'select saldo from carteira where player = $1 for update'</span>, [playerId]);
+    <span class="k">const</span> resposta = u.saldo &lt; amount
+      ? { status: <span class="n">402</span>, body: { error: { code: <span class="s">'INSUFFICIENT_FUNDS'</span> } } }
+      : { status: <span class="n">200</span>, body: { balance: u.saldo - amount, currency: <span class="s">'BRL'</span> } };
+    <span class="k">if</span> (resposta.status === <span class="n">200</span>) <span class="k">await</span> t.none(<span class="s">'update carteira set saldo = saldo - $2 where player = $1'</span>, [playerId, amount]);
+    <span class="k">await</span> t.none(<span class="s">'insert into orama_tx (id, resposta) values ($1, $2)'</span>, [transactionId, resposta]);
+    <span class="k">return</span> resposta;
+  });
+  res.status(r.status).json(r.body);
+});</pre></div>
+</section>
+
+<section id="catalogo">
+  <h2>Catálogo de jogos</h2>
+  <p>Todos os jogos são originais da Orama Games, feitos para celular e com RTP ajustável entre <strong>85% e 99%</strong> (o piso segue o mínimo exigido para jogo online no Brasil).</p>
+  <div class="games" id="games-grid"></div>
+</section>
+
+<section id="rtp">
+  <h2>RTP e fairness</h2>
+  <ul class="list">
+    <li><strong>RTP por operador e por jogo:</strong> você escolhe entre as opções de <code>rtpOptions</code> no painel. A troca vale para as rodadas novas, nunca para uma rodada em andamento.</li>
+    <li><strong>Sorteio no servidor</strong> com gerador criptográfico. O navegador só recebe o resultado.</li>
+    <li><strong>Provably fair:</strong> publicamos o hash da seed do servidor antes das rodadas e revelamos a seed na rotação. Qualquer um pode refazer a conta a partir de <code>serverSeed</code> + <code>nonce</code>.</li>
+    <li><strong>Limite de prêmio</strong> por rodada (<code>maxWin</code>) configurável, para proteger o caixa do operador.</li>
+  </ul>
+</section>
+
+<section id="erros">
+  <h2>Códigos de erro</h2>
+  <div class="tbl"><table>
+    <tr><th>HTTP</th><th>code</th><th>Quando</th></tr>
+    <tr><td>400</td><td><code>INVALID_REQUEST</code></td><td>Campo faltando ou com formato errado.</td></tr>
+    <tr><td>401</td><td><code>INVALID_SIGNATURE</code></td><td>Assinatura não confere ou timestamp fora da janela de 300 s.</td></tr>
+    <tr><td>402</td><td><code>INSUFFICIENT_FUNDS</code></td><td>(callback <code>/bet</code>) Jogador sem saldo.</td></tr>
+    <tr><td>403</td><td><code>GAME_NOT_ENABLED</code></td><td>Jogo não liberado para o seu operador.</td></tr>
+    <tr><td>403</td><td><code>PLAYER_BLOCKED</code></td><td>(callback) Jogador bloqueado ou autoexcluído na sua plataforma.</td></tr>
+    <tr><td>404</td><td><code>NOT_FOUND</code></td><td>Rodada ou sessão inexistente.</td></tr>
+    <tr><td>409</td><td><code>SESSION_EXPIRED</code></td><td>Token do link já usado ou vencido. Abra outra sessão.</td></tr>
+    <tr><td>422</td><td><code>BET_LIMIT</code></td><td>Aposta fora de <code>minBet</code>/<code>maxBet</code>.</td></tr>
+    <tr><td>429</td><td><code>RATE_LIMITED</code></td><td>Mais de 50 requisições/s. Veja o cabeçalho <code>Retry-After</code>.</td></tr>
+    <tr><td>5xx</td><td><code>INTERNAL_ERROR</code></td><td>Erro nosso. Pode tentar de novo com o mesmo corpo.</td></tr>
+  </table></div>
+</section>
+
+<section id="frontend">
+  <h2>Abrir o jogo no seu site</h2>
+  <p>A <code>launchUrl</code> funciona em iframe ou em nova aba. No celular, recomendamos tela cheia. O jogo avisa a página pai por <code>postMessage</code>:</p>
+  <div class="code" data-tabs>
+    <div class="code-head"><button class="t on">HTML</button><button class="t">Eventos</button><button class="copy">Copiar</button></div>
+<pre>&lt;iframe src=<span class="s">"{launchUrl}"</span> allow=<span class="s">"fullscreen; autoplay"</span>
+        style=<span class="s">"width:100%;height:100dvh;border:0"</span>&gt;&lt;/iframe&gt;
+
+&lt;script&gt;
+  window.addEventListener(<span class="s">'message'</span>, (e) => {
+    <span class="k">if</span> (e.origin !== <span class="s">'https://play.oramagames.site'</span>) <span class="k">return</span>;
+    <span class="k">if</span> (e.data.type === <span class="s">'orama:balance'</span>) atualizarSaldoNoTopo(e.data.balance);
+    <span class="k">if</span> (e.data.type === <span class="s">'orama:exit'</span>) fecharJogo();
+    <span class="k">if</span> (e.data.type === <span class="s">'orama:deposit'</span>) abrirDeposito();
+  });
+&lt;/script&gt;</pre>
+<pre hidden><span class="c">// eventos que o jogo manda para a página pai</span>
+{ type: <span class="s">'orama:ready'</span> }                          <span class="c">// jogo carregado</span>
+{ type: <span class="s">'orama:balance'</span>, balance: <span class="n">12350</span> }       <span class="c">// saldo mudou</span>
+{ type: <span class="s">'orama:round'</span>, roundId, bet, win }       <span class="c">// rodada fechada</span>
+{ type: <span class="s">'orama:deposit'</span> }                        <span class="c">// jogador clicou em "Depositar"</span>
+{ type: <span class="s">'orama:exit'</span> }                           <span class="c">// jogador clicou em "Sair"</span>
+{ type: <span class="s">'orama:error'</span>, code: <span class="s">'SESSION_EXPIRED'</span> } <span class="c">// abra outra sessão</span></pre>
+  </div>
+</section>
+
+<section id="comercial">
+  <h2>Modelo comercial</h2>
+  <div class="tbl"><table>
+    <tr><th>Item</th><th>Como funciona</th></tr>
+    <tr><td><strong>Revenue share</strong></td><td>Percentual sobre o GGR (apostas − prêmios) dos nossos jogos no mês, a partir de <strong>10%</strong>, com faixas por volume.</td></tr>
+    <tr><td><strong>GGR negativo</strong></td><td>Mês com GGR negativo não gera cobrança. O saldo negativo não é carregado para o mês seguinte.</td></tr>
+    <tr><td><strong>Fatura</strong></td><td>Todo dia 5, com base em <code>GET /reports/ggr</code>. Pagamento via PIX em até 10 dias.</td></tr>
+    <tr><td><strong>Setup</strong></td><td>Sem taxa de integração. Sandbox liberado no mesmo dia.</td></tr>
+    <tr><td><strong>Personalização</strong></td><td>Logo do operador na tela de carregamento e limites de aposta próprios.</td></tr>
+  </table></div>
+</section>
+
+<section id="checklist">
+  <h2>Checklist de homologação</h2>
+  <p>Antes de liberar as chaves de produção, rodamos estes testes no sandbox contra a sua carteira:</p>
+  <ul class="list">
+    <li>Assinatura inválida em qualquer callback → você responde <code>401</code>.</li>
+    <li><code>/bet</code> repetido com o mesmo <code>transactionId</code> → debita uma vez só.</li>
+    <li><code>/bet</code> sem saldo → <code>402 INSUFFICIENT_FUNDS</code>, sem mudar o saldo.</li>
+    <li><code>/win</code> com <code>amount: 0</code> → <code>200</code> com o saldo.</li>
+    <li><code>/win</code> repetido → credita uma vez só.</li>
+    <li><code>/rollback</code> de aposta existente → devolve o valor; de aposta desconhecida → <code>200</code>.</li>
+    <li><code>/rollback</code> repetido → devolve uma vez só.</li>
+    <li>Todos os callbacks respondem em menos de 3 s.</li>
+    <li>Conciliação de um dia de <code>GET /rounds</code> bate com a sua carteira.</li>
+  </ul>
+</section>
+
+<section id="contato">
+  <h2>Quero integrar</h2>
+  <p>Fale com o time comercial para receber as chaves de sandbox e o contrato.</p>
+  <p><a class="cta" style="display:inline-block;background:var(--green);color:#032010;font-weight:800;padding:12px 22px;border-radius:999px" href="https://wa.me/558584382947?text=Quero%20integrar%20os%20jogos%20da%20Orama%20Games%20via%20API" target="_blank" rel="noopener">Falar no WhatsApp · (85) 8438-2947</a></p>
+</section>
+
+</main>
+</div>
+
+<footer>© 2026 Orama Games · API v1.0 · Jogue com responsabilidade. Proibido para menores de 18 anos.</footer>
+
+<script>
+// catálogo: só os jogos que existem de verdade no site
+const JOGOS = [
+  ['capivara', 'Capivara da Sorte', 'Slot', 0.97],
+  ['gatinho', 'Gatinho Flash', 'Slot', 0.97],
+  ['papagaio', 'Papagaio Gay', 'Slot', 0.97],
+  ['macaco', 'Macaco Pelado', 'Slot com jackpot', 0.95],
+  ['bichos', 'Bichos da Sorte', 'Slot', 0.96],
+  ['raspa', 'Raspadinha Premiada', 'Raspadinha', 0.96],
+  ['crash', 'Galinha Angola Crash', 'Crash', 0.97],
+  ['sapo', 'Sapinho Pulador Crash', 'Crash', 0.96],
+  ['perereca', 'Perereca Suicida', 'Arcade', 0.96],
+  ['truco', 'Truco Aposta', 'Cartas', 0.96],
+  ['sinuca', 'Sinuca Aposta', 'Habilidade', 0.96],
+  ['velha', 'Jogo da Velha Aposta', 'Arcade', 0.96],
+];
+document.getElementById('games-grid').innerHTML = JOGOS.map(([id, nome, cat, rtp]) =>
+  `<div class="game"><img src="../assets/card_grid_${id}.png" alt="" loading="lazy">
+   <div><b>${nome}</b><code>${id}</code><small>${cat} · RTP até ${Math.round(rtp * 100)}%</small></div></div>`).join('');
+
+// abas dos blocos de código
+document.querySelectorAll('[data-tabs]').forEach((box) => {
+  const tabs = box.querySelectorAll('.t'), pres = box.querySelectorAll('pre');
+  tabs.forEach((t, i) => t.addEventListener('click', () => {
+    tabs.forEach((x, j) => x.classList.toggle('on', i === j));
+    pres.forEach((p, j) => (p.hidden = i !== j));
+  }));
+});
+
+// copiar o bloco visível
+document.querySelectorAll('.copy').forEach((b) => b.addEventListener('click', async () => {
+  const pre = [...b.closest('.code').querySelectorAll('pre')].find((p) => !p.hidden);
+  try { await navigator.clipboard.writeText(pre.innerText); b.textContent = 'Copiado'; }
+  catch { b.textContent = 'Erro'; }
+  setTimeout(() => (b.textContent = 'Copiar'), 1500);
+}));
+
+// calculadora de assinatura (roda só no navegador)
+const $ = (id) => document.getElementById(id);
+async function calcular() {
+  const out = $('c-out');
+  if (!crypto.subtle) { out.textContent = 'Abra por HTTPS para calcular.'; return; }
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode($('c-secret').value), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode($('c-ts').value + '.' + $('c-body').value));
+  out.textContent = [...new Uint8Array(sig)].map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+['c-secret', 'c-ts', 'c-body'].forEach((id) => $(id).addEventListener('input', calcular));
+calcular();
+
+// menu: marca a seção visível e fecha no celular ao clicar
+const links = [...document.querySelectorAll('nav.side a')];
+const nav = document.querySelector('nav.side');
+links.forEach((a) => a.addEventListener('click', () => nav.classList.remove('open')));
+const obs = new IntersectionObserver((es) => es.forEach((e) => {
+  if (e.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+}), { rootMargin: '-70px 0px -70% 0px' });
+document.querySelectorAll('main section').forEach((s) => obs.observe(s));
+</script>
+</body>
+</html>
