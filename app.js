@@ -369,7 +369,7 @@ function toggleFav(e, gameId) {
 
 // --- Launch Game Router ---
 // jogos de tela cheia (iframe) têm modo teste pra quem ainda não tem conta; os de modal pedem login
-const JOGOS_COM_TESTE = ['capivara', 'gatinho', 'galinha', 'papagaio', 'raspa', 'macaco', 'truco', 'sinuca', 'sapo', 'perereca', 'lulinha', 'crodila', 'pato', 'urubu', 'calango', 'velha', 'bichos'];
+const JOGOS_COM_TESTE = ['capivara', 'gatinho', 'galinha', 'papagaio', 'raspa', 'macaco', 'truco', 'sinuca', 'sapo', 'perereca', 'lulinha', 'crodila', 'pato', 'urubu', 'calango', 'penalti', 'jegues', 'tartarugas', 'lagartas', 'velhinhas', 'velha', 'bichos'];
 function launchGame(gameId) {
   if (!Auth.current && !(Demo.ligado && JOGOS_COM_TESTE.includes(gameId))) return Auth.show("login");
   Sounds.playClick();
@@ -403,6 +403,16 @@ function launchGame(gameId) {
     openGame('urubu.html?v=1');
   } else if (gameId === 'calango') {
     openGame('calango.html?v=5');
+  } else if (gameId === 'velhinhas') {
+    openGame('velhinhas.html?v=1');
+  } else if (gameId === 'lagartas') {
+    openGame('lagartas.html?v=1');
+  } else if (gameId === 'tartarugas') {
+    openGame('tartarugas.html?v=1');
+  } else if (gameId === 'jegues') {
+    openGame('jegues.html?v=1');
+  } else if (gameId === 'penalti') {
+    openGame('penalti.html?v=1');
   } else if (gameId === 'velha') {
     openGame('velha.html?v=5');
   } else if (gameId === 'bichos') {

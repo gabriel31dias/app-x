@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Corrida das Toruguitas</title>
+<link rel="preload" as="image" href="assets/tartarugas/bg.webp">
+<style>
+/* Tela sobre o cenário (assets/tartarugas/bg.webp 941x1672, gerado por tools/tartarugas_assets.py): posições em px da
+   arte convertidas pra % no JS (place), textos em cqw. Cartas, barra de aposta e botões já estão no desenho; o jogo põe
+   os números por cima. A corrida é uma cena própria (#race) com o panorama da folha. */
+:root{--wood:#5a3418;--gold:#ffd54a;--g:#6dff5a}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#2a1608;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/tartarugas/bg.webp) center/cover;filter:blur(24px) brightness(.35);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/tartarugas/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden}
+.stage.shake{animation:shake .5s}
+.abs{position:absolute}
+.pfx{position:absolute;pointer-events:none;background:center/contain no-repeat}
+.pfx.glow{mix-blend-mode:screen}
+/* ---------- tela de escolha ---------- */
+.tt{z-index:2;background:0 0/100% 100% no-repeat;transform-origin:50% 100%;cursor:pointer;animation:breath var(--d,2s) ease-in-out infinite}
+.tt.hop{animation:hop .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes breath{50%{transform:scaleY(1.03) scaleX(.99) translateY(-1%)}}
+@keyframes hop{30%{transform:translateY(-14%) scaleY(1.06) rotate(-4deg)}60%{transform:translateY(0) scaleY(.9)}}
+.spot{z-index:1;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(ellipse at 50% 75%,var(--c) 0,transparent 65%);mix-blend-mode:screen}
+.spot.on{opacity:.8;animation:spotP 1.2s ease-in-out infinite alternate}
+@keyframes spotP{to{opacity:.45}}
+.tag{z-index:5;pointer-events:none;display:none;text-align:center;font:900 3cqw/1 system-ui;color:#fff;padding:1cqw 1.6cqw;border-radius:2cqw;background:var(--c);border:.4cqw solid #fff;box-shadow:0 0 3cqw var(--c);white-space:nowrap;animation:tagB .8s ease-in-out infinite alternate}
+.tag::after{content:"";position:absolute;left:50%;bottom:-2.2cqw;translate:-50%;border:1.2cqw solid transparent;border-top-color:#fff}
+.tag.on{display:block}
+@keyframes tagB{to{transform:translateY(-12%)}}
+.card{z-index:4;border-radius:6%/5%;background-image:url(assets/tartarugas/bg.webp);background-repeat:no-repeat;cursor:pointer;transition:transform .25s cubic-bezier(.3,1.6,.5,1),filter .25s,box-shadow .25s}
+.card.sel{transform:translateY(-7%) scale(1.08);box-shadow:0 0 0 .6cqw #fff,0 0 5cqw 1cqw var(--c);z-index:5}
+.card.dim{filter:brightness(.6) saturate(.7)}
+.card .odd{position:absolute;left:9%;right:9%;bottom:5.5%;height:14%;display:grid;place-items:center;font:900 4.2cqw/1 system-ui;color:#fff3c8;text-shadow:0 .3cqw 0 #000;font-variant-numeric:tabular-nums}
+.card.sel .odd{color:var(--gold);animation:bump .5s}
+.bubble{position:absolute;z-index:30;pointer-events:none;padding:1.2cqw 2.2cqw;border-radius:2.6cqw;background:#fff;color:#3a200e;font:900 3cqw/1.1 system-ui;box-shadow:0 1cqw 3cqw #0008;white-space:nowrap;animation:bubble 1.8s ease forwards}
+.bubble::after{content:"";position:absolute;left:22%;bottom:-1.4cqw;border:.9cqw solid transparent;border-top-color:#fff}
+@keyframes bubble{0%{transform:scale(0);opacity:0}12%{transform:scale(1.1);opacity:1}20%{transform:scale(1)}80%{opacity:1}100%{transform:translateY(-40%);opacity:0}}
+.twinkle{position:absolute;z-index:3;pointer-events:none;width:3cqw;aspect-ratio:1;background:radial-gradient(#fff,#fff0 60%);clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)}
+.flagWave{position:absolute;z-index:1;pointer-events:none;width:1.2cqw;height:2.4cqw;clip-path:polygon(0 0,100% 0,50% 100%);animation:bunt 1.2s ease-in-out infinite alternate;transform-origin:50% 0}
+@keyframes bunt{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+/* textos por cima do desenho */
+#balBox{z-index:9;display:flex;align-items:center;gap:1.6cqw;padding:0 2.4cqw;border-radius:3cqw;background:#1e0f05dd;border:.4cqw solid #c89b5a;box-shadow:0 .6cqw 1.5cqw #0008;font:800 2.6cqw system-ui;color:#f5d7a0}
+#balBox b{font:900 4.4cqw system-ui;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+#balBox.bump b{animation:bump .5s}
+.round{z-index:9;border-radius:50%;background:radial-gradient(circle at 40% 35%,#a0662e,#4a2810);border:.5cqw solid #f5d7a0;display:grid;place-items:center;font-size:5cqw;box-shadow:0 .6cqw 1.5cqw #0008}
+.round:active{transform:scale(.9)}
+.round.off{opacity:.55}
+#betVal{z-index:7;display:grid;place-items:center;font:900 5.6cqw system-ui;color:#fff;font-variant-numeric:tabular-nums;pointer-events:none}
+#betVal.bump{animation:bump .4s}
+.hot{z-index:7;border-radius:1.6cqw}
+.hot:active{background:#fff3;transform:scale(.94)}
+.hot:disabled{background:#0007}
+#chips{z-index:7;display:grid;grid-template-columns:repeat(4,1fr);gap:1.8cqw;padding:.6cqw 1cqw}
+#chips button{border-radius:1.4cqw;border:.35cqw solid #555;background:linear-gradient(#3a3a3a,#1e1e1e);font:900 3.6cqw system-ui;color:#fff}
+#chips button.sel{background:linear-gradient(#b8862e,#6a4a14);border-color:#ffd54a;box-shadow:0 0 2cqw #ffd54a88}
+#go{z-index:7;border-radius:6cqw;background:url(assets/tartarugas/apostar.webp) 0 0/100% 100%;animation:goP 1.1s ease-in-out infinite}
+#go:active{transform:scale(.94)}
+#go:disabled{filter:grayscale(1) brightness(.65);animation:none}
+@keyframes goP{50%{transform:scale(1.04);filter:drop-shadow(0 0 3cqw #6dff5a)}}
+#info{z-index:8;display:grid;place-items:center;pointer-events:none}
+#info span{padding:1.2cqw 3cqw;border-radius:3cqw;background:#1e0f05dd;border:.4cqw solid #c89b5a;font:800 3.3cqw/1.2 system-ui;color:#fff;text-align:center;box-shadow:0 .8cqw 2cqw #0008}
+#info b{color:var(--gold)}
+/* ---------- corrida ---------- */
+#race{inset:0;z-index:20;overflow:hidden;display:none;background:linear-gradient(#3fa6f0,#8fd3ff 22%,#ffe2a8 30%)}
+#race.show{display:block;animation:fade .5s}
+.layer{position:absolute;left:0;right:0;background-repeat:repeat-x;background-size:auto 100%;pointer-events:none}
+#pano{filter:saturate(1.1);-webkit-mask:linear-gradient(#0000,#000 14%);mask:linear-gradient(#0000,#000 14%)}
+#track{background:repeating-linear-gradient(90deg,#0000 0 60px,#0000000d 60px 64px),linear-gradient(#d9a15e,#c98d4c 30%,#b87a3e);background-size:128px 100%,100% 100%;box-shadow:inset 0 2cqw 2cqw -1cqw #0004}
+.lane{position:absolute;left:0;right:0;height:.5cqw;background:repeating-linear-gradient(90deg,#fff9 0 40px,#0000 40px 80px);opacity:.8}
+.lane.solid{background:#fff8;height:.6cqw}
+#finish{z-index:3;width:5cqw;background:repeating-conic-gradient(#111 0 25%,#fff 0 50%) 0 0/2.5cqw 2.5cqw;box-shadow:0 0 3cqw #fff8}
+#startLine{z-index:3;width:1cqw;background:#fff;box-shadow:0 0 2cqw #fff}
+.flagPost{z-index:4;background:url(assets/tartarugas/flag.webp) center/contain no-repeat;animation:flagW 1s ease-in-out infinite alternate;transform-origin:10% 100%}
+@keyframes flagW{to{transform:skewY(-4deg) rotate(3deg)}}
+.tur{z-index:5;background-repeat:no-repeat;pointer-events:none}
+.tur.turbo{filter:drop-shadow(0 0 2cqw #ffb02a) drop-shadow(0 0 1cqw #fff)}
+.jtag{position:absolute;z-index:9;pointer-events:none;width:6cqw;aspect-ratio:1;border-radius:1.2cqw;display:grid;place-items:center;font:900 4cqw system-ui;color:#fff;background:var(--c);border:.4cqw solid #fff;box-shadow:0 .4cqw 1cqw #0007}
+.you{position:absolute;z-index:10;pointer-events:none;padding:.6cqw 1.4cqw;border-radius:1.6cqw;background:#fff;color:#3a200e;font:900 2.6cqw system-ui;white-space:nowrap;box-shadow:0 0 2.5cqw var(--c);border:.4cqw solid var(--c)}
+.you::after{content:"";position:absolute;left:50%;bottom:-1.8cqw;translate:-50%;border:1cqw solid transparent;border-top-color:var(--c)}
+.zzz{position:absolute;z-index:11;pointer-events:none;font:900 5cqw system-ui;color:#fff;-webkit-text-stroke:.4cqw #1e3a8a;paint-order:stroke fill;animation:zzz 1.4s ease-out forwards}
+@keyframes zzz{from{transform:translate(0,0) scale(.4);opacity:0}20%{opacity:1}to{transform:translate(4cqw,-10cqw) scale(1.2) rotate(15deg);opacity:0}}
+#rank{left:3%;right:3%;top:2%;z-index:12;display:grid;grid-template-columns:repeat(5,1fr);gap:1.4cqw;padding:1.4cqw;border-radius:3cqw;background:#1e0f05cc;border:.4cqw solid #c89b5a;box-shadow:0 1cqw 3cqw #0008}
+#rank div{display:flex;flex-direction:column;align-items:center;gap:.4cqw;font:900 2.6cqw system-ui;color:#f5d7a0}
+#rank i{width:12cqw;aspect-ratio:1;border-radius:50%;background-color:#0006;background-repeat:no-repeat;border:.45cqw solid var(--c)}
+#rank div.me i{box-shadow:0 0 2.5cqw var(--c);border-color:#fff}
+#rank div.lead i{animation:lead .6s ease-in-out infinite alternate}
+@keyframes lead{to{transform:scale(1.1)}}
+#bar{left:6%;right:6%;top:15.8%;height:2.2cqw;z-index:12;border-radius:2cqw;background:#1e0f05aa;border:.35cqw solid #c89b5a}
+#bar::after{content:"";position:absolute;right:-1cqw;top:-2.4cqw;width:5cqw;height:6.5cqw;background:url(assets/tartarugas/flag.webp) center/contain no-repeat}
+#bar i{position:absolute;top:50%;width:4.4cqw;aspect-ratio:1;translate:-50% -50%;border-radius:50%;border:.35cqw solid #fff;box-shadow:0 0 1cqw #000;display:grid;place-items:center;font:900 2.4cqw system-ui;color:#fff}
+#count{inset:0;z-index:25;display:grid;place-items:center;pointer-events:none;font:900 34cqw/1 system-ui;color:#fff;-webkit-text-stroke:1.4cqw #1f5a10;paint-order:stroke fill;text-shadow:0 2cqw 0 #1f5a10,0 0 8cqw #6dff5a}
+#count span{animation:cnt .9s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes cnt{0%{transform:scale(3);opacity:0}25%{transform:scale(1);opacity:1}80%{opacity:1}100%{transform:scale(.6);opacity:0}}
+.say{position:absolute;left:50%;top:21.5%;translate:-50%;z-index:14;pointer-events:none;padding:1.4cqw 3cqw;border-radius:3cqw;background:#fffbe8;color:#3a200e;font:900 3.8cqw system-ui;white-space:nowrap;border:.5cqw solid #c89b5a;box-shadow:0 1cqw 3cqw #0008;animation:say 2s ease forwards}
+@keyframes say{0%{transform:scale(0) rotate(-6deg);opacity:0}10%{transform:scale(1.12);opacity:1}18%{transform:scale(1)}85%{opacity:1}100%{transform:translateY(-30%);opacity:0}}
+.flash::after{content:"";position:absolute;inset:0;z-index:40;background:#fff;pointer-events:none;animation:fade .6s reverse forwards}
+.conf{position:absolute;z-index:30;pointer-events:none;width:1.5cqw;height:2.4cqw;border-radius:.3cqw}
+/* resultado */
+#result{inset:0;z-index:35;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2cqw;background:radial-gradient(circle,#1f6a2aee,#0a1a06f5);text-align:center;overflow:hidden}
+#result.show{display:flex;animation:fade .4s}
+#result .ray{position:absolute;width:250%;aspect-ratio:1;background:repeating-conic-gradient(#ffd54a1c 0 10deg,#0000 10deg 20deg);animation:rot 10s linear infinite;pointer-events:none}
+#result h2{position:relative;font:900 8.5cqw/1 system-ui;color:#fff27a;-webkit-text-stroke:1.2cqw #1f3a0a;paint-order:stroke fill;text-shadow:0 1cqw 0 #1f3a0a,0 0 5cqw #ffd54a;animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+#result h3{position:relative;font:900 5cqw system-ui;color:#fff}
+#result .amt{position:relative;font:900 11cqw system-ui;color:var(--g);text-shadow:0 0 5cqw #6dff5a88;font-variant-numeric:tabular-nums}
+#result .amt.lose{font-size:5cqw;color:#ffe0a0;text-shadow:none;padding:0 4cqw}
+#podio{position:relative;width:80cqw;aspect-ratio:1.2}
+#podio .blk{position:absolute;bottom:0;width:30%;display:grid;place-items:start center;padding-top:2cqw;font:900 9cqw system-ui;color:#fff3c8;-webkit-text-stroke:.5cqw #3a200e;paint-order:stroke fill;border-radius:1.5cqw 1.5cqw 0 0;
+  background:repeating-linear-gradient(90deg,#0000 0 5cqw,#0002 5cqw 5.3cqw),linear-gradient(#b87a3e,#7a4a20);border:.5cqw solid #3a200e;box-shadow:inset 0 1cqw 0 #fff3}
+#podio .pf{position:absolute;width:29%;aspect-ratio:1;background-repeat:no-repeat;animation:pfIn .6s cubic-bezier(.2,1.6,.4,1) backwards}
+#podio .crown{position:absolute;width:15%;aspect-ratio:1.3;background:url(assets/tartarugas/crown.webp) center/contain no-repeat;animation:crown 1s ease-in-out infinite alternate}
+#podio .trophy{position:absolute;width:18%;aspect-ratio:.8;background:url(assets/tartarugas/trophy.webp) center/contain no-repeat;animation:crown 1.3s ease-in-out infinite alternate}
+@keyframes pfIn{from{transform:translateY(40%) scale(.3);opacity:0}}
+@keyframes crown{to{transform:translateY(-12%) rotate(8deg)}}
+#again{position:relative;padding:2.4cqw 7cqw;border-radius:4cqw;background:linear-gradient(#9dff6a,#2ebd3a);color:#0a3a10;font:900 5cqw system-ui;border:.6cqw solid #fff;box-shadow:0 0 4cqw #6dff5a;animation:goP 1.1s ease-in-out infinite}
+.rain{position:fixed;top:-60px;z-index:50;pointer-events:none;font-size:32px;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid #c89b5a;border-radius:16px;background:#2a1608;color:#fff;padding:16px;font:14px/1.45 system-ui;box-shadow:0 0 30px #0008}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--gold);text-align:center;margin-bottom:10px}
+dialog table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+dialog td{padding:6px 4px;border-bottom:1px solid #ffffff14}
+dialog td:last-child{text-align:right}
+dialog p{margin-top:8px;opacity:.9}
+dialog .close{margin:14px auto 0;display:block;padding:8px 26px;border-radius:20px;background:var(--gold);color:#3a200e;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff14;color:#fff;border-radius:12px;padding:10px}
+@keyframes bump{50%{transform:scale(1.25);color:var(--gold)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes shake{20%{translate:-1.2% .6%}40%{translate:1.2% -.6%}60%{translate:-.8% .4%}80%{translate:.8% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Corrida das Toruguitas</h1>
+  <div class="abs" id="balBox">SALDO <b id="bal">R$ 0,00</b></div>
+  <button class="abs round" id="snd" aria-label="Som">🔊</button>
+  <div id="starts"></div>
+  <div id="cards"></div>
+  <div class="abs" id="info" aria-live="polite"></div>
+  <button class="abs hot" id="bDown" aria-label="Diminuir aposta"></button>
+  <div class="abs" id="betVal">2,00</div>
+  <button class="abs hot" id="bUp" aria-label="Aumentar aposta"></button>
+  <div class="abs" id="chips"></div>
+  <button class="abs" id="go" aria-label="Apostar"></button>
+  <button class="abs hot" id="menu" aria-label="Menu"></button>
+  <button class="abs hot" id="stats" aria-label="Estatísticas"></button>
+  <button class="abs hot" id="hist" aria-label="Histórico"></button>
+
+  <div class="abs" id="race">
+    <div class="layer" id="pano" style="background-image:url(assets/tartarugas/pano.webp)"></div>
+    <div class="layer" id="track"></div>
+    <div id="lanes"></div>
+    <div class="abs" id="startLine"></div><div class="abs flagPost" id="startFlag"></div>
+    <div class="abs" id="finish"></div><div class="abs flagPost" id="finishFlag"></div>
+    <div id="world"></div>
+    <div class="layer" id="front" style="background-image:url(assets/tartarugas/fence.webp);z-index:8"></div>
+    <div class="layer" id="fans" style="background-image:url(assets/tartarugas/crowd.webp);z-index:9"></div>
+    <div class="abs" id="rank"></div>
+    <div class="abs" id="bar"></div>
+    <div class="abs" id="count"></div>
+  </div>
+
+  <div class="abs" id="result">
+    <div class="ray"></div>
+    <h2 id="resTitle">CHEGADA!</h2>
+    <h3 id="resWinner"></h3>
+    <div id="podio"></div>
+    <div class="amt" id="resAmt"></div>
+    <button id="again">NOVA CORRIDA</button>
+  </div>
+</main>
+
+<dialog id="dlgRules">
+  <h3>Como jogar</h3>
+  <p>1. Escolha sua toruguita tocando na carta ou nela na largada.</p>
+  <p>2. Escolha a aposta e toque em <b>APOSTAR</b>.</p>
+  <p>3. Se ela chegar em 1º, você ganha a aposta × o valor da carta.</p>
+  <p>As favoritas ganham mais vezes e pagam menos; as azarãs ganham menos e pagam mais. Soneca, cenoura e turbo são só encenação: a ordem de chegada é sorteada antes da largada com o gerador criptográfico do navegador.</p>
+  <table id="oddsTable"></table>
+  <p>RTP (retorno médio): <b id="rtpInfo"></b>, igual pra qualquer tartaruga.</p>
+  <button class="close" onclick="dlgRules.close()">Fechar</button>
+</dialog>
+<dialog id="dlgMenu">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mMusic">🪗 Música: ligada</button>
+    <button id="mRules">❔ Como jogar</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button class="close" onclick="dlgMenu.close()">Fechar</button>
+</dialog>
+<dialog id="dlgList"><h3 id="listTitle"></h3><table id="listRows"></table><button class="close" onclick="dlgList.close()">Fechar</button></dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="tartarugas.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('tartarugas')</script><!-- admin assiste ao vivo -->
+<script>
+const { NOMES, CHANCE, odd, sortear, premio } = TT; // RTP: ler TT.RTP (muda ao vivo entre corridas)
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => 'R$ ' + x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fx = m => m.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'x';
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.random() * a.length | 0];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const START = 20, BETS = [1, 2, 5, 10, 20], CHIPS = [2, 5, 10, 20]; // aposta máxima R$ 20
+const COR = ['#e53935', '#1e88e5', '#2e9e3e', '#f2b705', '#8e24aa'];
+// tiras: [quadros, largura, altura] (saída do tools/tartarugas_assets.py); CARA = a cara boa de cada uma (a 1ª e a 2ª
+// da Relâmpuga saíram com as lentes do óculos vazadas no recorte)
+const SPR = {"walk1":[8,308,220],"face1":[5,217,200],"walk2":[8,325,220],"face2":[5,246,200],"walk3":[8,343,220],"face3":[5,200,200],"walk4":[8,336,220],"face4":[5,190,200],"walk5":[8,344,220],"face5":[5,210,200]};
+const CARA = [0, 0, 2, 0, 0], CARA2 = [4, 3, 3, 2, 1];
+
+// posições na arte (px de 941x1672) -> %
+const W = 941, H = 1672;
+const place = (el, [x, y, w, h]) => Object.assign(el.style, { left: x / W * 100 + '%', top: y / H * 100 + '%', width: w / W * 100 + '%', ...(h != null ? { height: h / H * 100 + '%' } : {}) });
+const PX = { balBox: [16, 16, 280, 62], snd: [16, 88, 62, 62], info: [40, 890, 861, 70], bDown: [198, 1398, 44, 52], betVal: [250, 1398, 184, 52], bUp: [447, 1398, 46, 52],
+  chips: [505, 1392, 396, 64], go: [268, 1482, 400, 136], menu: [33, 1545, 84, 80], stats: [140, 1545, 93, 80], hist: [705, 1545, 205, 80] };
+for (const id in PX) place($('#' + id), PX[id]);
+function div(cls, css = {}) { const d = document.createElement('div'); d.className = cls; Object.assign(d.style, css); return d; }
+function face(el, d, i) { const [n] = SPR['face' + (d + 1)]; Object.assign(el.style, { backgroundImage: `url(assets/tartarugas/face${d + 1}.webp)`, backgroundSize: `${n * 100}% 100%`, backgroundPosition: `${i / (n - 1) * 100}% 0` }); }
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('tartarugas.saldo') || START; } catch {}
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('tartarugas.saldo', balance); } catch {}
+}
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let mine = load('tartarugas.mine', []), winners = load('tartarugas.win', []);
+
+// ---------- som (sintetizado): música de fazenda, passinhos, ronco, torcida ----------
+let ac, sfxOn = load('tartarugas.sfx', true), musicOn = load('tartarugas.music', true), musicTimer, crowdBed;
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+const now = () => audio().currentTime;
+function tone(f, t, d, { type = 'sine', vol = .15, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+let noiseBuf;
+function noiseSrc() {
+  const a = audio();
+  if (!noiseBuf) { noiseBuf = a.createBuffer(1, a.sampleRate * 2, a.sampleRate); const ch = noiseBuf.getChannelData(0); let p = 0; for (let i = 0; i < ch.length; i++) { p = p * .7 + (Math.random() * 2 - 1) * .3; ch[i] = p * 2.2; } }
+  const s = a.createBufferSource(); s.buffer = noiseBuf; s.loop = true; return s;
+}
+function noise(t, d, vol = .15, freq = 1500, q = 1) {
+  const a = audio(), s = noiseSrc(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  s.connect(f).connect(g).connect(a.destination); s.start(t, Math.random()); s.stop(t + d + .05);
+}
+function voices(t, d, { vol = .12, f0 = 230, f1 = 0, vogal = 'o', n = 9, attack = .15 } = {}) {
+  const a = audio(), out = a.createGain(), fm = vogal === 'u' ? [320, 750] : vogal === 'e' ? [450, 1900] : [520, 950];
+  out.gain.setValueAtTime(.0001, t); out.gain.exponentialRampToValueAtTime(vol, t + attack); out.gain.setValueAtTime(vol, t + d * .6); out.gain.exponentialRampToValueAtTime(.0001, t + d);
+  const mix = a.createGain(); mix.gain.value = 1 / n;
+  fm.forEach((f, i) => { const b = a.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = f; b.Q.value = 4; const g = a.createGain(); g.gain.value = i ? .6 : 1; mix.connect(b).connect(g).connect(out); });
+  out.connect(a.destination);
+  for (let i = 0; i < n; i++) {
+    const o = a.createOscillator(), base = f0 * rnd(.8, 1.35);
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(base, t); if (f1) o.frequency.exponentialRampToValueAtTime(base * f1 / f0, t + d);
+    const lfo = a.createOscillator(), lg = a.createGain(); lfo.frequency.value = rnd(4, 7); lg.gain.value = base * .02; lfo.connect(lg).connect(o.frequency);
+    o.connect(mix); o.start(t + rnd(0, .08)); o.stop(t + d + .1); lfo.start(t); lfo.stop(t + d + .1);
+  }
+  noise(t, d, vol * .9, 1100, .6);
+}
+function startCrowd() {
+  if (crowdBed || !sfxOn) return;
+  const a = audio(), s = noiseSrc(), f = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+  f.type = 'bandpass'; f.frequency.value = 800; f.Q.value = .5; g.gain.value = .022;
+  lfo.frequency.value = .2; lg.gain.value = .01; lfo.connect(lg).connect(g.gain);
+  s.connect(f).connect(g).connect(a.destination); s.start(); lfo.start();
+  crowdBed = { s, g, lfo };
+}
+function stopCrowd() { if (!crowdBed) return; try { crowdBed.s.stop(); crowdBed.lfo.stop(); } catch {} crowdBed = null; }
+function crowdLevel(v, ms = 400) { if (crowdBed) crowdBed.g.gain.setTargetAtTime(v, now(), ms / 3000); }
+const SFX = {
+  click() { tone(900, now(), .05, { type: 'triangle', vol: .07 }); },
+  bet() { tone(660, now(), .08, { type: 'triangle', vol: .1 }); tone(990, now() + .07, .1, { type: 'triangle', vol: .1 }); },
+  squeak(p = 1) { const t = now(); [0, .1, .2].forEach((d, i) => tone((700 + i * 180) * p, t + d, .09, { type: 'triangle', vol: .08, slide: (900 + i * 200) * p })); }, // "iê-iê!" de tartaruga
+  beep(hi) { tone(hi ? 1320 : 880, now(), hi ? .5 : .18, { type: 'square', vol: .07 }); },
+  gun() { const t = now(); noise(t, .35, .6, 1200, .5); tone(120, t, .25, { vol: .3, slide: 40 }); },
+  step(t, v = .04) { noise(t, .04, v, 900, 3); },
+  snore() { const t = now(); [0, .7].forEach(d => { noise(t + d, .45, .12, 180, 2); tone(70, t + d, .45, { type: 'sawtooth', vol: .04, slide: 55 }); tone(1400, t + d + .5, .15, { vol: .02, slide: 2200 }); }); },
+  crunch() { const t = now(); for (let i = 0; i < 4; i++) noise(t + i * .06, .05, .18, 2500, 2); },
+  zap() { const t = now(); tone(300, t, .35, { type: 'sawtooth', vol: .06, slide: 2400 }); noise(t, .3, .1, 4000, 2); },
+  spin() { const t = now(); tone(400, t, .5, { type: 'triangle', vol: .06, slide: 1600 }); tone(800, t + .15, .4, { type: 'triangle', vol: .04, slide: 300 }); },
+  roar() { const t = now(); voices(t, 3, { vol: .26, f0: 260, f1: 300, vogal: 'o', n: 12, attack: .12 }); noise(t, 2.6, .35, 900, .4); },
+  cheer() { voices(now(), 1.2, { vol: .12, f0: 240, vogal: 'e', n: 7, attack: .08 }); },
+  uuuh() { voices(now(), 1.5, { vol: .2, f0: 300, f1: 170, vogal: 'u', n: 10, attack: .2 }); },
+  win() { const t = now(); [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, t + i * .11, .3, { type: 'triangle', vol: .12 })); },
+  coin() { tone(1800 + Math.random() * 600, now(), .08, { type: 'square', vol: .025 }); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+// música de fazenda: violão no "tum-tchá", baixo alternado e assobio; acelera na corrida
+const ACORDES = [[196, 247, 294], [196, 247, 294], [131, 165, 196], [147, 185, 220]]; // Sol, Sol, Dó, Ré
+const ASSOBIO = [784, 880, 988, 880, 784, 659, 784, 0, 880, 988, 1175, 988, 880, 784, 880, 0];
+let tempo = 1;
+function violao(freqs, t, vol = .025) { freqs.forEach((f, i) => tone(f * 2, t + i * .012, .28, { type: 'triangle', vol })); }
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  let step = 0;
+  (function tick() {
+    const t = now(), s = step % 4, ch = ACORDES[(step >> 3) % 4];
+    if (s === 0) tone(ch[step & 4 ? 2 : 0] / 2, t, .3, { vol: .13 });          // baixo alternado
+    if (s === 2) violao(ch, t);                                                 // tchá
+    if (s === 1 || s === 3) noise(t, .03, .015, 6000, 3);                       // chimbal leve
+    const w = ASSOBIO[(step >> 1) % 16]; if (step % 2 === 0 && w && (step >> 5) % 2) tone(w, t, .24, { vol: .025 }); // assobio a cada 2 voltas
+    step++;
+    musicTimer = setTimeout(tick, 170 / tempo);
+  })();
+}
+const stopMusic = () => { clearTimeout(musicTimer); musicTimer = null; };
+
+// ---------- efeitos ----------
+function say(text, x, y) {
+  const b = div('bubble', { top: y / H * 100 + '%' }); b.textContent = text; stage.append(b);
+  b.style.left = Math.max(1, Math.min(x / W * 100, 99 - b.offsetWidth / stage.clientWidth * 100)) + '%';
+  setTimeout(() => b.remove(), 1900);
+}
+function shake() { stage.classList.remove('shake'); stage.offsetHeight; stage.classList.add('shake'); }
+function flash() { stage.classList.remove('flash'); stage.offsetHeight; stage.classList.add('flash'); setTimeout(() => stage.classList.remove('flash'), 650); }
+const CONF = ['#e53935', '#1e88e5', '#2e9e3e', '#f2b705', '#8e24aa', '#fff'];
+function confetti(x, y, n = 50, spread = 500, parent = stage) {
+  const sw = stage.clientWidth / W;
+  for (let i = 0; i < n; i++) {
+    const c = div('conf', { left: x / W * 100 + '%', top: y / H * 100 + '%', background: pick(CONF) }); parent.append(c);
+    const dx = rnd(-spread, spread), up = rnd(150, 450);
+    c.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${dx * .6 * sw}px,${-up * sw}px) rotate(${rnd(-400, 400)}deg)`, offset: .35 },
+      { transform: `translate(${dx * sw}px,${rnd(300, 800) * sw}px) rotate(${rnd(-900, 900)}deg)`, opacity: 0 }], { duration: rnd(1800, 3200), easing: 'cubic-bezier(.2,.6,.5,1)', fill: 'forwards' }).onfinish = () => c.remove();
+  }
+}
+const GLOW = new Set(['dust1', 'dust2', 'dust3', 'speed', 'stars', 'whirl', 'confetti']); // efeitos crus: fundo escuro some no screen
+function fxOnce(name, x, y, s, keys, ms, parent = stage, z = 11) {
+  const e = div('pfx' + (GLOW.has(name) ? ' glow' : ''), { backgroundImage: `url(assets/tartarugas/${name}.webp)`, left: (x - s / 2) / W * 100 + '%', top: (y - s / 2) / H * 100 + '%', width: s / W * 100 + '%', height: s / H * 100 + '%', zIndex: z });
+  parent.append(e); e.animate(keys, { duration: ms, easing: 'ease-out', fill: 'forwards' }).onfinish = () => e.remove(); return e;
+}
+
+// ---------- tela de escolha ----------
+const LARG = [[28, 690, 164, 170], [200, 690, 162, 170], [378, 695, 182, 165], [568, 695, 160, 165], [736, 690, 176, 170]];
+const CARDS = [[22, 170], [205, 167], [385, 170], [567, 168], [748, 170]];
+let escolha = null;
+const starts = LARG.map((p, i) => {
+  const s = div('abs spot', { '--c': COR[i] }); place(s, [p[0] - 10, p[1] - 40, p[2] + 20, p[3] + 60]); $('#starts').append(s);
+  const t = div('abs tag', { '--c': COR[i] }); t.textContent = 'SUA TORUGUITA'; place(t, [p[0] + p[2] / 2 - 100, p[1] - 60, 200]); $('#starts').append(t);
+  const g = div('abs tt', { backgroundImage: `url(assets/tartarugas/start${i + 1}.webp)`, '--d': rnd(1.6, 2.4) + 's' }); place(g, p);
+  g.setAttribute('role', 'button'); g.setAttribute('aria-label', 'Escolher ' + NOMES[i]); g.onclick = () => escolher(i);
+  $('#starts').append(g); return { g, s, t };
+});
+const cards = CARDS.map(([x, w], i) => {
+  const c = document.createElement('button'); c.className = 'abs card'; c.style.setProperty('--c', COR[i]);
+  c.setAttribute('aria-label', 'Escolher ' + NOMES[i]); place(c, [x, 1085, w, 273]);
+  // a carta é o pedaço do próprio fundo (sem o número desenhado): o jogo escreve o valor por cima
+  c.style.backgroundSize = `${W / w * 100}% ${H / 273 * 100}%`; c.style.backgroundPosition = `${x / (W - w) * 100}% ${1085 / (H - 273) * 100}%`;
+  c.innerHTML = '<span class="odd"></span>'; c.onclick = () => escolher(i); $('#cards').append(c); return c;
+});
+const FALAS = [['Hoje eu tô ligeira!', 'Lentação? Só no nome!', 'Bandana da sorte 😎'], ['Bocejo... já vai começar?', 'Corro depois do cochilo', 'Aposta em mim, vai!'],
+  ['Relâmpuga chegou ⚡', 'Óculos escuros pra velocidade', 'Ninguém me alcança!'], ['Fofura também corre! 🎀', 'Vou ganhar com estilo!', 'Hihi, bora!'], ['Capacete de corrida!', 'Cascudinha não perde!', 'Sai da frente!']];
+function escolher(i) {
+  if (racing) return;
+  escolha = i; play('click'); play('squeak', rnd(.9, 1.2));
+  starts.forEach((o, k) => { o.s.classList.toggle('on', k === i); o.t.classList.toggle('on', k === i); });
+  cards.forEach((c, k) => { c.classList.toggle('sel', k === i); c.classList.toggle('dim', k !== i); });
+  const g = starts[i].g; g.classList.remove('hop'); g.offsetHeight; g.classList.add('hop');
+  const [x, y, w] = LARG[i]; say(pick(FALAS[i]), x + w / 2 - 90, y - 120);
+  for (let k = 0; k < 10; k++) fxOnce(k % 2 ? 'leaves' : 'stars', x + w / 2 + rnd(-60, 60), y + 120, rnd(40, 80), [{ transform: 'scale(.3)', opacity: 1 }, { transform: `translate(${rnd(-80, 80)}%,${rnd(-160, -40)}%) scale(1.2)`, opacity: 0 }], 900);
+  hud();
+}
+// tartarugas vivas na largada: pulinhos e falas sozinhas de vez em quando
+setInterval(() => {
+  if (document.hidden || racing) return;
+  const i = Math.random() * 5 | 0, g = starts[i].g; g.classList.remove('hop'); g.offsetHeight; g.classList.add('hop');
+  if (Math.random() < .35) { const [x, y, w] = LARG[i]; say(pick(['Bora correr!', 'Tô pronta!', ...FALAS[i]]), x + w / 2 - 80, y - 110); }
+}, 2400);
+setInterval(() => {
+  if (document.hidden || racing) return;
+  const t = div('twinkle'); place(t, [rnd(200, 740), rnd(60, 250), 34]); stage.append(t);
+  t.animate([{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(90deg)', opacity: 1 }, { transform: 'scale(0) rotate(180deg)', opacity: 0 }], { duration: 900 }).onfinish = () => t.remove();
+}, 450);
+// poeirinha na pista
+setInterval(() => {
+  if (document.hidden || racing) return;
+  fxOnce(pick(['dust1', 'dust2']), rnd(80, 860), rnd(840, 900), rnd(80, 140), [{ transform: 'translateX(0) scale(.5)', opacity: .7 }, { transform: 'translateX(40%) scale(1.3)', opacity: 0 }], 1800, stage, 3);
+}, 900);
+
+// ---------- corrida ----------
+const race = $('#race'), world = $('#world');
+const L = 5000, X0 = 150, LANE0 = 800, LANE_H = 138;
+const laneBottom = i => LANE0 + i * LANE_H + 120, turH = i => 150 + i * 9;
+for (let i = 0; i <= 5; i++) { const l = div('lane' + (i === 0 || i === 5 ? ' solid' : '')); place(l, [0, LANE0 + i * LANE_H - 12, W]); $('#lanes').append(l); }
+place($('#pano'), [0, 320, W, 480]); place($('#track'), [0, LANE0 - 40, W, 1672 - LANE0 + 40]); place($('#front'), [0, 1490, W, 170]); place($('#fans'), [0, 1570, W, 160]);
+const tur = [], tags = [];
+for (let i = 0; i < 5; i++) {
+  const e = div('abs tur'); e.style.zIndex = 5 + i; world.append(e); tur.push(e);
+  const t = div('jtag', { '--c': COR[i] }); t.textContent = i + 1; world.append(t); tags.push(t);
+}
+const you = div('you'); you.textContent = 'VOCÊ'; world.append(you);
+
+let racing = false, ordem = null, aposta = 0, script = null, cam = 0;
+// roteiro visual pra ordem sorteada: chegadas crescentes na ordem, ritmo variado, uma soneca e uma cenoura turbo
+function roteiro(ordem) {
+  const T = [], K = 12, sc = [];
+  T[ordem[0]] = rnd(9.5, 10.3);
+  for (let k = 1; k < 5; k++) T[ordem[k]] = T[ordem[k - 1]] + (k === 1 && Math.random() < .5 ? rnd(.06, .16) : rnd(.2, .6));
+  const soneca = Math.random() < .8 ? ordem[2 + (Math.random() * 3 | 0)] : -1, turbo = pick([0, 1, 2, 3, 4]);
+  for (let d = 0; d < 5; d++) {
+    const w = [], virada = d === ordem[0] && Math.random() < .6, arranque = Math.random() < .3;
+    for (let j = 0; j < K; j++) {
+      let x = rnd(.75, 1.3);
+      if (virada) x *= j < K / 2 ? .78 : 1.25;
+      if (arranque) x *= j < 3 ? 1.4 : .93;
+      w.push(x);
+    }
+    const tb = d === turbo ? 3 + (Math.random() * 6 | 0) : -1; if (tb >= 0) w[tb] *= 2.3;
+    const sum = w.reduce((a, b) => a + b), cum = [0]; w.forEach(x => cum.push(cum.at(-1) + x / sum));
+    const pausa = d === soneca ? { em: rnd(.3, .55) * T[d], dur: 1.5 } : null;
+    sc.push({ T: T[d], cum, K, tb, pausa, run: T[d] - (pausa ? pausa.dur : 0) });
+  }
+  return sc;
+}
+function posAt(s, t) {
+  let tt = t;
+  if (s.pausa) { if (t > s.pausa.em + s.pausa.dur) tt = t - s.pausa.dur; else if (t > s.pausa.em) tt = s.pausa.em; }
+  if (t >= s.T) { const v = L / s.T; return L + v * .9 * (1 - Math.exp(-(t - s.T) / .9)); }
+  const u = Math.max(0, tt) / s.run * s.K, j = Math.min(s.K - 1, u | 0), f = u - j;
+  return L * (s.cum[j] + (s.cum[j + 1] - s.cum[j]) * f);
+}
+const segAt = (s, t) => { let tt = t; if (s.pausa && t > s.pausa.em) tt = t > s.pausa.em + s.pausa.dur ? t - s.pausa.dur : s.pausa.em; return Math.min(s.K - 1, Math.max(0, tt) / s.run * s.K | 0); };
+
+function drawTur(d, pos, frame, extra = '') {
+  const e = tur[d], [n, fw, fh] = SPR['walk' + (d + 1)], h = turH(d), w = h * fw / fh, x = X0 + pos - cam;
+  Object.assign(e.style, { backgroundImage: `url(assets/tartarugas/walk${d + 1}.webp)`, backgroundSize: `${n * 100}% 100%`, backgroundPosition: `${frame / (n - 1) * 100}% 0`,
+    left: (x - w / 2) / W * 100 + '%', top: (laneBottom(d) - h) / H * 100 + '%', width: w / W * 100 + '%', height: h / H * 100 + '%', transform: extra });
+  place(tags[d], [x + w * .1, laneBottom(d) - h - 40, 56]);
+  if (d === escolha) place(you, [x - 45, laneBottom(d) - h - 100, 90]);
+  return x;
+}
+function scroll() {
+  const s = stage.clientWidth / W;
+  $('#pano').style.backgroundPositionX = -(180 + cam * 1900 / L) * s + 'px';
+  $('#track').style.backgroundPositionX = `${-cam * s}px, 0`;
+  $('#front').style.backgroundPositionX = -cam * 1.3 * s + 'px';
+  $('#fans').style.backgroundPositionX = -cam * 1.55 * s + 'px';
+  document.querySelectorAll('.lane:not(.solid)').forEach(l => l.style.backgroundPositionX = -cam * s + 'px');
+  const sx = X0 + 60 - cam, fxp = X0 + L - cam + 70;
+  place($('#startLine'), [sx, LANE0 - 12, 10, LANE_H * 5 + 12]); place($('#startFlag'), [sx - 10, LANE0 - 150, 110, 140]);
+  place($('#finish'), [fxp, LANE0 - 20, 47, LANE_H * 5 + 40]); place($('#finishFlag'), [fxp + 10, LANE0 - 170, 130, 160]);
+}
+let parts = [];
+function puff(name, wx, y, s, ms, drift = -60, z = 4, ratio = .7) {
+  const e = div('pfx' + (GLOW.has(name) ? ' glow' : ''), { backgroundImage: `url(assets/tartarugas/${name}.webp)`, zIndex: z }); world.append(e);
+  parts.push({ e, wx, y, s, t0: performance.now(), ms, drift, ratio });
+}
+function updParts(t) {
+  parts = parts.filter(p => {
+    const k = (t - p.t0) / p.ms; if (k >= 1) { p.e.remove(); return false; }
+    const x = X0 + p.wx + p.drift * k - cam, s = p.s * (.6 + k * .9);
+    Object.assign(p.e.style, { left: (x - s / 2) / W * 100 + '%', top: (p.y - s * p.ratio) / H * 100 + '%', width: s / W * 100 + '%', height: s * p.ratio / H * 100 + '%', opacity: 1 - k });
+    return true;
+  });
+}
+function narra(txt) { race.querySelectorAll('.say').forEach(b => b.remove()); const b = div('say'); b.textContent = txt; race.append(b); setTimeout(() => b.remove(), 2100); }
+function rankHTML(order) {
+  $('#rank').innerHTML = order.map((d, k) => `<div class="${d === escolha ? 'me' : ''} ${k === 0 ? 'lead' : ''}" style="--c:${COR[d]}"><i data-d="${d}"></i>${k + 1}º</div>`).join('');
+  $('#rank').querySelectorAll('i').forEach(el => face(el, +el.dataset.d, CARA[+el.dataset.d]));
+}
+function zzz(d, x) { const z = div('zzz'); z.textContent = pick(['Z', 'z', 'Zz']); place(z, [x + 20, laneBottom(d) - turH(d) - 10, 60]); world.append(z); setTimeout(() => z.remove(), 1500); }
+
+async function largar() {
+  if (racing) return;
+  if (escolha == null) { info('Escolha sua toruguita primeiro! 👆'); play('click'); return; }
+  const bet = BETS[betIdx];
+  if (balance < bet) {
+    if (host && balance < BETS[0]) { info('Saldo acabou, faça um depósito'); setTimeout(() => host.openModal('modal-deposit'), 1000); }
+    else if (!host && balance < BETS[0]) { balance = START; save(); info('Créditos recarregados: ' + brl(START)); }
+    else info('Saldo insuficiente, diminua a aposta');
+    return hud();
+  }
+  balance = r2(balance - bet); save(); play('bet'); aposta = bet;
+  racing = true; hud();
+  ordem = sortear(); script = roteiro(ordem);
+  cam = 0; parts.forEach(p => p.e.remove()); parts = [];
+  race.classList.add('show'); tempo = 1.3;
+  for (let d = 0; d < 5; d++) drawTur(d, 0, 0);
+  you.style.setProperty('--c', COR[escolha]); scroll(); rankHTML([0, 1, 2, 3, 4]);
+  $('#bar').innerHTML = [0, 1, 2, 3, 4].map(d => `<i style="background:${COR[d]};left:0%">${d + 1}</i>`).join('');
+  narra(`Você apostou ${brl(bet)} na ${NOMES[escolha]}!`); crowdLevel(.05);
+  await sleep(900);
+  for (const n of ['3', '2', '1']) { $('#count').innerHTML = `<span>${n}</span>`; play('beep'); if (n === '2') play('squeak'); await sleep(800); }
+  $('#count').innerHTML = '<span>JÁ!</span>'; play('beep', true); play('gun'); play('roar'); flash(); crowdLevel(.08);
+  setTimeout(() => $('#count').innerHTML = '', 900);
+  correr();
+}
+
+function correr() {
+  const t0 = performance.now(), sc = script, seen = { turbo: new Set(), sono: new Set() };
+  let lastStep = 0, lastPuff = 0, lastZ = 0, lastRank = '', lider = -1, fim = false, fimT = 0, slow = 1, tv = 0, lastT = t0;
+  const falas = [[2.2, () => narra(pick(['Largaram! Devagar e sempre!', 'Saíram... quase correndo!', 'Que emoção (lenta)!']))], [6, () => narra(pick(['Tá pegando fogo a corrida!', 'Olha a briga pela ponta!', 'A torcida enlouquece!']))]];
+  (function frame(now) {
+    const dt = Math.min(.05, (now - lastT) / 1000); lastT = now; tv += dt * slow; const t = tv;
+    const pos = sc.map(s => posAt(s, t)), lead = Math.max(...pos);
+    cam += (Math.max(0, Math.min(L + 380, lead - 560)) - cam) * Math.min(1, dt * 6);
+    scroll();
+    for (let d = 0; d < 5; d++) {
+      const s = sc[d], dormindo = s.pausa && t > s.pausa.em && t < s.pausa.em + s.pausa.dur;
+      if (dormindo) {
+        const x = drawTur(d, pos[d], 0, `rotate(${Math.sin(t * 3) * 3}deg) scaleY(.94)`);
+        if (!seen.sono.has(d)) {
+          seen.sono.add(d); play('snore'); play('uuuh');
+          narra(pick([`${NOMES[d]} tirou um cochilo! 😴`, `Dormiu no meio da pista, ${NOMES[d]}!`, `${NOMES[d]} parou pra soneca!`]));
+        }
+        if (now - lastZ > 380) { lastZ = now; zzz(d, x); }
+      } else {
+        const turbo = s.tb >= 0 && segAt(s, t) === s.tb && t < s.T;
+        drawTur(d, pos[d], Math.floor(pos[d] / 34) % 8, `translateY(${-Math.abs(Math.sin(pos[d] / 34 * Math.PI / 4)) * 2}%)`);
+        tur[d].classList.toggle('turbo', turbo);
+        if (turbo) {
+          if (!seen.turbo.has(d)) {
+            seen.turbo.add(d); play('crunch'); play('zap'); play('spin');
+            narra(pick([`${NOMES[d]} comeu uma cenoura! 🥕`, `Cenoura turbo da ${NOMES[d]}!`, `${NOMES[d]} ligou o casco a jato!`]));
+            puff('carrot', pos[d] + 40, laneBottom(d) - turH(d) * .8, 110, 700, 0, 12, 1);
+            puff('whirl', pos[d], laneBottom(d) - turH(d) * .4, 170, 700, 0, 12, 1);
+          }
+          if (Math.random() < .5) puff('speed', pos[d] - turH(d) * .9, laneBottom(d) - turH(d) * .4, 160, 380, -120, 4 + d, .4);
+        }
+      }
+    }
+    if (now - lastPuff > 110) { lastPuff = now; for (let d = 0; d < 5; d++) if (pos[d] < L + 300 && !(sc[d].pausa && t > sc[d].pausa.em && t < sc[d].pausa.em + sc[d].pausa.dur)) puff(Math.random() < .8 ? pick(['dust1', 'dust2']) : 'clods', pos[d] - turH(d) * .7, laneBottom(d) - 5, rnd(60, 100), rnd(600, 900), rnd(-90, -30), 4 + d); }
+    if (now - lastStep > 110 / slow && !fim) { lastStep = now; const tt = audio().currentTime; for (let k = 0; k < 2; k++) play('step', tt + k * .04, .035); }
+    updParts(now);
+    const order = [0, 1, 2, 3, 4].sort((a, b) => pos[b] - pos[a]), key = order.join('');
+    if (key !== lastRank) {
+      lastRank = key; rankHTML(order);
+      if (order[0] !== lider && t > 1.2 && !fim) { if (Math.random() < .6) narra(pick([`${NOMES[order[0]]} passa na frente!`, `${NOMES[order[0]]} assume a ponta!`, `É a ${NOMES[order[0]]} liderando!`])); play('cheer'); }
+      lider = order[0];
+    }
+    $('#bar').querySelectorAll('i').forEach((el, d) => { el.style.left = Math.min(100, pos[d] / L * 100) + '%'; el.style.zIndex = d === escolha ? 5 : 1; el.style.borderColor = d === escolha ? '#fff' : '#fff8'; });
+    while (falas.length && t > falas[0][0]) falas.shift()[1]();
+    if (!fim && pos[ordem[0]] >= L) {
+      fim = true; fimT = t; slow = .35;
+      play('roar'); play('win'); flash(); crowdLevel(.12, 200);
+      const w = ordem[0], x = X0 + L - cam + 70;
+      narra(`${NOMES[w]} VENCEU! 🏆`);
+      confetti(x, 800, 80, 600, race);
+      puff('confetti', L + 70, laneBottom(w) - turH(w) * .3, 280, 1200, 0, 12, 1); puff('stars', L + 40, laneBottom(w) - turH(w) * .6, 220, 1200, 40, 12, 1);
+      setTimeout(() => slow = 1, 1100);
+    }
+    if (fim && t - fimT > 2.6) return resultado();
+    requestAnimationFrame(frame);
+  })(t0);
+}
+
+function resultado() {
+  const w = ordem[0], pay = premio(aposta, escolha, ordem), pos = ordem.indexOf(escolha) + 1;
+  balance = r2(balance + pay); save(); reportarRodada('tartarugas', aposta, pay); hud();
+  mine.unshift({ bet: aposta, tt: escolha, win: w, pos, pay }); mine = mine.slice(0, 30); store('tartarugas.mine', mine);
+  winners.unshift(w); winners = winners.slice(0, 20); store('tartarugas.win', winners);
+  $('#resTitle').textContent = pay ? 'VOCÊ GANHOU!' : 'CHEGADA!';
+  $('#resWinner').textContent = `🏆 ${NOMES[w]} (#${w + 1}) venceu!`;
+  // pódio de madeira: 2º à esquerda, 1º no meio (coroa e troféu), 3º à direita
+  const P = $('#podio'); P.innerHTML = '';
+  [[1, 3, '32%'], [0, 35, '46%'], [2, 67, '22%']].forEach(([k, l, h]) => { const b = div('blk', { left: l + '%', height: h }); b.textContent = k + 1; P.append(b); });
+  [[ordem[1], 3.5, 34, CARA2[ordem[1]], .25], [ordem[0], 35.5, 17, CARA[ordem[0]], 0], [ordem[2], 67.5, 44, CARA2[ordem[2]], .5]].forEach(([d, l, top, fr, delay]) => {
+    const f = div('pf', { left: l + '%', top: top + '%', animationDelay: delay + 's' }); face(f, d, fr);
+    if (d === escolha) f.style.filter = `drop-shadow(0 0 2.5cqw ${COR[d]}) drop-shadow(0 0 1cqw #fff)`;
+    P.append(f);
+  });
+  P.append(div('crown', { left: '42.5%', top: '5%' })); P.append(div('trophy', { left: '80%', top: '2%' }));
+  const amt = $('#resAmt');
+  if (pay) {
+    amt.className = 'amt'; play('win'); play('squeak', 1.3);
+    const t0 = performance.now(); (function up(t) { const k = Math.min(1, (t - t0) / 1400); amt.textContent = '+' + brl(pay * k); if (k < 1) requestAnimationFrame(up); })(t0);
+    for (let i = 0; i < 40; i++) { const c = div('rain', { left: Math.random() * 100 + 'vw', animationDuration: rnd(1.6, 3.2) + 's', animationDelay: rnd(0, 1.2) + 's' }); c.textContent = pick(['💰', '💵', '🏆', '🥕', '🐢']); document.body.append(c); setTimeout(() => c.remove(), 4600); }
+    for (let i = 0; i < 12; i++) setTimeout(() => play('coin'), i * 60);
+  } else {
+    amt.className = 'amt lose'; amt.textContent = `Sua ${NOMES[escolha]} chegou em ${pos}º. Não foi dessa vez!`; play('uuuh');
+  }
+  $('#result').classList.add('show');
+}
+$('#again').onclick = () => {
+  play('click'); $('#result').classList.remove('show'); race.classList.remove('show');
+  racing = false; tempo = 1; crowdLevel(.022, 800); hud();
+};
+
+// ---------- aposta ----------
+let betIdx = BETS.indexOf(2), infoTimer;
+$('#chips').innerHTML = CHIPS.map(v => `<button data-v="${v}">${v}</button>`).join('');
+function info(html, ms = 2500) {
+  $('#info').innerHTML = `<span>${html}</span>`; clearTimeout(infoTimer);
+  infoTimer = setTimeout(() => $('#info').innerHTML = escolha == null ? '<span>Escolha sua toruguita! 👇</span>' : '', ms);
+}
+function hud() {
+  const bal = $('#bal'); bal.textContent = brl(balance); bal.style.fontSize = '';
+  const kb = ($('#balBox').clientWidth * .95 - bal.offsetLeft + $('#balBox').offsetLeft) / bal.offsetWidth; if (kb < 1) bal.style.fontSize = parseFloat(getComputedStyle(bal).fontSize) * kb + 'px';
+  $('#betVal').textContent = BETS[betIdx].toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  document.querySelectorAll('#chips button').forEach(b => b.classList.toggle('sel', +b.dataset.v === BETS[betIdx]));
+  $('#bDown').disabled = $('#bUp').disabled = racing;
+  cards.forEach((c, i) => c.querySelector('.odd').textContent = fx(odd(i)));
+  $('#go').disabled = racing;
+  if (!racing) $('#info').innerHTML = escolha == null ? '<span>Escolha sua toruguita! 👇</span>'
+    : `<span>Sua toruguita: <b style="color:${COR[escolha]}">${NOMES[escolha]}</b> · se ganhar: <b>${brl(r2(BETS[betIdx] * odd(escolha)))}</b></span>`;
+}
+const setBet = i => { if (racing) return; betIdx = Math.max(0, Math.min(BETS.length - 1, i)); play('click'); const v = $('#betVal'); v.classList.remove('bump'); v.offsetHeight; v.classList.add('bump'); hud(); };
+$('#bDown').onclick = () => setBet(betIdx - 1);
+$('#bUp').onclick = () => setBet(betIdx + 1);
+document.querySelectorAll('#chips button').forEach(b => b.onclick = () => setBet(BETS.indexOf(+b.dataset.v)));
+$('#go').onclick = () => { play('click'); largar(); };
+
+// ---------- menu, estatísticas e histórico ----------
+function setSfx(on) { sfxOn = on; store('tartarugas.sfx', on); $('#snd').textContent = on ? '🔊' : '🔇'; $('#snd').classList.toggle('off', !on); on ? startCrowd() : stopCrowd(); }
+$('#snd').onclick = () => { setSfx(!sfxOn); play('click'); };
+$('#snd').textContent = sfxOn ? '🔊' : '🔇'; $('#snd').classList.toggle('off', !sfxOn);
+$('#menu').onclick = () => { play('click'); $('#mMusic').textContent = `🪗 Música: ${musicOn ? 'ligada' : 'desligada'}`; dlgMenu.showModal(); };
+$('#mMusic').onclick = () => { musicOn = !musicOn; store('tartarugas.music', musicOn); musicOn ? startMusic() : stopMusic(); $('#mMusic').textContent = `🪗 Música: ${musicOn ? 'ligada' : 'desligada'}`; };
+$('#mRules').onclick = () => { dlgMenu.close(); regras(); };
+function regras() {
+  $('#oddsTable').innerHTML = NOMES.map((n, i) => `<tr><td style="color:${COR[i]}">${i + 1}. ${n}</td><td>ganha ${Math.round(CHANCE[i] * 100)}% · paga ${fx(odd(i))}</td></tr>`).join('');
+  dlgRules.showModal();
+}
+function lista(title, rows) { $('#listTitle').textContent = title; $('#listRows').innerHTML = rows; dlgList.showModal(); }
+$('#stats').onclick = () => {
+  play('click'); const n = winners.length;
+  lista(`📊 Últimas ${n} corridas`, n ? NOMES.map((nm, i) => `<tr><td style="color:${COR[i]}">${i + 1}. ${nm}</td><td>${winners.filter(w => w === i).length} vitória(s)</td></tr>`).join('') +
+    `<tr><td colspan="2" style="padding-top:10px">Chances reais: ${NOMES.map((nm, i) => `${nm} ${Math.round(CHANCE[i] * 100)}%`).join(' · ')}</td></tr>` : '<tr><td>Nenhuma corrida ainda</td></tr>');
+};
+$('#hist').onclick = () => {
+  play('click');
+  lista('🕒 Suas últimas apostas', mine.length ? mine.slice(0, 12).map(b => `<tr><td>${brl(b.bet)} na ${NOMES[b.tt]} · chegou ${b.pos}º</td><td style="color:${b.pay ? '#6dff5a' : '#ff9a8a'}">${b.pay ? '+' + brl(b.pay) : 'perdeu'}</td></tr>`).join('') : '<tr><td>Nenhuma aposta ainda</td></tr>');
+};
+function sair() {
+  if (racing && !$('#result').classList.contains('show')) return alert('Espere a corrida acabar antes de sair.');
+  host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html'));
+}
+$('#mExit').onclick = sair;
+document.addEventListener('keydown', e => {
+  if (document.querySelector('dialog[open]')) return;
+  const k = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4 }[e.code];
+  if (k != null) escolher(k);
+  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); $('#result').classList.contains('show') ? $('#again').click() : largar(); }
+});
+document.addEventListener('pointerdown', () => { audio(); startMusic(); startCrowd(); }, { once: true });
+const rtpTxt = r => (r * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+rtpAoVivo('tartarugas', TT, { ocupado: () => racing, depois: r => { $('#rtpInfo').textContent = rtpTxt(r); hud(); } });
+$('#rtpInfo').textContent = rtpTxt(TT.RTP);
+addEventListener('resize', hud);
+hud();
+</script>
+</body>
+</html>

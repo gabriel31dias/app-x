@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Pênalti na Várzea</title>
+<link rel="preload" as="image" href="assets/penalti/bg.webp">
+<style>
+/* Tela sobre o cenário (assets/penalti/bg.webp 941x1672, gerado por tools/penalti_assets.py): posições em px da arte
+   convertidas pra % no JS (place), textos em cqw. Os botões ESQUERDA/MEIO/DIREITA, a engrenagem e o som já estão no desenho. */
+:root{--g:#39ff5a;--y:#ffd54a;--r:#ff4d5e;--panel:#07140bdd}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#1a0f06;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/penalti/bg.webp) center/cover;filter:blur(24px) brightness(.35);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/penalti/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden}
+.stage.shake{animation:shake .5s}
+.stage.flashR::after,.stage.flashG::after,.stage.flashW::after{content:"";position:absolute;inset:0;z-index:30;pointer-events:none;animation:fade .7s reverse forwards}
+.stage.flashR::after{background:radial-gradient(circle,#ff2a3a66,#ff2a3a00 70%)}
+.stage.flashG::after{background:radial-gradient(circle,#39ff5a66,#39ff5a00 70%)}
+.stage.flashW::after{background:radial-gradient(circle at 50% 45%,#fff8,#fff0 60%)}
+.abs{position:absolute}
+.fx{position:absolute;pointer-events:none;mix-blend-mode:screen;background:center/contain no-repeat}
+.spr{position:absolute;background-repeat:no-repeat;pointer-events:none}
+/* logo: brilho passando (máscara do logo) e a bola girando */
+#shine{z-index:2;pointer-events:none;-webkit-mask:url(assets/penalti/logomask.webp) 0 0/100% 100%;mask:url(assets/penalti/logomask.webp) 0 0/100% 100%;
+  background:linear-gradient(105deg,#fff0 40%,#fffc 50%,#fff0 60%) 0 0/300% 100% no-repeat;animation:shine 3.6s ease-in-out infinite;mix-blend-mode:overlay}
+@keyframes shine{0%{background-position:100% 0}55%,100%{background-position:0 0}}
+#lball{z-index:3;border-radius:50%;background:url(assets/penalti/logoball.webp) 0 0/100% 100%;animation:spin 6s linear infinite;pointer-events:none}
+#lball.fast{animation-duration:.4s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.twinkle{position:absolute;z-index:3;pointer-events:none;width:3cqw;aspect-ratio:1;background:radial-gradient(#fff,#fff0 60%);clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)}
+/* torcida: faixas do próprio cenário esticando pra cima a partir da trave */
+.fan{position:absolute;z-index:1;pointer-events:none;background-image:url(assets/penalti/crowd.webp);background-repeat:no-repeat;transform-origin:50% 100%;
+  -webkit-mask:linear-gradient(90deg,#0000,#000 12%,#000 88%,#0000),linear-gradient(#0000,#000 22%);-webkit-mask-composite:source-in;
+  mask:linear-gradient(90deg,#0000,#000 12%,#000 88%,#0000),linear-gradient(#0000,#000 22%);mask-composite:intersect}
+.flag{position:absolute;z-index:1;pointer-events:none;width:6.5cqw;aspect-ratio:1/1.9;transform-origin:0 100%}
+.flag::before{content:"";position:absolute;left:0;bottom:0;width:.5cqw;height:100%;background:linear-gradient(90deg,#8a5a2a,#caa070);border-radius:.3cqw}
+.flag i{position:absolute;left:.4cqw;top:0;width:100%;aspect-ratio:1.43;transform-origin:0 50%;animation:wave .7s ease-in-out infinite alternate;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 14'%3E%3Crect width='20' height='14' fill='%23009c3b'/%3E%3Cpath d='M10 1.5 18.5 7 10 12.5 1.5 7z' fill='%23ffdf00'/%3E%3Ccircle cx='10' cy='7' r='3.3' fill='%23002776'/%3E%3C/svg%3E") 0 0/100% 100%;box-shadow:0 .4cqw 1cqw #0006}
+@keyframes wave{from{transform:skewY(-6deg) scaleX(.92)}to{transform:skewY(6deg) scaleX(1.02)}}
+.phone{position:absolute;z-index:2;pointer-events:none;width:5cqw;aspect-ratio:1;border-radius:50%;background:radial-gradient(#fff,#fff0 65%);mix-blend-mode:screen}
+.shout{position:absolute;z-index:14;pointer-events:none;padding:1cqw 2cqw;border-radius:2.4cqw;background:#fff;color:#1a1a1a;font:900 3cqw/1 system-ui;white-space:nowrap;box-shadow:0 .8cqw 2cqw #0007;animation:shout 1.6s ease forwards}
+.shout::after{content:"";position:absolute;left:30%;bottom:-1.4cqw;border:.9cqw solid transparent;border-top-color:#fff}
+.shout.hot{background:var(--y)}.shout.hot::after{border-top-color:var(--y)}
+.shout.bad{background:#ffd0d4}.shout.bad::after{border-top-color:#ffd0d4}
+@keyframes shout{0%{transform:scale(0) rotate(-8deg);opacity:0}12%{transform:scale(1.15) rotate(3deg);opacity:1}22%{transform:scale(1) rotate(0)}80%{opacity:1}100%{transform:translateY(-60%);opacity:0}}
+/* placas de prêmio */
+.val{z-index:6;display:flex;align-items:center;justify-content:center;gap:1.4cqw;pointer-events:none;font:900 7cqw/1 system-ui;color:var(--y);font-variant-numeric:tabular-nums;
+  -webkit-text-stroke:.5cqw #3a1a00;paint-order:stroke fill;text-shadow:0 .5cqw 0 #3a1a00,0 0 3cqw #ffb02a88;white-space:nowrap;letter-spacing:-.2cqw}
+#vNext{font-size:6cqw;gap:1cqw}
+.val span{display:inline-flex;align-items:center;gap:inherit}
+.val b{font:inherit;font-size:.78em;color:var(--g);-webkit-text-stroke-color:#0a3a10;text-shadow:0 .5cqw 0 #0a3a10,0 0 3cqw #39ff5a88}
+.val.bump{animation:bump .5s}
+/* gol: zonas acendendo */
+.zone{z-index:4;pointer-events:none;border-radius:.6cqw;opacity:0;transition:opacity .2s}
+.zone.hint{opacity:1;animation:zpulse 1s ease-in-out infinite alternate}
+.zone.hit{opacity:1;animation:zhit .9s ease-out}
+#zL{background:radial-gradient(#ff3a3a88,#ff3a3a22 70%);box-shadow:0 0 4cqw #ff3a3a,inset 0 0 3cqw #ff8a8a}
+#zM{background:radial-gradient(#ffd54a88,#ffd54a22 70%);box-shadow:0 0 4cqw #ffd54a,inset 0 0 3cqw #fff39a}
+#zR{background:radial-gradient(#39ff5a88,#39ff5a22 70%);box-shadow:0 0 4cqw #39ff5a,inset 0 0 3cqw #b8ffc4}
+@keyframes zpulse{from{opacity:.25}to{opacity:.8}}
+@keyframes zhit{0%{opacity:1;filter:brightness(2.5)}100%{opacity:0}}
+.ring{position:absolute;z-index:8;pointer-events:none;border-radius:50%;border:1cqw solid #fff;box-shadow:0 0 3cqw #fff,inset 0 0 2cqw #fff;animation:ring .7s ease-out forwards}
+@keyframes ring{from{transform:scale(.2);opacity:1}to{transform:scale(2.4);opacity:0}}
+/* personagens e bola */
+#gk{z-index:7}#kicker{z-index:12}#ball{z-index:11}
+#ballShadow{z-index:5;border-radius:50%;background:radial-gradient(#000a,#0000 70%);pointer-events:none}
+#spot{z-index:5;border-radius:50%;border:.5cqw solid #fff9;box-shadow:0 0 2cqw #fff8;pointer-events:none;animation:spotP 1.2s ease-in-out infinite alternate}
+@keyframes spotP{to{box-shadow:0 0 4cqw #ffd54a;border-color:#ffd54a}}
+#ball.fire{filter:drop-shadow(0 0 2cqw #ff8a00) drop-shadow(0 0 1cqw #ffd54a)}
+#kicker.breath{animation:breath 1.4s ease-in-out infinite}
+@keyframes breath{50%{scale:1.02 .98}}
+#gk.bob{animation:bob .9s ease-in-out infinite}
+@keyframes bob{50%{translate:0 -2%}}
+/* letreiros */
+.sign{position:absolute;z-index:20;pointer-events:none;background:center/contain no-repeat}
+.badge{position:absolute;left:50%;top:48%;translate:-50%;z-index:21;pointer-events:none;font:900 10cqw/1 system-ui;color:#fff;-webkit-text-stroke:.8cqw var(--c,#0a3a10);paint-order:stroke fill;text-shadow:0 0 5cqw var(--c,#39ff5a);animation:badge 1.5s cubic-bezier(.2,1.5,.4,1) forwards;white-space:nowrap}
+@keyframes badge{0%{transform:scale(0) rotate(-20deg);opacity:0}20%{transform:scale(1.2) rotate(4deg);opacity:1}35%{transform:scale(1)}75%{opacity:1}100%{transform:translateY(-80%) scale(.7);opacity:0}}
+.bubble{position:absolute;z-index:15;pointer-events:none;padding:1.4cqw 2.6cqw;border-radius:3cqw;background:#fff;color:#1a1a1a;font:900 3.2cqw/1.15 system-ui;box-shadow:0 1cqw 3cqw #0008;white-space:nowrap;animation:bubble 1.8s ease forwards}
+.bubble::after{content:"";position:absolute;left:18%;bottom:-1.6cqw;border:1cqw solid transparent;border-top-color:#fff}
+@keyframes bubble{0%{transform:scale(0);opacity:0}12%{transform:scale(1.1);opacity:1}20%{transform:scale(1)}80%{opacity:1}100%{transform:translateY(-40%);opacity:0}}
+.conf{position:absolute;z-index:19;pointer-events:none;width:1.4cqw;height:2.2cqw;border-radius:.3cqw}
+/* escada de multiplicadores */
+#ladder{z-index:6;display:grid;grid-template-columns:repeat(3,1fr);gap:.6cqw;padding:.6cqw;align-items:center}
+#ladder span{display:grid;place-items:center;height:100%;border-radius:1.4cqw;background:#000a;border:.3cqw solid #ffffff33;font:900 2.2cqw system-ui;color:#fff9;font-variant-numeric:tabular-nums;transition:all .3s}
+#ladder span.done{background:linear-gradient(#9dff6a,#1fbf3a);border-color:#d8ffb0;color:#062a0c}
+#ladder span.next{border-color:var(--y);color:var(--y);box-shadow:0 0 2cqw #ffd54a;animation:nextP .8s ease-in-out infinite alternate}
+@keyframes nextP{to{scale:1.1}}
+/* painéis: saldo, aposta e recado */
+.panel{background:var(--panel);border:.35cqw solid #39ff5a66;border-radius:2.4cqw;box-shadow:0 0 2.5cqw #39ff5a33,inset 0 0 2cqw #000a}
+#balBox,#betBox{z-index:13;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw;font:800 2.5cqw system-ui;color:#b8ffc4}
+#balBox,#betBox{transition:opacity .35s,transform .35s}
+.stage.kicking #balBox,.stage.kicking #betBox{opacity:0;transform:translateY(25%) scale(.85);pointer-events:none} /* somem durante a cobrança */
+#balBox b{white-space:nowrap;font:900 4.4cqw system-ui;color:#fff;font-variant-numeric:tabular-nums}
+#balBox.bump b{animation:bump .5s}
+#betBox div{display:flex;align-items:center;gap:1.4cqw}
+#betBox b{min-width:14cqw;text-align:center;font:900 4.4cqw system-ui;color:var(--y);font-variant-numeric:tabular-nums}
+#betBox b.bump{animation:bump .4s}
+.pm{width:6.4cqw;height:6.4cqw;display:grid;place-items:center;border-radius:1.6cqw;background:linear-gradient(#123a1c,#0a2111);border:.3cqw solid #39ff5a88;font:900 5cqw/1 system-ui;color:#dfffe4}
+.pm:active{transform:scale(.9)}
+.pm:disabled{opacity:.35}
+#msg{z-index:13;display:grid;place-items:center;text-align:center;font:800 3.3cqw/1.2 system-ui;text-shadow:0 0 1.5cqw #000,0 .3cqw 0 #000;pointer-events:none}
+/* sacar */
+#cash{z-index:16;border-radius:3cqw;display:none;flex-direction:column;align-items:center;justify-content:center;gap:.5cqw;font:900 6.4cqw/1 system-ui;color:#3a1a00;
+  background:linear-gradient(#fff39a,#ffd54a 45%,#ff9a1a);border:.6cqw solid #fff6c8;box-shadow:0 0 5cqw #ffd54aaa,inset 0 -1.2cqw 0 #a86a00;animation:cashPulse .5s ease-in-out infinite alternate}
+#cash.show{display:flex}
+#cash small{font:900 3.6cqw system-ui;font-variant-numeric:tabular-nums}
+#cash:active{transform:scale(.95)}
+@keyframes cashPulse{to{scale:1.05;box-shadow:0 0 8cqw #ffd54a,inset 0 -1.2cqw 0 #a86a00}}
+/* botões de chute do cenário: recortes que afundam */
+.kick{z-index:6;background:0 0/100% 100%;border-radius:7%/9%;transition:transform .1s,filter .2s}
+.kick:active{transform:scale(.93) translateY(2%)}
+.kick.pick{animation:pick 1.4s ease-in-out infinite}
+.kick.pick:nth-of-type(2){animation-delay:.2s}.kick.pick:nth-of-type(3){animation-delay:.4s}
+.kick.off{filter:grayscale(.7) brightness(.6)}
+@keyframes pick{0%,60%,100%{transform:none;filter:none}30%{transform:translateY(-3%) scale(1.03);filter:brightness(1.25) drop-shadow(0 0 2cqw #fff8)}}
+#bL{background-image:url(assets/penalti/btnL.webp)}#bM{background-image:url(assets/penalti/btnM.webp)}#bR{background-image:url(assets/penalti/btnR.webp)}
+.hot{z-index:6;border-radius:1.5cqw}
+#sndX{z-index:7;pointer-events:none;display:none}
+#sndX::before,#sndX::after{content:"";position:absolute;left:10%;right:10%;top:45%;height:14%;background:var(--r);border-radius:1cqw;rotate:45deg;box-shadow:0 0 1cqw #000}
+#sndX::after{rotate:-45deg}
+#sndX.on{display:block}
+#dog{z-index:6;border-radius:40%}
+/* ganho grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:min(10px,1.2vh);background:radial-gradient(circle,#1f8a3acc,#050b14f2);z-index:40;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .ray{position:absolute;width:200vmax;aspect-ratio:1;background:repeating-conic-gradient(#ffd54a22 0 10deg,#0000 10deg 20deg);animation:rot 8s linear infinite;pointer-events:none}
+.overlay .spr{position:relative;height:min(30vh,260px);max-width:60vw} /* cabe em tela baixa */
+.overlay img{position:relative;width:min(300px,70vw);max-height:16vh;object-fit:contain;animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay h2{position:relative;font:900 min(10vw,6vh,54px)/1 system-ui;color:#fff27a;-webkit-text-stroke:6px #3a2a00;paint-order:stroke fill;text-shadow:0 5px 0 #3a2a00,0 0 24px #ffd54a;animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{position:relative;font-size:min(12vw,7vh,64px);font-weight:900;text-shadow:0 0 24px var(--g);font-variant-numeric:tabular-nums}
+.overlay small{position:relative}
+.rain{position:fixed;top:-60px;z-index:41;pointer-events:none;font-size:32px;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid var(--g);border-radius:16px;background:#07140b;color:#fff;padding:16px;font:14px/1.45 system-ui;box-shadow:0 0 30px #39ff5a55}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--g);text-align:center;margin-bottom:10px}
+dialog table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+dialog td{padding:6px 4px;border-bottom:1px solid #ffffff14}
+dialog td:last-child{text-align:right}
+dialog p{margin-top:8px;opacity:.9}
+dialog .close{margin:14px auto 0;display:block;padding:8px 26px;border-radius:20px;background:var(--g);color:#062a0c;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff14;color:#fff;border-radius:12px;padding:10px}
+@keyframes bump{50%{transform:scale(1.25);color:var(--y)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes shake{20%{translate:-1.2% .6%}40%{translate:1.2% -.6%}60%{translate:-.8% .4%}80%{translate:.8% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Pênalti na Várzea</h1>
+  <div class="abs" id="shine" aria-hidden="true"></div>
+  <div class="abs" id="lball" aria-hidden="true"></div>
+  <button class="abs hot" id="menu" aria-label="Menu"></button>
+  <button class="abs hot" id="snd" aria-label="Som"></button>
+  <div class="abs" id="sndX" aria-hidden="true"></div>
+  <div class="abs val" id="vNow">R$ 0,00</div>
+  <div class="abs val" id="vNext">R$ 0,00 <b>2,2X</b></div>
+  <div class="abs zone" id="zL"></div><div class="abs zone" id="zM"></div><div class="abs zone" id="zR"></div>
+  <button class="abs" id="dog" aria-label="Cachorro"></button>
+
+  <div class="spr" id="gk" aria-hidden="true"></div>
+  <div class="abs" id="spot" aria-hidden="true"></div>
+  <div class="abs" id="ballShadow" aria-hidden="true"></div>
+  <div class="spr" id="ball" aria-hidden="true"></div>
+  <div class="spr" id="kicker" aria-hidden="true"></div>
+
+  <div class="abs panel" id="ladder"></div>
+  <div class="abs panel" id="balBox">SALDO <b id="bal">R$ 0,00</b></div>
+  <div class="abs" id="msg" aria-live="polite">Escolha o canto!</div>
+  <div class="abs panel" id="betBox">APOSTA<div><button class="pm" id="bDown" aria-label="Diminuir aposta">−</button><b id="bet">2,00</b><button class="pm" id="bUp" aria-label="Aumentar aposta">+</button></div></div>
+  <button class="abs" id="cash">SACAR<small id="cashVal">R$ 0,00</small></button>
+
+  <button class="abs kick" id="bL" aria-label="Chutar na esquerda"></button>
+  <button class="abs kick" id="bM" aria-label="Chutar no meio"></button>
+  <button class="abs kick" id="bR" aria-label="Chutar na direita"></button>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="ray"></div>
+  <div class="spr" id="ovGuy"></div>
+  <img src="assets/penalti/gol.webp" alt="">
+  <h2 id="ovTitle">GOLEADA!</h2>
+  <div class="amt" id="ovAmt">R$ 0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="dlgList"><h3 id="listTitle"></h3><table id="listRows"></table><button class="close" onclick="dlgList.close()">Fechar</button></dialog>
+<dialog id="dlgRules">
+  <h3>Como jogar</h3>
+  <p>1. Escolha a aposta e toque em <b>ESQUERDA</b>, <b>MEIO</b> ou <b>DIREITA</b> pra bater o pênalti.</p>
+  <p>2. Fez o gol? O prêmio sobe um degrau (<b id="escadaInfo"></b> a aposta). Aí você escolhe: <b>SACAR</b> o prêmio ou bater mais um pra subir de novo.</p>
+  <p>3. Errou (goleiro pegou, trave ou isolou), perde a aposta. No máximo <b id="maxGols"></b> gols: o último paga <b id="maxInfo"></b> a aposta (o prêmio máximo) e saca sozinho.</p>
+  <p>Toque no cachorro quando quiser (só diversão).</p>
+  <p>RTP (retorno médio): <b id="rtpInfo"></b>, igual pra qualquer canto e qualquer ponto de saque. Cada cobrança é sorteada com o gerador criptográfico do navegador.</p>
+  <button class="close" onclick="dlgRules.close()">Fechar</button>
+</dialog>
+<dialog id="dlgMenu">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mMusic">🥁 Batucada: ligada</button>
+    <button id="mHist">📊 Histórico</button>
+    <button id="mRules">❔ Como jogar</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button class="close" onclick="dlgMenu.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="penalti.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('penalti')</script><!-- admin assiste ao vivo -->
+<script>
+const { MAX_GOLS, ESCADA, mult, chute, fim, premio } = PN; // RTP: ler PN.RTP (muda ao vivo entre séries)
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => 'R$ ' + x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.random() * a.length | 0];
+const fx = m => m.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + 'x';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const START = 20, BETS = [1, 2, 5, 10, 15, 20]; // aposta máxima R$ 20
+// tiras: [quadros, largura, altura] (saída do tools/penalti_assets.py)
+const SPR = {"kick":[11,204,300],"celeb":[6,191,300],"slide":[1,294,260],"fallen":[1,429,220],"gk":[4,302,260],"gkdive":[1,424,240],"gksave":[3,308,240]};
+
+// posições na arte (px de 941x1672) -> %
+const W = 941, H = 1672;
+const place = (el, [x, y, w, h]) => Object.assign(el.style, { left: x / W * 100 + '%', top: y / H * 100 + '%', width: w / W * 100 + '%', ...(h ? { height: h / H * 100 + '%' } : {}) });
+const PX = {
+  shine: [190, 18, 590, 327], lball: [665, 151, 94, 94], menu: [22, 22, 80, 76], snd: [838, 22, 80, 76], sndX: [846, 30, 64, 60],
+  vNow: [58, 388, 250, 74], vNext: [638, 386, 266, 76], zL: [190, 632, 185, 310], zM: [377, 632, 245, 310], zR: [627, 632, 181, 310], dog: [20, 820, 95, 125],
+  ladder: [150, 546, 706, 54], balBox: [24, 1046, 236, 92], msg: [270, 1046, 400, 92], betBox: [680, 1046, 237, 92], cash: [600, 1170, 300, 116],
+  bL: [28, 1394, 290, 220], bM: [340, 1394, 275, 220], bR: [632, 1394, 284, 220],
+};
+for (const id in PX) place($('#' + id), PX[id]);
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('penalti.saldo') || START; } catch {}
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('penalti.saldo', balance); } catch {}
+}
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let mine = load('penalti.mine', []);
+
+// ---------- som (sintetizado): torcida, batucada, apito, chute, rede, trave ----------
+let ac, sfxOn = load('penalti.sfx', true), musicOn = load('penalti.music', true), musicTimer, crowdBed;
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+const now = () => audio().currentTime;
+function tone(f, t, d, { type = 'sine', vol = .15, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+let noiseBuf;
+function noiseSrc() {
+  const a = audio();
+  if (!noiseBuf) { noiseBuf = a.createBuffer(1, a.sampleRate * 2, a.sampleRate); const ch = noiseBuf.getChannelData(0); let p = 0; for (let i = 0; i < ch.length; i++) { p = p * .7 + (Math.random() * 2 - 1) * .3; ch[i] = p * 2.2; } }
+  const s = a.createBufferSource(); s.buffer = noiseBuf; s.loop = true; return s;
+}
+function noise(t, d, vol = .15, freq = 1500, q = 1) {
+  const a = audio(), s = noiseSrc(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  s.connect(f).connect(g).connect(a.destination); s.start(t, Math.random()); s.stop(t + d + .05);
+}
+// "vozes" da torcida: várias serras desafinadas passando por formantes de vogal (ô = 500/900 Hz, u = 320/750 Hz)
+function voices(t, d, { vol = .12, f0 = 230, f1 = 0, vogal = 'o', n = 9, attack = .15 } = {}) {
+  const a = audio(), out = a.createGain(), fm = vogal === 'u' ? [320, 750] : vogal === 'e' ? [450, 1900] : [520, 950];
+  out.gain.setValueAtTime(.0001, t); out.gain.exponentialRampToValueAtTime(vol, t + attack); out.gain.setValueAtTime(vol, t + d * .6); out.gain.exponentialRampToValueAtTime(.0001, t + d);
+  const mix = a.createGain(); mix.gain.value = 1 / n;
+  fm.forEach((f, i) => { const b = a.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = f; b.Q.value = 4; const g = a.createGain(); g.gain.value = i ? .6 : 1; mix.connect(b).connect(g).connect(out); });
+  out.connect(a.destination);
+  for (let i = 0; i < n; i++) {
+    const o = a.createOscillator(), base = f0 * rnd(.8, 1.35);
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(base, t); if (f1) o.frequency.exponentialRampToValueAtTime(base * f1 / f0, t + d);
+    const lfo = a.createOscillator(), lg = a.createGain(); lfo.frequency.value = rnd(4, 7); lg.gain.value = base * .02; lfo.connect(lg).connect(o.frequency);
+    o.connect(mix); o.start(t + rnd(0, .08)); o.stop(t + d + .1); lfo.start(t); lfo.stop(t + d + .1);
+  }
+  noise(t, d, vol * .9, 1100, .6);
+}
+// murmúrio da torcida sempre ligado (sobe na hora do chute)
+function startCrowd() {
+  if (crowdBed || !sfxOn) return;
+  const a = audio(), s = noiseSrc(), f = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+  f.type = 'bandpass'; f.frequency.value = 800; f.Q.value = .5; g.gain.value = .035;
+  lfo.frequency.value = .23; lg.gain.value = .015; lfo.connect(lg).connect(g.gain);
+  s.connect(f).connect(g).connect(a.destination); s.start(); lfo.start();
+  crowdBed = { s, g, lfo };
+}
+function stopCrowd() { if (!crowdBed) return; try { crowdBed.s.stop(); crowdBed.lfo.stop(); } catch {} crowdBed = null; }
+function crowdLevel(v, ms = 400) { if (crowdBed) crowdBed.g.gain.setTargetAtTime(v, now(), ms / 3000); }
+const SFX = {
+  click() { tone(900, now(), .05, { type: 'triangle', vol: .07 }); },
+  bet() { tone(660, now(), .08, { type: 'triangle', vol: .1 }); tone(990, now() + .07, .1, { type: 'triangle', vol: .1 }); },
+  whistle() { const t = now(); [0, .22].forEach((d, i) => { const a = audio(), o = a.createOscillator(), g = a.createGain(), l = a.createOscillator(), lg = a.createGain();
+    o.frequency.value = 2900; l.frequency.value = 38; lg.gain.value = 180; l.connect(lg).connect(o.frequency);
+    g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(.09, t + d + .02); g.gain.setValueAtTime(.09, t + d + (i ? .45 : .16)); g.gain.exponentialRampToValueAtTime(.0001, t + d + (i ? .5 : .2));
+    o.connect(g).connect(audio().destination); o.start(t + d); l.start(t + d); o.stop(t + d + .6); l.stop(t + d + .6); }); },
+  step() { noise(now(), .06, .12, 300, 1.5); },
+  kick() { const t = now(); tone(140, t, .18, { vol: .35, slide: 45 }); noise(t, .08, .3, 900, 1); },
+  whoosh() { const t = now(), a = audio(), s = noiseSrc(), f = a.createBiquadFilter(), g = a.createGain();
+    f.type = 'bandpass'; f.Q.value = 2; f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(3000, t + .45);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.18, t + .2); g.gain.exponentialRampToValueAtTime(.0001, t + .5);
+    s.connect(f).connect(g).connect(a.destination); s.start(t); s.stop(t + .55); },
+  net() { const t = now(); noise(t, .5, .35, 2500, .8); noise(t, .3, .2, 400, 1); },
+  post() { const t = now(); [1250, 1870, 2510, 3390].forEach((f, i) => tone(f, t, 1.2 - i * .2, { type: 'triangle', vol: .08 })); tone(95, t, .2, { vol: .3 }); },
+  catch() { const t = now(); tone(110, t, .15, { vol: .3, slide: 60 }); noise(t, .12, .3, 600); },
+  thud() { noise(now(), .25, .3, 250); },
+  goal() { // explosão da torcida: rugido, "ôôô", corneta e fogos
+    const t = now();
+    voices(t, 3.2, { vol: .3, f0: 260, f1: 300, vogal: 'o', n: 12, attack: .12 });
+    noise(t, 3, .45, 900, .4);
+    [0, .5, 1.0].forEach(d => tone(233, t + .3 + d, .35, { type: 'sawtooth', vol: .06 }));
+    for (let i = 0; i < 6; i++) { const d = .4 + i * .35; noise(t + d, .25, .25, 3500, .7); tone(rnd(900, 1600), t + d, .2, { type: 'triangle', vol: .04, slide: 300 }); }
+  },
+  uuuh() { const t = now(); voices(t, 1.8, { vol: .28, f0: 300, f1: 170, vogal: 'u', n: 12, attack: .2 }); },
+  chant() { const t = now(); [0, .38, .76, 1.34].forEach((d, i) => voices(t + d, i === 3 ? .5 : .3, { vol: .09, f0: i === 3 ? 300 : 240, vogal: i === 3 ? 'e' : 'o', n: 6, attack: .04 })); },
+  cash() { const t = now(); [784, 988, 1175, 1568, 1976].forEach((f, i) => tone(f, t + i * .07, .25, { type: 'triangle', vol: .12 })); },
+  coin() { tone(1800 + Math.random() * 600, now(), .08, { type: 'square', vol: .025 }); },
+  bark() { const t = now(); [0, .22].forEach(d => { tone(520, t + d, .12, { type: 'sawtooth', vol: .1, slide: 260 }); noise(t + d, .1, .15, 900, 2); }); },
+  boo() { const t = now(); voices(t, 1.4, { vol: .2, f0: 150, f1: 120, vogal: 'u', n: 10, attack: .1 }); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+// batucada: surdo, caixa, tamborim e agogô; acelera com a sequência de gols
+let tempo = 1;
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  let step = 0;
+  (function tick() {
+    const t = now(), s = step % 16;
+    if (s === 4 || s === 12) tone(s === 12 ? 62 : 72, t, .35, { vol: .16, slide: 45 });  // surdo
+    if (s % 2 === 0 || s === 7 || s === 15) noise(t, .06, s % 4 === 2 ? .06 : .03, 3200, 1.2);  // caixa
+    if ([0, 3, 6, 10, 13].includes(s)) tone(1800, t, .04, { type: 'square', vol: .015 });  // tamborim
+    if (s === 0 || s === 8) tone(880, t, .15, { type: 'triangle', vol: .03 }); if (s === 2 || s === 10) tone(660, t, .15, { type: 'triangle', vol: .03 });  // agogô
+    step++;
+    musicTimer = setTimeout(tick, 125 / tempo);
+  })();
+}
+const stopMusic = () => { clearTimeout(musicTimer); musicTimer = null; };
+
+// ---------- sprites e efeitos ----------
+function div(cls, css = {}) { const d = document.createElement('div'); d.className = cls; Object.assign(d.style, css); return d; }
+/** quadro i da tira `name` no elemento, com a base em (cx, bottom) e altura h (px da arte) */
+function pose(el, name, i, cx, bottom, h, { flip = false, rot = 0 } = {}) {
+  const [n, fw, fh] = SPR[name], w = h * fw / fh;
+  Object.assign(el.style, { backgroundImage: `url(assets/penalti/${name}.webp)`, backgroundSize: `${n * 100}% 100%`, backgroundPosition: `${n > 1 ? i / (n - 1) * 100 : 0}% 0`,
+    left: (cx - w / 2) / W * 100 + '%', top: (bottom - h) / H * 100 + '%', width: w / W * 100 + '%', height: h / H * 100 + '%', transform: `scaleX(${flip ? -1 : 1}) rotate(${flip ? -rot : rot}deg)` });
+  el.dataset.x = cx; el.dataset.y = bottom - h / 2;
+}
+function img(el, name, cx, cy, s, rot = 0) {
+  Object.assign(el.style, { background: `url(assets/penalti/${name}.webp) center/contain no-repeat`, left: (cx - s / 2) / W * 100 + '%', top: (cy - s / 2) / H * 100 + '%', width: s / W * 100 + '%', height: s / H * 100 + '%', transform: `rotate(${rot}deg)` });
+}
+const tween = (ms, fn, ease = k => k) => new Promise(res => { const t0 = performance.now(); (function f(t) { const k = Math.min(1, (t - t0) / ms); fn(ease(k), k); k < 1 ? requestAnimationFrame(f) : res(); })(t0); });
+const easeOut = k => 1 - (1 - k) ** 2, easeIn = k => k * k;
+function fxAt(name, x, y, s, keys, ms, { screen = true, z = 13, ratio = 1 } = {}) {
+  const e = div(screen ? 'fx' : 'abs', { backgroundImage: `url(assets/penalti/${name}.webp)`, background: `url(assets/penalti/${name}.webp) center/contain no-repeat`, left: (x - s / 2) / W * 100 + '%', top: (y - s * ratio / 2) / H * 100 + '%', width: s / W * 100 + '%', height: s * ratio / H * 100 + '%', zIndex: z, pointerEvents: 'none' });
+  stage.append(e);
+  e.animate(keys, { duration: ms, easing: 'ease-out', fill: 'forwards' }).onfinish = () => e.remove();
+  return e;
+}
+function part(src, x, y, s, { dx = rnd(-120, 120), dy = rnd(-200, 60), rot = rnd(-360, 360), ms = rnd(900, 1600), z = 13, screen = false } = {}) {
+  const e = div(screen ? 'fx' : 'abs', { background: `url(assets/penalti/${src}.webp) center/contain no-repeat`, left: (x - s / 2) / W * 100 + '%', top: (y - s / 2) / H * 100 + '%', width: s / W * 100 + '%', aspectRatio: '1', zIndex: z, pointerEvents: 'none' });
+  stage.append(e);
+  const sw = stage.clientWidth / W;
+  e.animate([{ transform: 'translate(0,0) scale(.4)', opacity: 1 }, { transform: `translate(${dx * .5 * sw}px,${(dy - 80) * sw}px) scale(1.1) rotate(${rot / 2}deg)`, offset: .4 },
+    { transform: `translate(${dx * sw}px,${(dy + 160) * sw}px) scale(.8) rotate(${rot}deg)`, opacity: 0 }], { duration: ms, easing: 'cubic-bezier(.3,.7,.6,1)', fill: 'forwards' }).onfinish = () => e.remove();
+}
+const CONF = ['#009c3b', '#ffdf00', '#002776', '#fff', '#39ff5a', '#ff4d5e'];
+function confetti(x, y, n = 40, spread = 500) {
+  const sw = stage.clientWidth / W;
+  for (let i = 0; i < n; i++) {
+    const c = div('conf', { left: x / W * 100 + '%', top: y / H * 100 + '%', background: pick(CONF) });
+    stage.append(c);
+    const dx = rnd(-spread, spread), up = rnd(150, 420);
+    c.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${dx * .6 * sw}px,${-up * sw}px) rotate(${rnd(-400, 400)}deg)`, offset: .35 },
+      { transform: `translate(${dx * sw}px,${(rnd(250, 700)) * sw}px) rotate(${rnd(-900, 900)}deg)`, opacity: 0 }], { duration: rnd(1800, 3000), easing: 'cubic-bezier(.2,.6,.5,1)', fill: 'forwards' }).onfinish = () => c.remove();
+  }
+}
+function firework(x, y) {
+  fxAt('spark', x, y, rnd(120, 200), [{ transform: 'scale(.1) rotate(0)', opacity: 1 }, { transform: 'scale(1.6) rotate(60deg)', opacity: 0 }], 900, { z: 3 });
+  const c = pick(CONF), sw = stage.clientWidth / W;
+  for (let i = 0; i < 14; i++) {
+    const a = i / 14 * Math.PI * 2, d = rnd(60, 110), p = div('abs', { left: x / W * 100 + '%', top: y / H * 100 + '%', width: '1cqw', aspectRatio: '1', borderRadius: '50%', background: c, boxShadow: `0 0 1.5cqw ${c}`, zIndex: 3, pointerEvents: 'none' });
+    stage.append(p);
+    p.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d * sw}px,${(Math.sin(a) * d + 40) * sw}px)`, opacity: 0 }], { duration: 1100, easing: 'cubic-bezier(.1,.8,.4,1)', fill: 'forwards' }).onfinish = () => p.remove();
+  }
+}
+function sign(name, x, y, w, ms = 1600) {
+  const s = div('sign', { backgroundImage: `url(assets/penalti/${name}.webp)`, left: (x - w / 2) / W * 100 + '%', top: (y - w * .35) / H * 100 + '%', width: w / W * 100 + '%', height: w * .7 / H * 100 + '%' });
+  stage.append(s);
+  s.animate([{ transform: 'scale(0) rotate(-15deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(4deg)', opacity: 1, offset: .15 }, { transform: 'scale(1) rotate(0)', offset: .25 },
+    { transform: 'scale(1.05) rotate(-2deg)', offset: .6 }, { transform: 'scale(.8) translateY(-30%)', opacity: 0 }], { duration: ms, easing: 'ease-out', fill: 'forwards' }).onfinish = () => s.remove();
+}
+function badge(text, color) {
+  stage.querySelectorAll('.badge').forEach(b => b.remove());
+  const b = div('badge'); b.textContent = text; b.style.setProperty('--c', color); stage.append(b);
+  setTimeout(() => b.remove(), 1600);
+}
+function flash(c) { stage.classList.remove('flashR', 'flashG', 'flashW'); stage.offsetHeight; stage.classList.add(c); setTimeout(() => stage.classList.remove(c), 750); }
+function shake() { stage.classList.remove('shake'); stage.offsetHeight; stage.classList.add('shake'); }
+function say(text, x, y) {
+  stage.querySelectorAll('.bubble').forEach(b => b.remove());
+  const b = div('bubble', { top: y / H * 100 + '%' }); b.textContent = text; stage.append(b);
+  b.style.left = Math.max(1, Math.min(x / W * 100, 99 - b.offsetWidth / stage.clientWidth * 100)) + '%'; // não sai da tela
+  setTimeout(() => b.remove(), 1900);
+}
+function ringAt(x, y, s, color = '#fff') {
+  const r = div('ring', { left: (x - s / 2) / W * 100 + '%', top: (y - s / 2) / H * 100 + '%', width: s / W * 100 + '%', aspectRatio: '1', borderColor: color, boxShadow: `0 0 3cqw ${color}` });
+  stage.append(r); setTimeout(() => r.remove(), 800);
+}
+const msg = (t, c = '#fff') => { $('#msg').textContent = t; $('#msg').style.color = c; };
+const bump = el => { el.classList.remove('bump'); el.offsetHeight; el.classList.add('bump'); };
+
+// ---------- cenário vivo ----------
+// torcida: uma faixa por pessoa (px da arte: x0, x1, topo), cada uma pula no seu tempo
+const FANS = [[0, 138, 484], [108, 228, 484], [196, 342, 484], [310, 452, 440], [420, 590, 440], [556, 690, 484], [656, 800, 484]];
+const CROWD_Y = 430, CROWD_B = 604;
+const fans = FANS.map(([x0, x1, y0]) => {
+  const f = div('fan'); place(f, [x0, y0, x1 - x0, CROWD_B - y0]);
+  f.style.backgroundSize = `${941 / (x1 - x0) * 100}% ${(CROWD_B - CROWD_Y) / (CROWD_B - y0) * 100}%`;
+  f.style.backgroundPosition = `${x0 / (941 - (x1 - x0)) * 100}% ${(y0 - CROWD_Y) / ((CROWD_B - CROWD_Y) - (CROWD_B - y0)) * 100}%`;
+  stage.append(f); return f;
+});
+let party = 0; // 0 = assistindo, 1 = tensão, 2 = festa, -1 = decepção
+function crowdMove() {
+  fans.forEach((f, i) => {
+    f._a?.cancel();
+    const d = party === 2 ? rnd(260, 380) : party === 1 ? rnd(500, 700) : party === -1 ? 900 : rnd(1100, 1700);
+    const up = party === 2 ? `translateY(-${rnd(1.2, 2.2)}cqw) scaleY(${rnd(1.06, 1.1)})` : party === 1 ? `scaleY(${rnd(1.03, 1.05)})` : party === -1 ? 'scaleY(.97) translateY(.6cqw)' : `scaleY(${rnd(1.008, 1.02)})`;
+    f._a = f.animate([{ transform: 'none' }, { transform: up }], { duration: d, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out', delay: -rnd(0, d) });
+  });
+}
+crowdMove();
+// bandeiras balançando e flashes de celular filmando
+for (const [x, y, s] of [[392, 452, 1], [548, 448, .9], [122, 505, .75], [742, 500, .8]]) {
+  const f = div('flag'); f.innerHTML = '<i></i>'; place(f, [x, y - 120 * s, 62 * s]); f.style.rotate = rnd(-8, 8) + 'deg';
+  f.querySelector('i').style.animationDelay = -rnd(0, .7) + 's'; stage.append(f);
+  f.animate([{ transform: 'rotate(-6deg)' }, { transform: 'rotate(6deg)' }], { duration: rnd(900, 1300), iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+}
+setInterval(() => {
+  if (document.hidden || Math.random() < (party === 2 ? 0 : .5)) return;
+  const p = div('phone'); place(p, [rnd(20, 760), rnd(500, 580), 44]); stage.append(p);
+  p.animate([{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1.3)' }, { opacity: 0, transform: 'scale(.8)' }], { duration: 400 }).onfinish = () => p.remove();
+}, 380);
+// gritos da torcida
+const GRITOS = {
+  0: ['CHUTA LOGO!', 'VAI, GORDÃO!', 'É HOJE!', 'Ô GOLEIRO FRANGUEIRO!', 'AGORA VAI!', 'CAPRICHA!', 'NO ÂNGULO!', 'Ô JUIZ LADRÃO!', 'PAGA UMA GELADA!'],
+  1: ['VAIII!', 'CHUTA!', 'BOTA NA GAVETA!', 'SEM MEDO!', 'OLHA O CANTO!'],
+  2: ['GOOOL!', 'É CAMPEÃO!', 'UHUUU!', 'ÉÉÉÉ!', 'CRAQUE!', 'LINDO DEMAIS!', 'OLÊ OLÊ!', 'SUBIU O PRÊMIO!'],
+  '-1': ['UUUUH!', 'PERNA DE PAU!', 'VAI TREINAR!', 'ISSO É CHUTE?', 'AAAAH NÃO!', 'DEVOLVE O INGRESSO!'],
+};
+function grito(force) {
+  const list = GRITOS[party], x = rnd(40, 700), y = rnd(452, 520);
+  const s = div('shout' + (party === 2 ? ' hot' : party === -1 ? ' bad' : ''), { left: x / W * 100 + '%', top: y / H * 100 + '%' });
+  s.textContent = pick(list); stage.append(s); setTimeout(() => s.remove(), 1700);
+  s.style.left = Math.min(x / W * 100, 99 - s.offsetWidth / stage.clientWidth * 100) + '%';
+  if (!force && party === 0 && Math.random() < .25) play('chant');
+}
+setInterval(() => { if (!document.hidden && Math.random() < (party === 2 ? .9 : party === 0 ? .35 : .6)) grito(); }, 700);
+// estrelinhas no logo
+setInterval(() => {
+  if (document.hidden) return;
+  const t = div('twinkle'); place(t, [rnd(210, 740), rnd(30, 320), 30]); stage.append(t);
+  t.animate([{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(90deg)', opacity: 1 }, { transform: 'scale(0) rotate(180deg)', opacity: 0 }], { duration: 900 }).onfinish = () => t.remove();
+}, 500);
+
+// ---------- personagens ----------
+const gk = $('#gk'), kicker = $('#kicker'), ball = $('#ball'), shadow = $('#ballShadow');
+const GK = { x: 497, b: 940, h: 235 };                    // goleiro no meio do gol
+const K0 = { x: 300, b: 1400, h: 490 }, K1 = { x: 440, b: 1290, h: 410 }; // batedor: espera e ponto do chute
+const SPOT = { x: 515, y: 1236, s: 64 };                  // marca do pênalti
+const TGT = { L: [282, 760], M: [497, 700], R: [715, 758] };
+const SIDES = ['L', 'M', 'R'];
+place($('#spot'), [SPOT.x - 44, SPOT.y + 12, 88, 26]);
+let gkIdle = 0, gkTimer;
+function gkReady() {
+  clearInterval(gkTimer); gk.classList.add('bob');
+  pose(gk, 'gk', 0, GK.x, GK.b, GK.h);
+  gkTimer = setInterval(() => { gkIdle = (gkIdle + 1) % 3; pose(gk, 'gk', gkIdle, GK.x, GK.b, GK.h); }, 330);
+}
+function ballAt(x, y, s, rot = 0) {
+  img(ball, 'ball', x, y, s, rot);
+  ball.dataset.x = x; ball.dataset.y = y;
+}
+function shadowAt(x, y, s, o = 1) { place(shadow, [x - s * .6, y - s * .15, s * 1.2, s * .3]); shadow.style.opacity = o; }
+function resetPitch() {
+  gkReady();
+  kicker.style.opacity = 1; pose(kicker, 'kick', 0, K0.x, K0.b, K0.h); kicker.classList.add('breath');
+  ball.style.opacity = 1; ball.classList.toggle('fire', gols === MAX_GOLS - 1); ballAt(SPOT.x, SPOT.y, SPOT.s); shadowAt(SPOT.x, SPOT.y + SPOT.s * .45, SPOT.s);
+  $('#spot').style.opacity = 1;
+}
+
+// ---------- estado ----------
+let state = 'idle', gols = 0, serie = null; // serie = { bet } enquanto tem aposta rolando
+let betIdx = BETS.indexOf(2);
+// escreve na placa e diminui a letra até caber (R$ 1.500,00 não cabe no tamanho normal)
+function caber(el, html) {
+  el.innerHTML = `<span>${html}</span>`; el.style.fontSize = '';
+  const k = el.clientWidth * .96 / el.firstChild.offsetWidth;
+  if (k < 1) el.style.fontSize = parseFloat(getComputedStyle(el).fontSize) * k + 'px';
+}
+function hud() {
+  const bal = $('#bal'); bal.textContent = brl(balance); bal.style.fontSize = '';
+  const kb = $('#balBox').clientWidth * .9 / bal.offsetWidth; if (kb < 1) bal.style.fontSize = parseFloat(getComputedStyle(bal).fontSize) * kb + 'px';
+  const bet = serie ? serie.bet : BETS[betIdx];
+  $('#bet').textContent = BETS[betIdx].toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  caber($('#vNow'), brl(premio(bet, gols)));
+  caber($('#vNext'), !fim(bet, gols) ? `${brl(premio(bet, gols + 1))} <b>${fx(mult(gols + 1)).toUpperCase()}</b>` : '<b>MÁXIMO!</b>');
+  $('#ladder').innerHTML = Array.from({ length: MAX_GOLS }, (_, i) => `<span class="${i < gols ? 'done' : i === gols && state !== 'kick' ? 'next' : ''}">${i < gols ? '⚽' : fx(mult(i + 1))}</span>`).join('');
+  const canKick = state === 'idle' || state === 'live';
+  stage.classList.toggle('kicking', state === 'kick');
+  document.querySelectorAll('.kick').forEach(b => { b.classList.toggle('off', !canKick); b.classList.toggle('pick', canKick); b.disabled = !canKick; });
+  document.querySelectorAll('.zone').forEach(z => z.classList.toggle('hint', canKick && z.classList.contains('hover')));
+  $('#cash').classList.toggle('show', state === 'live' && gols > 0);
+  $('#cashVal').textContent = brl(premio(serie?.bet || 0, gols));
+  $('#bDown').disabled = $('#bUp').disabled = !!serie;
+}
+
+// ---------- a cobrança ----------
+async function bater(side) {
+  if (state !== 'idle' && state !== 'live') return;
+  if (!serie) {
+    const bet = BETS[betIdx];
+    if (balance < bet) {
+      if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito', '#ff8a8a'); setTimeout(() => host.openModal('modal-deposit'), 1000); }
+      else if (!host && balance < BETS[0]) { balance = START; save(); msg('Créditos recarregados: ' + brl(START)); }
+      else msg('Saldo insuficiente, diminua a aposta', '#ff8a8a');
+      return hud();
+    }
+    balance = r2(balance - bet); save(); play('bet'); bump($('#balBox'));
+    serie = { bet }; gols = 0;
+  }
+  const gol = chute(gols);
+  // como errou: goleiro pega (60%), trave (20%) ou isola (20%)
+  const erro = gol ? null : pick(['save', 'save', 'save', 'post', 'over']);
+  // pra onde o goleiro pula: no gol, pra outro canto; na defesa, no canto certo; na trave/isolada, qualquer um
+  const gkSide = gol ? pick(SIDES.filter(s => s !== side)) : erro === 'save' ? side : pick(SIDES);
+  state = 'kick'; party = 1; crowdMove(); crowdLevel(.07); hud();
+  document.querySelectorAll('.zone').forEach(z => z.classList.remove('hint'));
+  $('#z' + side).classList.add('hint');
+  msg(gols ? `Valendo ${brl(premio(serie.bet, gols + 1))}!` : `Aposta de ${brl(serie.bet)} · ${{ L: 'na esquerda', M: 'no meio', R: 'na direita' }[side]}!`, '#fff39a');
+  say(pick(['Segura essa, goleiro!', 'Vou bater forte!', 'Esse vai no ângulo!', 'Olha o chute do 10!', 'Hoje eu tô inspirado!']), K0.x - 60, K0.b - K0.h - 70);
+  play('whistle');
+  await sleep(550);
+  kicker.classList.remove('breath'); gk.classList.remove('bob'); clearInterval(gkTimer);
+  pose(gk, 'gk', 3, GK.x, GK.b, GK.h); // goleiro se prepara
+  // corrida: quadros 0..6 indo do ponto de espera até a bola (fica menor com a distância)
+  let lastF = -1;
+  await tween(760, (k, raw) => {
+    const f = Math.min(6, raw * 7 | 0);
+    if (f !== lastF && f % 2 === 0) play('step'); lastF = f;
+    pose(kicker, 'kick', f, K0.x + (K1.x - K0.x) * k, K0.b + (K1.b - K0.b) * k, K0.h + (K1.h - K0.h) * k);
+  }, easeIn);
+  pose(kicker, 'kick', 7, K1.x, K1.b, K1.h); // pé na bola
+  play('kick'); play('whoosh'); crowdLevel(.12, 200);
+  $('#spot').style.opacity = 0;
+  fxAt('dirt', SPOT.x + 10, SPOT.y - 10, 150, [{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(1.3) translateY(-20%)', opacity: 0 }], 700, { screen: false });
+  fxAt('dust1', SPOT.x - 30, SPOT.y + 20, 170, [{ transform: 'scale(.5)', opacity: .9 }, { transform: 'scale(1.5) translateX(-20%)', opacity: 0 }], 900, { screen: false, ratio: .5 });
+  (async () => { for (const f of [8, 9, 10]) { await sleep(90); pose(kicker, 'kick', f, K1.x, K1.b, K1.h); } })();
+  // alvo da bola
+  let [tx, ty] = TGT[side];
+  tx += rnd(-30, 30); ty += rnd(-35, 35);
+  if (erro === 'post') [tx, ty] = side === 'L' ? [190, rnd(680, 860)] : side === 'R' ? [806, rnd(680, 860)] : [rnd(400, 600), 628];
+  if (erro === 'over') [tx, ty] = [TGT[side][0] + rnd(-40, 40), 580];
+  const fogo = gols === MAX_GOLS - 1; // a cobrança que vale o máximo vai pegando fogo
+  ball.classList.toggle('fire', fogo);
+  // goleiro pula um pouco depois do chute
+  (async () => {
+    await sleep(90);
+    const [gx] = TGT[gkSide];
+    if (gkSide === 'M') {
+      await tween(300, k => pose(gk, 'gk', 3, GK.x, GK.b - 110 * Math.sin(k * Math.PI / 2), GK.h * (1 + .05 * k)), easeOut);
+    } else {
+      const flip = gkSide === 'L';
+      await tween(330, k => pose(gk, 'gkdive', 0, GK.x + (gx - GK.x) * k, GK.b - 110 * Math.sin(k * Math.PI * .7), 200, { flip, rot: -14 * k }), easeOut);
+    }
+  })();
+  // voo da bola: curva de Bézier com efeito lateral, diminuindo com a distância
+  const cx = (SPOT.x + tx) / 2 + (tx - SPOT.x) * .15, cy = Math.min(SPOT.y, ty) - 140;
+  let lastTrail = 0;
+  await tween(erro === 'over' ? 520 : 470, (k, raw) => {
+    const x = (1 - k) ** 2 * SPOT.x + 2 * (1 - k) * k * cx + k * k * tx, y = (1 - k) ** 2 * SPOT.y + 2 * (1 - k) * k * cy + k * k * ty;
+    const s = SPOT.s + (34 - SPOT.s) * k;
+    ballAt(x, y, s, raw * 900);
+    shadowAt(x, SPOT.y + SPOT.s * .45 + (940 - SPOT.y - SPOT.s * .45) * k, s, 1 - k * .7);
+    const t = performance.now();
+    if (t - lastTrail > 35) { lastTrail = t; part(fogo ? 'fireball' : pick(['blur1', 'blur2', 'blur3']), x, y, s * (fogo ? 1.6 : 1.1), { dx: rnd(-20, 20), dy: rnd(20, 60), rot: 0, ms: 380, z: 10, screen: fogo }); }
+  }, k => k * (1.6 - .6 * k));
+  if (gol) await golFeito(side, tx, ty, gkSide);
+  else await perdeu(erro, side, tx, ty, gkSide);
+}
+
+async function golFeito(side, tx, ty, gkSide) {
+  gols++; hud();
+  play('net'); play('goal'); flash('flashW'); shake();
+  party = 2; crowdMove(); crowdLevel(.16, 200);
+  $('#z' + side).classList.remove('hint'); const z = $('#z' + side); z.classList.remove('hit'); z.offsetHeight; z.classList.add('hit');
+  ringAt(tx, ty, 120, side === 'L' ? '#ff5a5a' : side === 'M' ? '#ffd54a' : '#39ff5a'); ringAt(tx, ty, 200);
+  fxAt({ L: 'glowR', M: 'glowY', R: 'glowG' }[side], tx, ty, 170, [{ transform: 'scale(.6)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], 900);
+  // bola afunda na rede e cai
+  tween(500, k => ballAt(tx + (tx - GK.x) * .05 * k, ty + (900 - ty) * k * k, 34 - 6 * k, 900 + k * 200));
+  sign('gol', 497, 800, 560, 2200);
+  confetti(tx, ty, 60); setTimeout(() => confetti(497, 420, 50, 600), 250);
+  for (let i = 0; i < 7; i++) setTimeout(() => firework(rnd(80, 860), rnd(90, 430)), i * 260);
+  $('#lball').classList.add('fast'); setTimeout(() => $('#lball').classList.remove('fast'), 2000);
+  // goleiro no chão, batedor comemora de frente
+  const [gx] = TGT[gkSide];
+  if (gkSide === 'M') pose(gk, 'gksave', 0, GK.x, GK.b, 200); else pose(gk, 'gksave', 2, gx, GK.b + 4, 170, { flip: gkSide === 'L' });
+  fxAt('dust2', gkSide === 'M' ? GK.x : gx, GK.b - 20, 200, [{ transform: 'scale(.5)', opacity: .9 }, { transform: 'scale(1.4)', opacity: 0 }], 900, { screen: false, ratio: .6 });
+  say(pick(['Ah, não! 😤', 'Esse foi sem querer!', 'Escorreguei!', 'Juiz, foi falta!']), (gkSide === 'M' ? GK.x : gx) - 40, GK.b - 210);
+  let f = 0; const celeb = setInterval(() => pose(kicker, 'celeb', f++ % 6, K1.x, K1.b + 30, 420), 110);
+  const r = premio(serie.bet, gols), acabou = fim(serie.bet, gols);
+  badge(fx(mult(gols)).toUpperCase(), '#1fbf3a');
+  msg(!acabou ? `GOL! Prêmio ${brl(r)} · saca ou bate mais um?` : `PRÊMIO MÁXIMO! ${brl(r)} no bolso!`, '#9dff5c');
+  tempo = Math.min(1.5, 1 + gols * .06);
+  await sleep(1700);
+  clearInterval(celeb);
+  pose(kicker, 'slide', 0, K1.x + 40, K1.b + 30, 360);
+  fxAt('dust1', K1.x - 40, K1.b, 200, [{ transform: 'scale(.5)', opacity: .9 }, { transform: 'scale(1.5) translateX(-30%)', opacity: 0 }], 900, { screen: false, ratio: .5 });
+  await sleep(700);
+  party = 0; crowdMove(); crowdLevel(.035, 1500);
+  if (acabou) { state = 'live'; return sacar(); }
+  state = 'live'; resetPitch(); hud();
+}
+
+async function perdeu(erro, side, tx, ty, gkSide) {
+  const [gx] = TGT[gkSide];
+  if (erro === 'save') {
+    play('catch'); crowdLevel(.08, 200);
+    fxAt('spark', tx, ty, 180, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.3)', opacity: 0 }], 500);
+    // goleiro agarra e cai com a bola
+    const lx = gkSide === 'M' ? GK.x : gx;
+    if (gkSide === 'M') pose(gk, 'gksave', 0, GK.x, GK.b, 200); else pose(gk, 'gksave', 1, lx, GK.b + 4, 175, { flip: gkSide === 'L' });
+    tween(300, k => ballAt(tx + (lx + (gkSide === 'M' ? 0 : gkSide === 'L' ? -40 : 40) - tx) * k, ty + (GK.b - 40 - ty) * k, 34, 0));
+    play('thud');
+    fxAt('dust2', lx, GK.b - 20, 220, [{ transform: 'scale(.5)', opacity: .9 }, { transform: 'scale(1.4)', opacity: 0 }], 900, { screen: false, ratio: .6 });
+    say(pick(['AQUI NÃO, PARÇA! 😎', 'É MINHA!', 'Pegou nada!', 'Paredão da várzea!']), lx - 60, GK.b - 230);
+  } else if (erro === 'post') {
+    play('post'); shake();
+    fxAt('spark', tx, ty, 200, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], 600);
+    badge('NA TRAVE!', '#ff4d5e');
+    // bate e volta pro campo
+    const bx = tx + (tx < 497 ? -260 : tx > 497 ? 260 : rnd(-200, 200));
+    tween(700, k => { ballAt(tx + (bx - tx) * k, ty + (1150 - ty) * k - 180 * Math.sin(k * Math.PI), 34 + 26 * k, k * -700); shadowAt(tx + (bx - tx) * k, 940 + 250 * k, 34 + 26 * k, .6); }).then(() => ball.style.opacity = 0);
+    if (gkSide === 'M') pose(gk, 'gksave', 0, GK.x, GK.b, 200); else pose(gk, 'gksave', 2, gx, GK.b + 4, 170, { flip: gkSide === 'L' });
+  } else {
+    badge('ISOLOU!', '#ff4d5e');
+    // passa por cima do travessão e some na torcida
+    tween(600, k => { ballAt(tx + rnd(-2, 2), 580 - 160 * k, 34 - 14 * k, 900 + k * 600); shadowAt(tx, 940, 30, .5 * (1 - k)); }).then(() => ball.style.opacity = 0);
+    setTimeout(() => { const s = div('shout bad', { left: (tx - 60) / W * 100 + '%', top: 455 / H * 100 + '%' }); s.textContent = 'É MINHA! 🙌'; stage.append(s); setTimeout(() => s.remove(), 1700); }, 400);
+    if (gkSide === 'M') pose(gk, 'gksave', 0, GK.x, GK.b, 200); else pose(gk, 'gksave', 2, gx, GK.b + 4, 170, { flip: gkSide === 'L' });
+  }
+  await sleep(250);
+  play('uuuh'); flash('flashR');
+  party = -1; crowdMove(); crowdLevel(.06, 300);
+  sign('perdeu', 497, 800, 420, 2000);
+  pose(kicker, 'fallen', 0, K1.x - 10, K1.b + 20, 240);
+  fxAt('dust1', K1.x, K1.b - 20, 240, [{ transform: 'scale(.5)', opacity: .9 }, { transform: 'scale(1.6)', opacity: 0 }], 1000, { screen: false, ratio: .5 });
+  const perdido = serie.bet, feitos = gols;
+  reportarRodada('penalti', perdido, 0);
+  mine.unshift({ bet: perdido, gols: feitos, pay: 0 }); mine = mine.slice(0, 30); store('penalti.mine', mine);
+  msg(feitos ? `Perdeu ${brl(premio(perdido, feitos))} depois de ${feitos} gol${feitos > 1 ? 's' : ''} 😭` : `Perdeu ${brl(perdido)} · tenta de novo!`, '#ff8a8a');
+  serie = null; gols = 0; tempo = 1; hud();
+  await sleep(2100);
+  party = 0; crowdMove(); crowdLevel(.035, 1500);
+  state = 'idle'; resetPitch(); hud();
+}
+
+function sacar() {
+  if (state !== 'live' || !serie || !gols) return;
+  const pay = premio(serie.bet, gols), feitos = gols;
+  balance = r2(balance + pay); save(); reportarRodada('penalti', serie.bet, pay);
+  mine.unshift({ bet: serie.bet, gols: feitos, pay }); mine = mine.slice(0, 30); store('penalti.mine', mine);
+  play('cash'); bump($('#balBox')); bump($('#vNow'));
+  for (let i = 0; i < 14; i++) setTimeout(() => { confetti(750, 1220, 3, 200); play('coin'); }, i * 40);
+  msg(`Sacou ${brl(pay)} com ${feitos} gol${feitos > 1 ? 's' : ''}! 💰`, '#9dff5c');
+  if (feitos >= MAX_GOLS) bigWin(pay, feitos);
+  serie = null; gols = 0; tempo = 1; state = 'idle';
+  resetPitch(); hud();
+}
+
+function bigWin(pay, feitos) {
+  const ov = $('#overlay');
+  $('#ovTitle').textContent = 'PRÊMIO MÁXIMO!';
+  const g = $('#ovGuy'), [n, fw, fh] = SPR.celeb; Object.assign(g.style, { backgroundImage: 'url(assets/penalti/celeb.webp)', backgroundSize: `${n * 100}% 100%`, aspectRatio: `${fw} / ${fh}` });
+  g._a?.cancel(); g._a = g.animate([{ backgroundPositionX: '0%' }, { backgroundPositionX: '100%' }], { duration: 660, easing: `steps(${n}, jump-none)`, iterations: Infinity });
+  ov.classList.add('show'); play('goal');
+  const t0 = performance.now(); (function up(t) { const k = Math.min(1, (t - t0) / 1500); $('#ovAmt').textContent = brl(pay * k); if (k < 1) requestAnimationFrame(up); })(t0);
+  for (let i = 0; i < 40; i++) {
+    const c = div('rain', { left: Math.random() * 100 + 'vw', animationDuration: rnd(1.6, 3.2) + 's', animationDelay: rnd(0, 1.2) + 's' });
+    c.textContent = pick(['💰', '💵', '⚽', '🏆', '💰']); document.body.append(c); setTimeout(() => c.remove(), 4600);
+  }
+  clearTimeout(ov.t); ov.t = setTimeout(() => ov.classList.remove('show'), 4500);
+}
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+
+// ---------- controles ----------
+const KBTN = { L: '#bL', M: '#bM', R: '#bR' };
+for (const s of SIDES) {
+  const b = $(KBTN[s]), z = $('#z' + s);
+  b.onclick = () => { play('click'); bater(s); };
+  b.onpointerenter = () => { z.classList.add('hover'); if (state === 'idle' || state === 'live') z.classList.add('hint'); };
+  b.onpointerleave = () => { z.classList.remove('hover'); if (state !== 'kick') z.classList.remove('hint'); };
+}
+$('#cash').onclick = () => { play('click'); sacar(); };
+const setBet = i => { if (serie) return; betIdx = Math.max(0, Math.min(BETS.length - 1, i)); play('click'); bump($('#bet')); hud(); };
+$('#bDown').onclick = () => setBet(betIdx - 1);
+$('#bUp').onclick = () => setBet(betIdx + 1);
+function setSfx(on) {
+  sfxOn = on; store('penalti.sfx', on); $('#sndX').classList.toggle('on', !on);
+  if (on) startCrowd(); else stopCrowd();
+}
+$('#snd').onclick = () => { setSfx(!sfxOn); play('click'); };
+$('#sndX').classList.toggle('on', !sfxOn);
+$('#menu').onclick = () => { play('click'); menuTxt(); dlgMenu.showModal(); };
+function menuTxt() { $('#mMusic').textContent = `🥁 Batucada: ${musicOn ? 'ligada' : 'desligada'}`; }
+$('#mMusic').onclick = () => { musicOn = !musicOn; store('penalti.music', musicOn); musicOn ? startMusic() : stopMusic(); menuTxt(); };
+$('#mRules').onclick = () => { dlgMenu.close(); dlgRules.showModal(); };
+$('#mHist').onclick = () => {
+  dlgMenu.close();
+  $('#listTitle').textContent = '📊 Suas últimas séries';
+  $('#listRows').innerHTML = mine.length ? mine.slice(0, 12).map(b => `<tr><td>${brl(b.bet)} · ${b.gols} gol${b.gols === 1 ? '' : 's'}</td><td style="color:${b.pay ? '#9dff5c' : '#ff8a8a'}">${b.pay ? '+' + brl(b.pay) : 'perdeu'}</td></tr>`).join('') : '<tr><td>Nenhuma cobrança ainda</td></tr>';
+  dlgList.showModal();
+};
+function sair() {
+  if (state === 'kick') return alert('Espere a cobrança acabar antes de sair.');
+  if (serie && gols) sacar(); // prêmio garantido vai pro saldo
+  host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html'));
+}
+$('#mExit').onclick = sair;
+// cachorro da várzea: late e comenta
+$('#dog').onclick = () => {
+  play('bark');
+  const s = div('shout', { left: 40 / W * 100 + '%', top: 780 / H * 100 + '%' }); s.textContent = pick(['AU AU! 🐶', 'AUUU!', 'Me dá a bola!', 'Au! Chuta logo!']); stage.append(s); setTimeout(() => s.remove(), 1700);
+};
+document.addEventListener('keydown', e => {
+  if (document.querySelector('dialog[open]')) return;
+  const k = { ArrowLeft: 'L', ArrowUp: 'M', ArrowRight: 'R', Digit1: 'L', Digit2: 'M', Digit3: 'R' }[e.code];
+  if (k) { e.preventDefault(); bater(k); }
+  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); sacar(); }
+});
+document.addEventListener('pointerdown', () => { audio(); startMusic(); startCrowd(); }, { once: true });
+// fechar o jogo (iframe) com gols feitos: saca sozinho
+addEventListener('pagehide', () => { if (serie && gols && state === 'live') sacar(); });
+// RTP mudou no painel: aplica entre séries (dentro de uma série a chance continua a mesma que o jogador viu)
+const rtpTxt = r => (r * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+rtpAoVivo('penalti', PN, { ocupado: () => !!serie || state === 'kick', depois: r => $('#rtpInfo').textContent = rtpTxt(r) });
+$('#rtpInfo').textContent = rtpTxt(PN.RTP);
+$('#maxGols').textContent = MAX_GOLS; $('#maxInfo').textContent = fx(mult(MAX_GOLS)); $('#escadaInfo').textContent = ESCADA.map(fx).join(' → ');
+
+$('#ladder').style.gridTemplateColumns = `repeat(${MAX_GOLS},1fr)`; // uma casa por degrau da escada
+addEventListener('resize', hud); // a letra das placas é recalculada pro tamanho novo
+resetPitch(); hud();
+</script>
+</body>
+</html>
