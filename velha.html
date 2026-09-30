@@ -142,7 +142,7 @@ const place = (el, [x, y, w, h]) => Object.assign(el.style, { left: x / 9.41 + '
 for (const id in PX) place($('#' + id), PX[id]);
 
 // ---- saldo: no site (iframe) usa a carteira do pai; sozinho usa créditos fictícios ----
-const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
 let balance = START;
 if (host) balance = host.State.balance;
 else try { balance = +localStorage.getItem('velha.saldo') || START; } catch {}
@@ -292,7 +292,7 @@ $('#play').onclick = start;
 $('#quit').onclick = () => { if (playing) finish('O', true); else toast('Nenhuma partida em andamento'); };
 $('#pvp').onclick = () => toast('Partidas contra outros jogadores<br><b>em breve</b>');
 $('#chat').onclick = () => toast('Chat <b>em breve</b>');
-const leave = () => { if (playing && !confirm('Sair agora conta como desistência. Sair?')) return; if (playing) finish('O', true); host ? host.closeGame() : (location.href = 'index.html'); };
+const leave = () => { if (playing && !confirm('Sair agora conta como desistência. Sair?')) return; if (playing) finish('O', true); host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html')); };
 $('#menu').onclick = leave;
 $('#lobby').onclick = leave;
 $('#dep').onclick = () => host ? host.openModal('modal-deposit') : toast('Depósito disponível no site');

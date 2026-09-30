@@ -97,6 +97,7 @@ class ConfigDto {
   @IsOptional() @IsBoolean() bonusDiarioAtivo?: boolean;
   @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(0.01, { message: 'O bônus precisa ser maior que zero' }) @Max(1000, { message: 'Máximo R$ 1.000' }) bonusDiario?: number;
   @IsOptional() @IsBoolean() indicacaoAtiva?: boolean;
+  @IsOptional() @IsBoolean() modoTeste?: boolean;
   @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(0.01, { message: 'O valor precisa ser maior que zero' }) @Max(1000, { message: 'Máximo R$ 1.000' }) indicacao?: number;
   @IsOptional() @IsInt({ message: 'Número inteiro' }) @Min(0) @Max(1000) indicacaoMinRodadas?: number;
   @IsOptional() @IsNumber({}, { message: 'Valor inválido' }) @Min(0) @Max(1000) infCadastro?: number;
@@ -139,5 +140,17 @@ export class ConfigController {
       },
     });
     return this.auto.verificar(); // aplica na hora: ligar com a casa negativa já baixa; desligar já restaura
+  }
+}
+
+/** o que o site (público, sem login) precisa saber da configuração */
+@Controller('site')
+export class SiteController {
+  constructor(private readonly prisma: PrismaService) {}
+
+  @Get('config')
+  async config() {
+    const c = await this.prisma.configuracao.findUnique({ where: { id: 1 } });
+    return { modoTeste: c?.modoTeste ?? true };
   }
 }

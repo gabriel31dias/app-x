@@ -151,7 +151,7 @@ const PATH = [
 const FROG_H = 240; // altura do sapo (px da arte) na vitória-régia de baixo
 
 // ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
-const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
 let balance = START;
 if (host) balance = host.State.balance;
 else try { balance = +localStorage.getItem('sapo.saldo') || START; } catch {}
@@ -391,7 +391,7 @@ $('#mExit').onclick = () => {
   if (active && !active.cashed && state === 'fly') return alert('Espere a rodada acabar ou saque antes de sair.');
   if (active && state === 'wait') cancelActive();
   if (queued) { balance = r2(balance + queued.bet); queued = null; save(); }
-  host ? host.closeGame() : (location.href = 'index.html');
+  host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html'));
 };
 $('#top').onclick = () => {
   const best = mine.filter(b => b.pay).sort((a, b) => b.pay - a.pay).slice(0, 10);

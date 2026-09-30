@@ -211,7 +211,7 @@ document.addEventListener('visibilitychange', () => { if (actx) document.hidden 
 
 // ---------- SALDO (o do site quando aberto dentro dele) ----------
 const START = 20;
-const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
 let balance = START, betIdx = 1;
 if (host) balance = host.State.balance;
 else try { balance = +localStorage.getItem('raspa.saldo') || START; } catch {}

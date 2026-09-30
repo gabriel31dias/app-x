@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Urubuzinho Carioca</title>
+<link rel="preload" as="image" href="assets/urubu/bg.webp">
+<style>
+/* Tela sobre a arte (assets/urubu/bg.webp 1024x1536, gerada por tools/urubu_assets.py):
+   posições em % da imagem (x/10.24, y/15.36), textos em cqw. --cell = altura de uma linha dos rolos (174.3px da arte) */
+:root{--y:#ffd54a;--r:#ff5a2a}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#3a1e08;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/urubu/bg.webp) center/cover;filter:blur(24px) brightness(.4);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 1024 / 1536);aspect-ratio:1024/1536;background:url(assets/urubu/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden;--cell:17.02cqw}
+.stage.shake{animation:shake .35s}
+.abs{position:absolute}
+.crop{position:absolute;background:url(assets/urubu/bg.webp) 0 0/100% 100%;pointer-events:none}
+/* sol e mar vivos */
+.sun{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 88% 4%,#fff6c888,#0000 22%);mix-blend-mode:screen;animation:sun 3s ease-in-out infinite alternate}
+@keyframes sun{to{opacity:.4}}
+.wave{position:absolute;left:88%;top:29%;width:12%;height:6%;z-index:1;pointer-events:none;background:repeating-linear-gradient(90deg,#fff0 0 8%,#ffffff55 10%,#fff0 14%);mix-blend-mode:screen;animation:wave 2.4s linear infinite}
+@keyframes wave{to{background-position:100cqw 0}}
+/* urubu grande (x 170–900, y 0–420): corpo balança, braço com a arma dá coice a cada tiro */
+.uru{left:16.6%;top:0;width:71.29%;height:27.34%;z-index:2;transform-origin:48% 100%;animation:sway 2.6s ease-in-out infinite;pointer-events:none}
+.uru i{position:absolute;inset:0;background:0 0/100% 100% no-repeat}
+.uru .body{background-image:url(assets/urubu/big_body.webp);transform-origin:50% 100%;animation:breathe 1.1s ease-in-out infinite alternate}
+.uru .arm{background-image:url(assets/urubu/big_arm.webp);transform-origin:83.6% 66.7%}
+.uru.party{animation:party .5s ease-in-out 4}
+@keyframes sway{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg) translateY(-1%)}}
+@keyframes breathe{to{transform:scale(1.01,1.022)}}
+@keyframes party{50%{transform:translateY(-5%) rotate(-3deg) scale(1.03)}}
+/* logo URUBUZINHO CARIOCA (x 90–1000, y 318–668), na frente do urubu */
+.logo{left:8.79%;top:20.7%;width:88.87%;height:22.79%;z-index:4;background:url(assets/urubu/logo.webp) 0 0/100% 100%;pointer-events:none;transform-origin:50% 60%;animation:logo 3s ease-in-out infinite}
+@keyframes logo{50%{transform:scale(1.02)}}
+.logo.hit{animation:logoHit .3s}
+@keyframes logoHit{40%{transform:scale(1.05) rotate(-1deg)}}
+/* tiros: clarão na boca da arma, rastro da bala subindo, cápsulas e fumaça */
+.flashm{position:absolute;z-index:6;pointer-events:none;width:22cqw;aspect-ratio:1;translate:-50% -50%;background:radial-gradient(circle,#fff 0 8%,#fff3a0 16%,#ffb02a 30%,#ff5a0a00 62%);clip-path:polygon(50% 0,58% 36%,96% 20%,66% 48%,100% 62%,62% 62%,72% 100%,50% 70%,26% 100%,38% 62%,0 56%,34% 46%,8% 16%,44% 36%);mix-blend-mode:screen}
+.tracer{position:absolute;z-index:5;pointer-events:none;width:1.1cqw;height:14cqw;border-radius:1cqw;background:linear-gradient(#fff0,#fff6c8 40%,#ffd54a 80%,#fff);box-shadow:0 0 2cqw #ffb02a;transform-origin:50% 100%}
+.casing{position:absolute;z-index:6;pointer-events:none;width:3.4cqw;aspect-ratio:1;background:url(assets/urubu/casing.webp) center/contain no-repeat}
+.smoke{position:absolute;z-index:5;pointer-events:none;width:8cqw;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#f4f4f4cc,#cfcfcf66 50%,#cfcfcf00 70%)}
+.glint{position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(circle at 84% 3%,#fff4b855,#0000 30%);animation:fade .25s reverse forwards}
+/* rolos */
+.reel{position:absolute;top:44.08%;height:calc(var(--cell)*3);overflow:hidden}
+.reel.spinning .strip{filter:blur(2px) brightness(1.1)}
+.cell{position:relative;height:var(--cell);display:grid;place-items:center;padding:5%;transition:opacity .3s}
+.cell img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 .6cqw .6cqw #5a2a0088)}
+.cell.win{z-index:2}
+.cell.win img{animation:pulse .4s ease-in-out infinite alternate}
+.cell.win::after{content:"";position:absolute;inset:4%;border-radius:2cqw;box-shadow:0 0 0 .5cqw #fff3b0,0 0 4cqw var(--r);animation:pulse .4s ease-in-out infinite alternate;pointer-events:none}
+.cell.dim{opacity:.35}
+.cell.land img{animation:land .35s cubic-bezier(.3,1.8,.5,1)}
+.cell.wild img{animation:wildGlow 1.2s ease-in-out infinite alternate}
+.cell .anim{position:absolute;inset:5%;background-repeat:no-repeat;background-position-y:center;z-index:1}
+@keyframes land{from{transform:translateY(-12%) scale(1.15,.85)}}
+@keyframes wildGlow{to{filter:drop-shadow(0 0 2.5cqw #ffd54a) brightness(1.15)}}
+.lines{position:absolute;left:6.25%;top:44.08%;width:87.89%;height:34.05%;pointer-events:none;z-index:3;overflow:visible}
+.lines polyline{fill:none;stroke:#fff27a;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px #ff5a2a);stroke-dasharray:1600;animation:draw .5s ease-out forwards}
+.spr{position:absolute;background-repeat:no-repeat;background-size:auto 100%;pointer-events:none}
+/* moedas e cédulas pulando */
+.coin{position:absolute;width:6cqw;aspect-ratio:1;background:url(assets/urubu/coin.webp) center/contain no-repeat;pointer-events:none;z-index:7}
+.bill{position:absolute;width:9cqw;aspect-ratio:2.1;border-radius:.6cqw;background:linear-gradient(90deg,#1f7a2e,#3cb54a 20%,#7fe07a 50%,#3cb54a 80%,#1f7a2e);box-shadow:inset 0 0 0 .35cqw #155a20,0 .4cqw .8cqw #0006;display:grid;place-items:center;pointer-events:none;z-index:7}
+.bill::before{content:"$";width:3.2cqw;aspect-ratio:1;border-radius:50%;background:#e8ffd8;color:#1f7a2e;font:900 2.4cqw/3.2cqw system-ui;text-align:center}
+/* controles (botões pintados na arte) */
+.hit{position:absolute;border-radius:50%;transition:background .15s,transform .1s,box-shadow .2s;z-index:3}
+.hit:active{transform:scale(.92);background:#fff3}
+#info{left:3.42%;top:83.66%;width:13.67%;aspect-ratio:1}
+#down{left:22.95%;top:83.98%;width:12.7%;aspect-ratio:1}
+#up{left:63.77%;top:83.98%;width:12.7%;aspect-ratio:1}
+#auto{left:82.03%;top:83.33%;width:14.65%;aspect-ratio:1}
+#auto.on,#turbo.on{box-shadow:0 0 0 .6cqw var(--y),0 0 4cqw var(--r);background:#ffd54a22;animation:blinkOn 1s ease-in-out infinite alternate}
+@keyframes blinkOn{to{box-shadow:0 0 0 .6cqw #fff,0 0 6cqw var(--r)}}
+.spin{position:absolute;left:38.28%;top:79.56%;width:23.05%;aspect-ratio:1;border-radius:50%;overflow:hidden;filter:drop-shadow(0 0 2cqw #3cff6a88);z-index:3}
+.spin .crop{left:-166.1%;top:-517.8%;width:433.9%;height:650.8%}
+.spin:not(:disabled){animation:spinIdle 1.6s ease-in-out infinite}
+.spin.busy{animation:rot .45s linear infinite}
+.spin:active{transform:scale(.94)}
+@keyframes spinIdle{50%{scale:1.06;filter:drop-shadow(0 0 5cqw #ffd54a)}}
+.gift{position:absolute;left:50%;top:77.4%;translate:-50%;z-index:6;padding:.5cqw 2.5cqw;border-radius:3cqw;background:linear-gradient(#ffe36a,#ff9a1a);color:#5a1a00;font:900 3cqw system-ui;box-shadow:0 0 3cqw #ffd54a;pointer-events:none;display:none;animation:pulse .5s ease-in-out infinite alternate}
+.stage.hasGift .gift{display:block}
+.stage.hasGift .spin{filter:drop-shadow(0 0 5cqw #ffd54a)}
+.round{position:absolute;top:1.3%;width:9cqw;aspect-ratio:1;border-radius:50%;background:#3a1e08d0;border:.4cqw solid #d9892a;display:grid;place-items:center;font-size:4.4cqw;z-index:8}
+.round:active{transform:scale(.92)}
+#menu{left:2%}
+#snd{left:12%}
+#msg{left:50%;translate:-50%;top:92.7%;max-width:92%;width:max-content;text-align:center;font:800 3.1cqw/1.2 system-ui;color:#fff;background:#3a1e08f0;border:.3cqw solid #d9892aaa;border-radius:3cqw;padding:.4cqw 3cqw;z-index:8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud{left:2.5%;right:2.5%;top:96%;height:3.4%;display:flex;gap:1.5cqw;z-index:8}
+.hud div{flex:1;display:flex;align-items:center;justify-content:center;gap:1.2cqw;border-radius:3cqw;background:#3a1e08e8;border:.3cqw solid #f5c542aa;font:800 2.3cqw system-ui;color:#ffe0b0;white-space:nowrap}
+.hud b{font-size:3.3cqw;color:#fff;font-variant-numeric:tabular-nums}
+.hud b.bump{animation:bump .4s}
+#turbo{flex:0 0 12cqw;display:grid;place-items:center;border-radius:3cqw;background:#3a1e08e8;border:.3cqw solid #f5c542aa;font:900 2.6cqw system-ui;color:var(--y)}
+@keyframes bump{50%{transform:scale(1.3);color:var(--y)}}
+/* giros grátis */
+.free{left:6.25%;top:44.08%;width:87.89%;height:34.05%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;background:#3a1e08ee;border-radius:2cqw;z-index:6;text-align:center;border:.5cqw solid var(--y)}
+.free.show{display:flex;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.free img{width:26%;animation:hop 1s ease-in-out infinite}
+.free b,.pop b,.banner b{font:900 8cqw/1.05 system-ui;color:#ffe14a;-webkit-text-stroke:1cqw #5a1a00;paint-order:stroke fill;text-shadow:0 .7cqw 0 #5a1a00,0 0 3cqw #ff5a2a;text-align:center}
+.free span{font:800 4.4cqw system-ui}
+.stage.freespin .reel{box-shadow:inset 0 0 4cqw #ffb02a88}
+#freeTag{left:0;right:0;top:41.4%;text-align:center;font:900 3.6cqw system-ui;color:var(--y);-webkit-text-stroke:.5cqw #5a1a00;paint-order:stroke fill;display:none;z-index:5}
+.stage.freespin #freeTag{display:block}
+/* evento: urubu passando andando */
+.walker{z-index:9;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 1.5cqw 1cqw #0008)}
+.banner{left:8%;top:44%;width:84%;z-index:10;pointer-events:none;background:#3a1e08f2;border:.5cqw solid var(--y);border-radius:4cqw;box-shadow:0 0 5cqw #ff5a2aaa;padding:3cqw 0;animation:bannerIn 2.2s cubic-bezier(.2,1.5,.4,1) forwards}
+.banner b{display:block;font-size:6.6cqw}
+@keyframes bannerIn{0%{transform:scale(0) rotate(-20deg);opacity:0}15%{transform:scale(1.1) rotate(3deg);opacity:1}25%{transform:scale(1) rotate(0)}80%{opacity:1}100%{transform:translateY(-60%) scale(.5);opacity:0}}
+.pop{left:8%;top:42%;width:84%;z-index:11;display:flex;flex-direction:column;align-items:center;pointer-events:none;background:#3a1e08f2;border:.5cqw solid var(--y);border-radius:4cqw;box-shadow:0 0 5cqw #ff5a2aaa;padding:2cqw 0 3cqw;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.pop .spr{position:relative;width:42%}
+.pop b{font-size:7cqw}
+/* ganho grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle,#c05a10cc,#1e0c02f0);z-index:20;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .ray{position:absolute;width:200vmax;aspect-ratio:1;background:repeating-conic-gradient(#ffd54a22 0 10deg,#0000 10deg 20deg);animation:rot 8s linear infinite;pointer-events:none}
+.overlay .spr{position:relative;width:min(300px,62vw);animation:hop 1s ease-in-out infinite}
+.overlay h2{position:relative;font:900 clamp(34px,11vw,60px)/1 system-ui;color:#fff27a;-webkit-text-stroke:6px #5a1a00;paint-order:stroke fill;text-shadow:0 5px 0 #5a1a00,0 0 24px #ff5a2a;animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{position:relative;font-size:clamp(38px,12vw,64px);font-weight:900;text-shadow:0 0 24px #ffb02a;font-variant-numeric:tabular-nums}
+.overlay small{position:relative}
+.rain{position:fixed;top:-60px;z-index:21;pointer-events:none;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid var(--y);border-radius:16px;background:#3a1e08;color:#fff;padding:16px;font:14px/1.45 system-ui}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--y);text-align:center;margin-bottom:8px}
+.pay{display:grid;grid-template-columns:46px 1fr 1fr 1fr;align-items:center;gap:4px 8px;font-variant-numeric:tabular-nums}
+.pay img{width:46px;height:46px;object-fit:contain}
+.pay small{opacity:.7}
+dialog p{margin-top:10px;opacity:.9}
+dialog button.close{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#3a1a00;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff18;color:#fff;border-radius:12px;padding:10px}
+@keyframes pulse{to{transform:scale(1.1)}}
+@keyframes hop{50%{transform:translateY(-8%) scale(1.04)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes draw{from{stroke-dashoffset:1600}to{stroke-dashoffset:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes shake{20%{translate:-.8% .5%}40%{translate:.8% -.5%}60%{translate:-.5% .3%}80%{translate:.5% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Urubuzinho Carioca</h1>
+  <div class="sun" aria-hidden="true"></div>
+  <div class="wave" aria-hidden="true"></div>
+  <div class="abs uru" id="uru" aria-hidden="true"><i class="body"></i><i class="arm" id="arm"></i></div>
+  <div class="abs logo" id="logo" aria-hidden="true"></div>
+  <button class="round" id="menu" aria-label="Menu">☰</button>
+  <button class="round" id="snd" aria-label="Som">🔊</button>
+  <div class="abs" id="freeTag"></div>
+  <div id="reels"></div>
+  <svg class="lines" id="lines" viewBox="64 677 900 523" preserveAspectRatio="none"></svg>
+  <div class="abs free" id="free"></div>
+  <button class="hit" id="info" aria-label="Tabela de pagamentos"></button>
+  <button class="hit" id="down" aria-label="Diminuir aposta"></button>
+  <button class="spin" id="spin" aria-label="Girar (espaço)"><div class="crop"></div></button>
+  <button class="hit" id="up" aria-label="Aumentar aposta"></button>
+  <button class="hit" id="auto" aria-label="Giro automático"></button>
+  <div class="gift">🎁 GIRO GRÁTIS</div>
+  <div class="abs" id="msg" aria-live="polite">Toque no urubu quando ele passar!</div>
+  <div class="abs hud"><div>SALDO <b id="bal">0,00</b></div><div>APOSTA <b id="bet">1,00</b></div><div>GANHO <b id="win">0,00</b></div><button id="turbo" aria-label="Turbo">⚡</button></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="ray"></div>
+  <div class="spr" id="ovPose"></div>
+  <h2 id="ovTitle">GRANDE GANHO!</h2>
+  <div class="amt" id="ovAmt">0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>10 linhas, da esquerda pra direita, a partir do 1º rolo. O <b>WILD</b> substitui qualquer símbolo, menos o SCATTER.<br><br>
+  <b>🗿 Rodadas Grátis:</b> 3, 4 ou 5 SCATTER (Cristo Redentor) em qualquer lugar dão <b id="fsInfo"></b> giros grátis com todos os ganhos <b id="fsMult"></b>.<br><br>
+  <b>🐦‍⬛ Urubu passando:</b> de vez em quando um urubu atravessa a tela. Toque nele! De vez em quando (1 em 4) ele dá um <b>giro grátis</b> (até R$ 5,00).<br><br>
+  RTP (retorno médio ao jogador): <b id="rtpInfo"></b>. Prêmio máximo por rodada: <b id="maxInfo"></b> a aposta. Sorteio com gerador criptográfico do navegador.</p>
+  <button class="close" onclick="payDlg.close()">Fechar</button>
+</dialog>
+<dialog id="menuDlg">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mMusic">🎵 Música: ligada</button>
+    <button id="mPay">📋 Tabela de pagamentos</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button class="close" onclick="menuDlg.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="urubu.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('urubu')</script><!-- admin assiste ao vivo -->
+<script>
+const { SYMBOLS, LINES, COLS, ROWS, WILD, SCATTER, FREE_SPINS, FREE_MULT, MAX_WIN, drawSymbol, playRound } = UR; // RTP: ler UR.RTP (muda ao vivo)
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const BETS = [0.5, 1, 2, 5, 10, 20, 50, 100], START = 20;
+// tiras de animação: [quadros, largura do quadro, altura] (saída do tools/urubu_assets.py)
+const SPR = {"walk":[7,224,240],"poses":[7,271,240]};
+const IMG = id => `assets/urubu/s_${id}.webp`;
+// colunas dos rolos na arte (x inicial, x final), janela y 677–1200
+const COLX = [[64, 240], [245, 420], [426, 602], [607, 785], [790, 964]];
+const Y0 = 677, CELL = 174.33;
+const MUZZLE = [84, 3], EJECT = [78, 7.5]; // boca da arma e janela das cápsulas, em % do palco
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('urubu.saldo') || START; } catch {}
+let pending = 0; // prêmio já salvo no saldo mas ainda não mostrado
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('urubu.saldo', balance); } catch {}
+}
+
+// ---------- som (sintetizado) ----------
+let ac, sfxOn = true, musicOn = true, musicTimer;
+try { sfxOn = localStorage.getItem('urubu.sfx') !== 'off'; musicOn = localStorage.getItem('urubu.music') !== 'off'; } catch {}
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+function tone(f, t, d, { type = 'sine', vol = .2, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+function noise(t, d, vol = .15, freq = 2000, type = 'bandpass', curve = 3) {
+  const a = audio(), b = a.createBuffer(1, a.sampleRate * d, a.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length) ** curve;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = b; f.type = type; f.frequency.value = freq; g.gain.value = vol;
+  s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+const now = () => audio().currentTime;
+const SFX = {
+  click() { tone(900, now(), .06, { type: 'triangle', vol: .08 }); },
+  tick() { tone(500 + Math.random() * 300, now(), .03, { type: 'triangle', vol: .03 }); },
+  stop() { tone(160, now(), .15, { vol: .25 }); },
+  coin() { const t = now(); tone(1800, t, .08, { type: 'square', vol: .03 }); tone(2400, t + .06, .12, { type: 'square', vol: .03 }); },
+  // tiro: estalo (ruído agudo curto) + estrondo grave + eco
+  shot() {
+    const t = now();
+    noise(t, .12, .9, 1800, 'highpass', 6); noise(t, .35, .7, 400, 'lowpass', 4);
+    tone(140, t, .18, { type: 'square', vol: .18, slide: 45 }); noise(t + .09, .3, .15, 600, 'lowpass', 3);
+  },
+  tink() { const t = now(); tone(3200 + Math.random() * 800, t, .06, { vol: .05 }); tone(4200, t + .09, .05, { vol: .03 }); },
+  step() { noise(now(), .05, .2, 300, 'lowpass', 2); },
+  whistle() { const t = now(); tone(1200, t, .25, { vol: .08, slide: 2400 }); tone(1100, t + .35, .45, { vol: .08, slide: 600 }); },
+  win(n) { const t = now(); [523, 659, 784, 1047, 1319].slice(0, 2 + n).forEach((f, i) => tone(f, t + i * .09, .25, { type: 'triangle', vol: .15 })); },
+  big() { const t = now(); [523, 659, 784, 1047, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t + i * .11, .35, { type: 'square', vol: .08 })); },
+  star() { const t = now(); [1568, 2093, 2637].forEach((f, i) => tone(f, t + i * .06, .3, { vol: .1 })); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+// samba/funk carioca: surdo, tamborim e cavaco
+const MEL = [659, 0, 784, 0, 659, 587, 0, 523, 587, 0, 659, 0, 784, 880, 784, 0];
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  let step = 0;
+  musicTimer = setInterval(() => {
+    const t = now(), n = MEL[step % MEL.length];
+    if (n) tone(n, t, .14, { type: 'triangle', vol: .04 });
+    if (step % 8 === 0) tone(70, t, .3, { vol: .16, slide: 45 });
+    if (step % 8 === 4) tone(90, t, .2, { vol: .1, slide: 60 });
+    if ([2, 5, 7, 10, 13, 15].includes(step % 16)) noise(t, .03, .06, 5000);
+    step++;
+  }, 135);
+}
+const stopMusic = () => { clearInterval(musicTimer); musicTimer = null; };
+
+// ---------- sprites e peças ----------
+function sprite(el, name, ms, loop = true) {
+  const [n, w, h] = SPR[name];
+  el._spr?.cancel();
+  Object.assign(el.style, { backgroundImage: `url(assets/urubu/${name}.webp)`, backgroundSize: `${n * 100}% 100%`, aspectRatio: `${w} / ${h}` });
+  return el._spr = el.animate([{ backgroundPositionX: '0%' }, { backgroundPositionX: '100%' }], { duration: ms, easing: `steps(${n}, jump-none)`, iterations: loop ? Infinity : 1, fill: 'forwards' });
+}
+function div(cls, css = {}) { const d = document.createElement('div'); d.className = cls; Object.assign(d.style, css); return d; }
+const W = () => stage.clientWidth, H = () => stage.clientHeight;
+
+// ---------- TIRO pra cima: coice no braço, clarão, bala subindo, cápsula caindo, fumaça ----------
+function shot() {
+  play('shot');
+  $('#arm').animate([{ transform: 'none' }, { transform: 'rotate(-7deg) translate(1.5%,1.5%)' }, { transform: 'none' }], { duration: 110, easing: 'ease-out' });
+  $('#uru').animate([{ translate: '0 0' }, { translate: '0 .6%' }, { translate: '0 0' }], { duration: 110 });
+  const f = div('flashm', { left: MUZZLE[0] + '%', top: MUZZLE[1] + '%' }); stage.append(f);
+  f.animate([{ transform: `scale(.4) rotate(${rnd(0, 90)}deg)`, opacity: 1 }, { transform: `scale(1.2) rotate(${rnd(90, 180)}deg)`, opacity: 0 }], { duration: 90 }).onfinish = () => f.remove();
+  const g = div('glint'); stage.append(g); setTimeout(() => g.remove(), 260);
+  // bala: rastro saindo pela boca pra cima e pra direita
+  const tr = div('tracer', { left: MUZZLE[0] + '%', top: MUZZLE[1] + '%' }), ang = rnd(8, 30);
+  stage.append(tr);
+  tr.animate([{ transform: `translate(-50%,-100%) rotate(${ang}deg) translateY(0)`, opacity: 1 }, { transform: `translate(-50%,-100%) rotate(${ang}deg) translateY(-${H() * .35}px)`, opacity: .6 }], { duration: 160, easing: 'linear' }).onfinish = () => tr.remove();
+  // cápsula: pula pra direita, gira e cai quicando até sumir
+  const c = div('casing', { left: EJECT[0] + '%', top: EJECT[1] + '%' }); stage.append(c);
+  const dx = rnd(4, 14) * W() / 100, dy = rnd(22, 38) * H() / 100;
+  c.animate([
+    { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+    { transform: `translate(${dx * .5}px,-${H() * .05}px) rotate(${rnd(300, 500)}deg)`, offset: .25 },
+    { transform: `translate(${dx}px,${dy}px) rotate(${rnd(800, 1100)}deg)`, offset: .8 },
+    { transform: `translate(${dx * 1.15}px,${dy - H() * .02}px) rotate(${rnd(1100, 1300)}deg)`, offset: .9 },
+    { transform: `translate(${dx * 1.25}px,${dy}px) rotate(1400deg)`, opacity: 0 },
+  ], { duration: 1100, easing: 'ease-in' }).onfinish = () => c.remove();
+  setTimeout(() => play('tink'), 880);
+  // fumaça subindo da boca
+  const s = div('smoke', { left: MUZZLE[0] - 4 + '%', top: MUZZLE[1] - 1 + '%' }); stage.append(s);
+  s.animate([{ transform: 'scale(.4)', opacity: .9 }, { transform: `translate(${rnd(-6, 2)}cqw,-8cqw) scale(2)`, opacity: 0 }], { duration: rnd(900, 1400), easing: 'ease-out' }).onfinish = () => s.remove();
+}
+let firing = 0;
+async function rajada(n, gap = 95) {
+  if (firing) return; firing = n;
+  $('#logo').classList.remove('hit'); $('#logo').offsetHeight; $('#logo').classList.add('hit');
+  for (let i = 0; i < n; i++) { shot(); if (i % 3 === 0) { stage.classList.remove('shake'); stage.offsetHeight; stage.classList.add('shake'); } await sleep(gap + rnd(-15, 25)); }
+  firing = 0;
+}
+// o urubu atira pra cima de tempos em tempos, sozinho
+(function vezEmQuando() { setTimeout(() => { if (!document.hidden) rajada(Math.random() < .3 ? 1 : 2 + (Math.random() * 4 | 0)); vezEmQuando(); }, rnd(2500, 5500)); })();
+
+// ---------- dinheiro pulando (coordenadas em % do palco) ----------
+function money(x, y, { kind = Math.random() < .6 ? 'coin' : 'bill', dx = rnd(-12, 12), up = rnd(8, 22), fall = rnd(6, 18), ms = rnd(900, 1500), size } = {}) {
+  const c = div(kind, { left: x + '%', top: y + '%' }); if (size) c.style.width = size + 'cqw';
+  stage.append(c);
+  const px = v => v * W() / 100, py = v => v * H() / 100, sp = kind === 'bill' ? 'rotateX' : 'rotate';
+  c.animate([
+    { transform: 'translate(-50%,-50%) scale(.6)', opacity: 1 },
+    { transform: `translate(calc(-50% + ${px(dx / 2)}px),calc(-50% - ${py(up)}px)) scale(1.1) ${sp}(${rnd(-300, 300)}deg)`, offset: .45, easing: 'ease-in' },
+    { transform: `translate(calc(-50% + ${px(dx)}px),calc(-50% + ${py(fall)}px)) scale(.9) ${sp}(${rnd(-600, 600)}deg)`, opacity: .9, offset: .9 },
+    { transform: `translate(calc(-50% + ${px(dx)}px),calc(-50% + ${py(fall - 1.5)}px)) scale(.8)`, opacity: 0 },
+  ], { duration: ms, easing: 'cubic-bezier(.3,.7,.6,1)', fill: 'forwards' }).onfinish = () => c.remove();
+}
+function moneyTo(x0, y0, x1, y1, delay = 0) {
+  const c = div('coin', { left: x0 + '%', top: y0 + '%', opacity: 0 }); stage.append(c);
+  const dx = (x1 - x0) * W() / 100, dy = (y1 - y0) * H() / 100;
+  c.animate([
+    { transform: 'translate(-50%,-50%) scale(.5)', opacity: 1 },
+    { transform: `translate(calc(-50% + ${dx * .4}px),calc(-50% + ${dy * .4 - H() * .1}px)) scale(1.2) rotate(200deg)`, offset: .45 },
+    { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.4) rotate(400deg)`, opacity: .8 },
+  ], { duration: 750, delay, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => { c.remove(); play('coin'); };
+}
+// ambiente: moedas pulando do monte de dinheiro e das flores
+const SPOTS = [[34, 23], [38, 22], [10, 40], [90, 40], [4, 82], [96, 82], [16, 80], [84, 80]];
+setInterval(() => { if (document.hidden) return; const [x, y] = SPOTS[Math.random() * SPOTS.length | 0]; money(x + rnd(-2, 2), y, { up: rnd(4, 10), fall: rnd(1, 4), size: rnd(3.5, 6) }); }, 380);
+
+// ---------- rolos ----------
+const reels = COLX.map(([x0, x1]) => {
+  const r = document.createElement('div');
+  r.className = 'reel';
+  Object.assign(r.style, { left: x0 / 10.24 + '%', width: (x1 - x0) / 10.24 + '%' });
+  r.innerHTML = '<div class="strip"></div>';
+  $('#reels').append(r);
+  return r;
+});
+const cellHtml = (s, cls = '') => `<div class="cell${s === WILD ? ' wild' : ''}${cls}" data-s="${s}"><img src="${IMG(SYMBOLS[s].id)}" alt="${SYMBOLS[s].id}"></div>`;
+const col = (g, c) => [0, 1, 2].map(r => g[r * COLS + c]);
+const cellEl = i => reels[i % COLS].firstElementChild.children[(i / COLS) | 0];
+const cellXY = i => { const [x0, x1] = COLX[i % COLS]; return [(x0 + x1) / 2 / 10.24, (Y0 + ((i / COLS) | 0) * CELL + CELL / 2) / 15.36]; };
+let grid = Array.from({ length: 15 }, drawSymbol);
+reels.forEach((r, c) => r.firstElementChild.innerHTML = col(grid, c).map(s => cellHtml(s)).join(''));
+
+let turbo = false, auto = false;
+function spinReel(c, next) {
+  const reel = reels[c], strip = reel.firstElementChild;
+  const n = (turbo ? 6 : 12) + c * (turbo ? 2 : 4), dur = (turbo ? 380 : 800) + c * (turbo ? 110 : 260);
+  const final = col(next, c), filler = Array.from({ length: n }, drawSymbol);
+  strip.innerHTML = [...final, ...filler, ...col(grid, c)].map(s => cellHtml(s)).join('');
+  strip.style.transition = 'none';
+  strip.style.transform = `translateY(calc(var(--cell) * ${-(n + 3)}))`;
+  strip.offsetHeight;
+  reel.classList.add('spinning');
+  strip.style.transition = `transform ${dur}ms cubic-bezier(.25,.1,.3,1.06)`;
+  strip.style.transform = 'translateY(0)';
+  return new Promise(res => setTimeout(() => {
+    reel.classList.remove('spinning');
+    strip.style.transition = 'none';
+    strip.innerHTML = final.map(s => cellHtml(s, ' land')).join('');
+    play('stop');
+    final.forEach((s, r) => { if (s === WILD || s === SCATTER) { const [x, y] = cellXY(r * COLS + c); for (let k = 0; k < 6; k++) money(x, y, { up: rnd(4, 10), fall: rnd(2, 8) }); shot(); } });
+    res();
+  }, dur));
+}
+function clearWin() {
+  $('#lines').innerHTML = '';
+  for (let i = 0; i < 15; i++) { const c = cellEl(i); c.classList.remove('win', 'dim'); c.querySelector('.anim')?.remove(); }
+}
+function showWins(wins) {
+  const hit = new Set(wins.flatMap(w => w.cells));
+  for (let i = 0; i < 15; i++) {
+    const c = cellEl(i), s = +c.dataset.s;
+    c.classList.add(hit.has(i) ? 'win' : 'dim');
+    // urubu que paga troca de pose sem parar
+    if (hit.has(i) && SYMBOLS[s].id === 'urubu') { const a = div('spr anim'); c.querySelector('img').style.opacity = 0; c.append(a); sprite(a, 'poses', 1200); }
+  }
+  const pt = i => { const [x0, x1] = COLX[i % COLS]; return `${(x0 + x1) / 2},${Y0 + ((i / COLS) | 0) * CELL + CELL / 2}`; };
+  $('#lines').innerHTML = wins.map(w => `<polyline points="${LINES[w.line].map(pt).join(' ')}"/>`).join('');
+  [...hit].forEach((i, k) => {
+    const [x, y] = cellXY(i);
+    for (let j = 0; j < 4; j++) money(x, y, { up: rnd(6, 16), fall: rnd(0, 6) });
+    moneyTo(x, y, 67, 97.7, 150 + k * 60);
+  });
+}
+function scattersSpin(cells) {
+  cells.forEach(i => { const c = cellEl(i); c.classList.add('win'); c.querySelector('img').animate([{ transform: 'rotateY(0)' }, { transform: 'rotateY(720deg) scale(1.2)' }, { transform: 'rotateY(1080deg)' }], { duration: 1100 }); });
+  play('star');
+}
+
+// ---------- HUD ----------
+let betIdx = 1, spinning = false;
+const msg = t => $('#msg').textContent = t;
+const bump = el => { el.classList.remove('bump'); el.offsetHeight; el.classList.add('bump'); };
+function hud() { $('#bal').textContent = brl(r2(balance - pending)); $('#bet').textContent = brl(gift ?? BETS[betIdx]); }
+function countUp(el, to, ms = 800) {
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / ms); el.textContent = brl(to * k); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+function rain(n) {
+  for (let i = 0; i < n; i++) {
+    const bill = Math.random() < .35, c = div((bill ? 'bill' : 'coin') + ' rain', { left: Math.random() * 100 + 'vw', animationDuration: 1.6 + Math.random() * 1.8 + 's', animationDelay: Math.random() * 1.2 + 's', width: bill ? rnd(60, 90) + 'px' : rnd(30, 48) + 'px' });
+    document.body.append(c); setTimeout(() => c.remove(), 4800);
+  }
+}
+function bigWin(total, bet, title) {
+  const ov = $('#overlay');
+  $('#ovTitle').textContent = title || (total >= bet * 50 ? 'MEGA GANHO!' : 'GRANDE GANHO!');
+  sprite($('#ovPose'), 'poses', 1400);
+  ov.classList.add('show'); countUp($('#ovAmt'), total, 1800); rain(60); play('big'); rajada(12, 80);
+  clearTimeout(ov.t); ov.t = setTimeout(() => ov.classList.remove('show'), 4600);
+}
+function uruParty() { const u = $('#uru'); u.classList.remove('party'); u.offsetHeight; u.classList.add('party'); setTimeout(() => u.classList.remove('party'), 2000); }
+
+// ---------- evento: urubu passando andando pela tela; tocar nele às vezes dá giro grátis ----------
+const GIFT_CHANCE = 1 / 4, GIFT_MAX = 5; // valor travado na hora que ganha (senão era só subir a aposta antes de girar)
+let gift = null, eventOn = false;
+function sorte(p) { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] < p * 2 ** 32; }
+async function passeio() {
+  if (eventOn || $('#overlay').classList.contains('show') || stage.classList.contains('freespin')) return;
+  eventOn = true;
+  const ban = div('abs banner'); ban.innerHTML = '<b>🐦‍⬛ OLHA O URUBU!</b>'; stage.append(ban); setTimeout(() => ban.remove(), 2300);
+  play('whistle'); await sleep(1200);
+  msg('👆 Toque no urubu antes que ele vá embora!');
+  const dir = Math.random() < .5 ? 1 : -1, y = rnd(44, 54), dur = turbo ? 4200 : 5600;
+  const u = div('spr walker', { width: '38%', top: y + '%' }); sprite(u, 'walk', 900);
+  if (dir < 0) u.style.scale = '-1 1';
+  stage.append(u);
+  const move = u.animate([{ left: (dir > 0 ? -32 : 102) + '%' }, { left: (dir > 0 ? 102 : -32) + '%' }], { duration: dur, fill: 'both' });
+  u.animate([{ transform: 'translateY(0) rotate(-2deg)' }, { transform: 'translateY(-4%) rotate(2deg)' }], { duration: 225, iterations: Infinity, direction: 'alternate' });
+  const steps = setInterval(() => play('step'), 450);
+  const caught = await new Promise(res => { u.onpointerdown = e => { e.stopPropagation(); res(true); }; move.onfinish = () => res(false); });
+  clearInterval(steps);
+  if (caught) {
+    u.getAnimations().forEach(a => a.pause());
+    const r = u.getBoundingClientRect(), s = stage.getBoundingClientRect(), x = (r.left - s.left + r.width / 2) / s.width * 100;
+    u.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.2) translateY(-10%)' }, { transform: 'scale(1)' }], { duration: 500, iterations: 2 });
+    rajada(8, 80); uruParty();
+    for (let k = 0; k < 30; k++) setTimeout(() => money(Math.min(90, Math.max(10, x)), y + 8, { up: rnd(10, 28), fall: rnd(4, 28), dx: rnd(-35, 35) }), k * 25);
+    await sleep(900); u.remove();
+    // de vez em quando (1 em 4) o toque vale um giro grátis de verdade; guarda no máximo 1
+    const premio = gift === null && sorte(GIFT_CHANCE);
+    if (premio) { gift = Math.min(BETS[betIdx], GIFT_MAX); stage.classList.add('hasGift'); hud(); }
+    const pop = div('abs pop'); pop.innerHTML = `<div class="spr"></div><b>${premio ? `🎁 GIRO GRÁTIS<br>de R$ ${brl(gift)}!` : 'É NÓIS, PARÇA!<br>Na próxima tem mais'}</b>`;
+    stage.append(pop); sprite(pop.firstChild, 'poses', 1100); if (premio) rain(25);
+    msg(premio ? '🎁 Ganhou um giro grátis! Aperta o girar' : '😎 O urubu mandou um salve!');
+    await sleep(2300); pop.remove();
+  } else {
+    u.remove(); msg('💨 Ele passou! Fica de olho no próximo…');
+  }
+  await sleep(600);
+  eventOn = false;
+  if (!spinning) msg('Toque no urubu quando ele passar!');
+}
+(function agenda() { setTimeout(() => { if (!document.hidden) passeio(); agenda(); }, rnd(15000, 26000)); })();
+
+// ---------- rodada ----------
+async function showSpin(s, bet, mult) {
+  clearWin();
+  const ticker = setInterval(() => play('tick'), 80);
+  await Promise.all(reels.map((_, c) => spinReel(c, s.grid)));
+  clearInterval(ticker);
+  grid = s.grid;
+  if (s.win > 0) {
+    showWins(s.wins); play('win', Math.min(3, s.wins.length)); uruParty();
+    rajada(Math.min(10, 2 + Math.round(s.win / bet)), 90); // quanto maior o ganho, maior a rajada
+    msg(`${mult > 1 ? `x${mult} · ` : ''}Ganhou R$ ${brl(s.win)} em ${s.wins.length} linha${s.wins.length > 1 ? 's' : ''}`);
+    await sleep(turbo ? 700 : 1300);
+  }
+}
+async function spin() {
+  if (spinning) return;
+  const free = gift, bet = free ?? BETS[betIdx];
+  if (free === null && balance < bet) {
+    setAuto(false);
+    if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (!host && balance < BETS[0]) { balance = START; save(); hud(); msg('Créditos recarregados: R$ ' + brl(START)); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').disabled = true; $('#spin').classList.add('busy');
+  play('click'); msg('Boa sorte, parça!'); $('#win').textContent = '0,00';
+  if (free !== null) { gift = null; stage.classList.remove('hasGift'); msg(`🎁 Giro grátis de R$ ${brl(bet)}!`); }
+  else balance = r2(balance - bet);
+  save(); hud();
+
+  const res = playRound(bet);
+  balance = r2(balance + res.total); pending = res.total; save(); reportarRodada('urubu', free === null ? bet : 0, res.total); // o prêmio já vai pro saldo; a tela só anima
+  await showSpin(res.base, bet, 1);
+  let shown = res.base.win;
+  if (res.free.length) {
+    scattersSpin(res.base.scatters); msg(`🗿 ${res.base.scatters.length} SCATTER!`);
+    await sleep(1200);
+    const fr = $('#free');
+    fr.innerHTML = `<img src="${IMG('scatter')}" alt=""><b>RODADAS GRÁTIS!</b><span>${res.free.length} giros grátis · ganhos x${FREE_MULT}</span>`;
+    fr.classList.add('show'); rajada(15, 70); uruParty(); await sleep(2200); fr.classList.remove('show');
+    stage.classList.add('freespin');
+    for (let k = 0; k < res.free.length; k++) {
+      $('#freeTag').textContent = `GIRO GRÁTIS ${k + 1}/${res.free.length} · x${FREE_MULT} · R$ ${brl(shown - res.base.win)}`;
+      await showSpin(res.free[k], bet, FREE_MULT);
+      shown += res.free[k].win;
+      await sleep(turbo ? 150 : 350);
+    }
+    stage.classList.remove('freespin');
+  }
+  pending = 0; hud(); bump($('#bal'));
+  countUp($('#win'), res.total); if (res.total) bump($('#win'));
+  if (res.free.length) bigWin(res.total, bet, res.total ? 'RODADAS GRÁTIS!' : 'FIM DOS GIROS');
+  else if (res.total >= bet * 15) bigWin(res.total, bet);
+  if (res.total > 0) msg(`${res.capped ? `Prêmio máximo (${MAX_WIN}x)! ` : ''}Total: R$ ${brl(res.total)}`);
+  else {
+    msg(['Quase, parça!', 'Deu ruim, mas o urubu tá de olho 👀', 'Gira de novo, mermão!', 'Nada dessa vez… bora!'][Math.random() * 4 | 0]);
+    if (Math.random() < .12) setTimeout(passeio, 900);
+  }
+  spinning = false; $('#spin').disabled = false; $('#spin').classList.remove('busy');
+  if (auto) setTimeout(() => auto && !$('#overlay').classList.contains('show') ? spin() : auto && setTimeout(spin, 4700), turbo ? 250 : 600);
+}
+
+// ---------- botões ----------
+function setAuto(on) { auto = on; $('#auto').classList.toggle('on', on); }
+$('#spin').onclick = spin;
+$('#up').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); hud(); bump($('#bet')); };
+$('#down').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); hud(); bump($('#bet')); };
+$('#turbo').onclick = () => { turbo = !turbo; $('#turbo').classList.toggle('on', turbo); play('click'); msg(turbo ? '⚡ Turbo ligado' : 'Turbo desligado'); };
+$('#auto').onclick = () => { setAuto(!auto); play('click'); msg(auto ? '🔁 Giro automático ligado' : 'Giro automático desligado'); if (auto) spin(); };
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+function renderPay() {
+  const lb = BETS[betIdx] / LINES.length;
+  $('#payTable').innerHTML = '<span></span><small>3</small><small>4</small><small>5</small>' + SYMBOLS.map((s, i) =>
+    `<img src="${IMG(s.id)}" alt="${s.id}">` + (i === SCATTER ? `<span style="grid-column:span 3">3+ = giros grátis</span>` : s.pays.map(p => `<b>${brl(lb * p)}</b>`).join(''))).join('');
+  $('#fsInfo').textContent = Object.values(FREE_SPINS).join(', ');
+  $('#fsMult').textContent = 'x' + FREE_MULT;
+  $('#rtpInfo').textContent = (UR.RTP * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+  $('#maxInfo').textContent = MAX_WIN + 'x';
+}
+function openPay() { renderPay(); payDlg.showModal(); }
+$('#info').onclick = openPay;
+$('#snd').onclick = () => { sfxOn = !sfxOn; try { localStorage.setItem('urubu.sfx', sfxOn ? 'on' : 'off'); } catch {} $('#snd').textContent = sfxOn ? '🔊' : '🔇'; };
+$('#snd').textContent = sfxOn ? '🔊' : '🔇';
+$('#menu').onclick = () => { $('#mMusic').textContent = `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`; menuDlg.showModal(); };
+$('#mMusic').onclick = () => { musicOn = !musicOn; try { localStorage.setItem('urubu.music', musicOn ? 'on' : 'off'); } catch {} musicOn ? startMusic() : stopMusic(); $('#mMusic').textContent = `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`; };
+$('#mPay').onclick = () => { menuDlg.close(); openPay(); };
+$('#mExit').onclick = () => { if (spinning) return; host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html')); };
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !payDlg.open && !menuDlg.open) { e.preventDefault(); spin(); } });
+document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
+hud();
+setTimeout(() => rajada(4), 800);  // chega atirando
+setTimeout(passeio, 5000);         // primeira passada logo no começo
+// RTP mudou no painel: aplica entre giros e redesenha a tabela
+rtpAoVivo('urubu', UR, { ocupado: () => spinning, depois: renderPay });
+</script>
+</body>
+</html>

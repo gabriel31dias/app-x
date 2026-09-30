@@ -284,7 +284,7 @@ const r2 = v => Math.round(v * 100) / 100;
 let betIdx = 1, spinning = false, auto = false, grid = spinGrid();
 const START = 20; // saldo inicial e recarga (só quando aberto fora do site)
 // aberto dentro do site (iframe, mesma origem): usa o saldo do site em vez do próprio
-const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
 let balance = START;
 if (host) balance = host.State.balance;
 else try { balance = +localStorage.getItem('capivara.saldo') || START; } catch {}

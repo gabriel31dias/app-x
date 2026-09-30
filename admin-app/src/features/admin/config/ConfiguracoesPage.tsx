@@ -4,18 +4,18 @@ import { api } from "@/shared/lib/api";
 import { brl, dataHora } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Banknote, Clock, Gift, Handshake, Loader2, Megaphone, Scale } from "lucide-react";
+import { AlertTriangle, Banknote, Clock, Gamepad2, Gift, Handshake, Loader2, Megaphone, Scale } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-export type Config = { saqueExigeDeposito: boolean; saqueMinimo: number; bonusDiarioAtivo: boolean; bonusDiario: number; indicacaoAtiva: boolean; indicacao: number; indicacaoMinRodadas: number; infCadastro: number; infPrimeiroDeposito: number; infPercentual: number; infSaqueMinimo: number; autoBalanco: boolean; janelaHoras: number; metaHoraAtiva: boolean; metaHora: number; lucroHora: number; motivoBalanco: string | null; balancoAtivo: boolean; ativadoEm: string | null; atualizadoPor: string | null; atualizadoEm: string; lucroJanela: number };
+export type Config = { saqueExigeDeposito: boolean; saqueMinimo: number; bonusDiarioAtivo: boolean; bonusDiario: number; indicacaoAtiva: boolean; modoTeste: boolean; indicacao: number; indicacaoMinRodadas: number; infCadastro: number; infPrimeiroDeposito: number; infPercentual: number; infSaqueMinimo: number; autoBalanco: boolean; janelaHoras: number; metaHoraAtiva: boolean; metaHora: number; lucroHora: number; motivoBalanco: string | null; balancoAtivo: boolean; ativadoEm: string | null; atualizadoPor: string | null; atualizadoEm: string; lucroJanela: number };
 const JANELAS = [{ h: 24, label: "Últimas 24 horas" }, { h: 168, label: "Últimos 7 dias" }, { h: 720, label: "Últimos 30 dias" }];
 
 export function ConfiguracoesPage() {
   const qc = useQueryClient();
   const { data: c, isLoading, error } = useQuery({ queryKey: ["config"], queryFn: () => api<Config>("/admin/config"), refetchInterval: 30_000 });
   const salvar = useMutation({
-    mutationFn: (dto: Partial<Pick<Config, "autoBalanco" | "janelaHoras" | "metaHoraAtiva" | "metaHora" | "saqueExigeDeposito" | "saqueMinimo" | "bonusDiarioAtivo" | "bonusDiario" | "indicacaoAtiva" | "indicacao" | "indicacaoMinRodadas" | "infCadastro" | "infPrimeiroDeposito" | "infPercentual" | "infSaqueMinimo">>) => api<Config>("/admin/config", { method: "PUT", body: JSON.stringify({ autoBalanco: c!.autoBalanco, janelaHoras: c!.janelaHoras, ...dto }) }),
+    mutationFn: (dto: Partial<Pick<Config, "autoBalanco" | "janelaHoras" | "metaHoraAtiva" | "metaHora" | "saqueExigeDeposito" | "saqueMinimo" | "bonusDiarioAtivo" | "bonusDiario" | "indicacaoAtiva" | "modoTeste" | "indicacao" | "indicacaoMinRodadas" | "infCadastro" | "infPrimeiroDeposito" | "infPercentual" | "infSaqueMinimo">>) => api<Config>("/admin/config", { method: "PUT", body: JSON.stringify({ autoBalanco: c!.autoBalanco, janelaHoras: c!.janelaHoras, ...dto }) }),
     onSuccess: (novo) => {
       qc.setQueryData(["config"], novo);
       qc.invalidateQueries({ queryKey: ["rtp"] });
@@ -72,6 +72,23 @@ export function ConfiguracoesPage() {
             className="h-9 px-5 rounded-full bg-[#9B5BF8] hover:bg-[#884BE0] text-white text-sm font-semibold disabled:opacity-50">Salvar mínimo</button>
           <span className="text-xs text-muted-foreground">O site mostra e valida esse valor no modal de saque.</span>
         </form>
+      </Panel>
+
+      <Panel title="Modo teste" icon={<Gamepad2 className="h-5 w-5" />}>
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <p className="text-sm font-medium text-[#54052D] dark:text-foreground">Deixar visitante jogar sem conta</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Quem ainda não tem conta abre os jogos de tela cheia com <b className="text-foreground">saldo de brincadeira</b> (chances normais, nada entra no painel).
+              Depois de 3 rodadas, o primeiro ganho (ou 20 rodadas) fecha o jogo e abre o <b className="text-foreground">cadastro</b>. Desligado, tocar num jogo sem conta abre o login.
+            </p>
+          </div>
+          <button role="switch" aria-checked={c.modoTeste} aria-label="Ligar modo teste" disabled={salvar.isPending}
+            onClick={() => salvar.mutate({ modoTeste: !c.modoTeste })}
+            className={cn("relative shrink-0 h-7 w-12 rounded-full border-2 border-[#9B5BF8] transition-colors disabled:opacity-50", c.modoTeste ? "bg-[#9B5BF8]" : "bg-transparent")}>
+            <span className={cn("absolute top-0.5 h-5 w-5 rounded-full transition-all", c.modoTeste ? "left-[22px] bg-white" : "left-0.5 bg-[#9B5BF8]")} />
+          </button>
+        </div>
       </Panel>
 
       <Panel title="Bônus diário" icon={<Gift className="h-5 w-5" />}>

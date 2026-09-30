@@ -208,7 +208,7 @@ const IMG = id => `assets/lulinha/s_${id}.webp`;
 const COLX = [[52, 215], [218, 387], [390, 558], [562, 730], [733, 890]];
 
 // ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
-const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
 let balance = START;
 if (host) balance = host.State.balance;
 else try { balance = +localStorage.getItem('lulinha.saldo') || START; } catch {}
@@ -546,7 +546,7 @@ $('#menu').onclick = () => { menuTxt(); menuDlg.showModal(); };
 $('#mSfx').onclick = () => { sfxOn = !sfxOn; try { localStorage.setItem('lulinha.sfx', sfxOn ? 'on' : 'off'); } catch {} menuTxt(); };
 $('#mMusic').onclick = () => { musicOn = !musicOn; try { localStorage.setItem('lulinha.music', musicOn ? 'on' : 'off'); } catch {} musicOn ? startMusic() : stopMusic(); menuTxt(); };
 $('#mPay').onclick = () => { menuDlg.close(); openPay(); };
-$('#mExit').onclick = () => { if (spinning) return; host ? host.closeGame() : (location.href = 'index.html'); };
+$('#mExit').onclick = () => { if (spinning) return; host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html')); };
 document.addEventListener('keydown', e => { if (e.code === 'Space' && !payDlg.open && !menuDlg.open) { e.preventDefault(); spin(); } });
 document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
 hud();

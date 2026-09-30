@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Calango do Nordeste</title>
+<link rel="preload" as="image" href="assets/calango/bg.webp">
+<style>
+/* Tela sobre a arte (assets/calango/bg.webp 941x1672, gerada por tools/calango_assets.py):
+   posições em % da imagem (x/9.41, y/16.72), textos em cqw. --cell = altura de uma linha dos rolos (172.7px da arte) */
+:root{--y:#ffd54a;--o:#ff7a1a}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#3a1a06;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/calango/bg.webp) center/cover;filter:blur(24px) brightness(.4);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/calango/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden;--cell:18.35cqw}
+.stage.shake{animation:shake .4s}
+.abs{position:absolute}
+.crop{position:absolute;background:url(assets/calango/bg.webp) 0 0/100% 100%;pointer-events:none}
+.piece{position:absolute;background:0 0/100% 100% no-repeat;pointer-events:none}
+/* sol do sertão, calor subindo e lamparinas */
+.sun{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 58% 4%,#fff2b066,#0000 26%);mix-blend-mode:screen;animation:sun 2.6s ease-in-out infinite alternate}
+@keyframes sun{to{opacity:.35}}
+.lamp{position:absolute;width:16cqw;aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:radial-gradient(#ffd27a99,#ff9a2a44 40%,#ff9a2a00 70%);mix-blend-mode:screen;pointer-events:none;z-index:4;animation:lamp 1.3s steps(8) infinite alternate}
+@keyframes lamp{0%{opacity:1;scale:1}30%{opacity:.7;scale:.9}60%{opacity:.95;scale:1.05}100%{opacity:.8}}
+/* calango grande (x 222–700, y 0–318): dança, aponta e comemora */
+.big{left:23.59%;top:0;width:50.8%;height:19.02%;z-index:2;background-image:url(assets/calango/big.webp);transform-origin:50% 100%;animation:dance 1.3s ease-in-out infinite}
+.big.party{animation:party .45s ease-in-out 5}
+/* a base do recorte fica escondida atrás do logo (só 36px de folga): os movimentos esticam a partir dos pés em vez de subir o corpo inteiro */
+@keyframes dance{0%,100%{transform:rotate(-1.6deg)}25%{transform:scale(1.015,1.04)}50%{transform:rotate(1.6deg)}75%{transform:scale(1.015,1.04)}}
+@keyframes party{50%{transform:translateY(-2%) rotate(-1.5deg) scale(1.06,1.12)}}
+/* logo (x 136–776, y 282–588), na frente do calango */
+.logo{left:14.45%;top:16.87%;width:68.01%;height:18.3%;z-index:4;background:url(assets/calango/logo.webp) 0 0/100% 100%;pointer-events:none;transform-origin:50% 60%;animation:logo 2.6s ease-in-out infinite}
+@keyframes logo{50%{transform:scale(1.025) rotate(-.6deg)}}
+/* placa RODADAS GRÁTIS (x 772–936, y 56–234) pregada no poste; jegue (x 770–941, y 392–578) */
+.sign{left:82.04%;top:3.35%;width:17.43%;height:10.65%;z-index:3;background-image:url(assets/calango/sign.webp);transform-origin:50% 50%;animation:wobble 3s ease-in-out infinite}
+.sign.bang{animation:bang .32s ease-in-out 7}
+@keyframes wobble{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg) scale(1.02)}}
+@keyframes bang{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(4deg) scale(1.12)}}
+.jegue{left:81.83%;top:23.44%;width:18.17%;height:11.12%;z-index:3;background-image:url(assets/calango/jegue_big.webp);transform-origin:30% 100%;animation:jegue 3.2s ease-in-out infinite}
+.jegue.hop{animation:hop .5s ease-in-out 3}
+@keyframes jegue{0%,100%{transform:none}20%{transform:rotate(-3deg) translateY(-2%)}40%{transform:rotate(1deg)}70%{transform:rotate(-2deg) translateY(-1%)}}
+/* rolos */
+.reel{position:absolute;top:37.08%;height:calc(var(--cell)*3);overflow:hidden}
+.reel.spinning .strip{filter:blur(2px) brightness(1.1)}
+.cell{position:relative;height:var(--cell);display:grid;place-items:center;padding:5%;transition:opacity .3s}
+.cell img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 .6cqw .6cqw #5a2a0088)}
+.cell.win{z-index:2}
+.cell.win img{animation:pulse .4s ease-in-out infinite alternate}
+.cell.win::after{content:"";position:absolute;inset:4%;border-radius:2cqw;box-shadow:0 0 0 .5cqw #fff3b0,0 0 4cqw var(--o);animation:pulse .4s ease-in-out infinite alternate;pointer-events:none}
+.cell.dim{opacity:.35}
+.cell.land img{animation:land .35s cubic-bezier(.3,1.8,.5,1)}
+.cell.wild img{animation:wildGlow 1.1s ease-in-out infinite alternate}
+.cell .anim{position:absolute;inset:5%;background-repeat:no-repeat;background-position-y:center;z-index:1}
+@keyframes land{from{transform:translateY(-12%) scale(1.15,.85)}}
+@keyframes wildGlow{to{filter:drop-shadow(0 0 3cqw #ffd54a) brightness(1.15)}}
+.lines{position:absolute;left:8.29%;top:37.08%;width:83.74%;height:30.98%;pointer-events:none;z-index:3;overflow:visible}
+.lines polyline{fill:none;stroke:#fff27a;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px #ff7a1a);stroke-dasharray:1600;animation:draw .5s ease-out forwards}
+.spr{position:absolute;background-repeat:no-repeat;background-size:auto 100%;pointer-events:none}
+.fx{position:absolute;pointer-events:none;background:center/contain no-repeat;z-index:7}
+/* moedas pulando (CSS: dourada com $) e cédulas */
+.coin{position:absolute;width:5.5cqw;aspect-ratio:1;border-radius:50%;pointer-events:none;z-index:7;background:radial-gradient(circle at 35% 30%,#fffbd0,#ffd23a 40%,#e09a10 70%,#9a5a00);box-shadow:inset 0 0 0 .45cqw #f7b52a,inset 0 0 0 .7cqw #a8660a,0 .4cqw .8cqw #0007;display:grid;place-items:center;font:900 3cqw/1 system-ui;color:#9a5a00}
+.coin::before{content:"$"}
+.bill{position:absolute;width:9cqw;aspect-ratio:2.1;border-radius:.6cqw;background:linear-gradient(90deg,#1f7a2e,#3cb54a 20%,#7fe07a 50%,#3cb54a 80%,#1f7a2e);box-shadow:inset 0 0 0 .35cqw #155a20,0 .4cqw .8cqw #0006;display:grid;place-items:center;pointer-events:none;z-index:7}
+.bill::before{content:"$";width:3.2cqw;aspect-ratio:1;border-radius:50%;background:#e8ffd8;color:#1f7a2e;font:900 2.4cqw/3.2cqw system-ui;text-align:center}
+.confete{position:absolute;width:1.6cqw;height:2.4cqw;border-radius:.3cqw;pointer-events:none;z-index:8}
+/* HUD pintado na arte: valores por cima dos painéis */
+.val{top:75.6%;height:2.63%;display:grid;place-items:center;font:900 4.4cqw system-ui;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 .3cqw 0 #000;white-space:nowrap;z-index:3}
+#bal{left:6.38%;width:24.65%}
+#bet{left:42.3%;width:15.94%}
+#win{left:72.05%;width:21.89%}
+.val.bump{animation:bump .4s}
+@keyframes bump{50%{transform:scale(1.25);color:var(--y)}}
+.hit{position:absolute;border-radius:50%;transition:background .15s,transform .1s,box-shadow .2s;z-index:3}
+.hit:active{transform:scale(.92);background:#fff3}
+#down{left:35.6%;top:75.24%;width:5.31%;aspect-ratio:1;border-radius:1.4cqw}
+#up{left:58.98%;top:75.24%;width:5.31%;aspect-ratio:1;border-radius:1.4cqw}
+#menu{left:5.84%;top:82.42%;width:11.05%;aspect-ratio:1}
+#info{left:19.77%;top:82.42%;width:11.05%;aspect-ratio:1}
+#auto{left:68.54%;top:82.42%;width:11.05%;aspect-ratio:1}
+#turbo{left:82.68%;top:82.42%;width:11.05%;aspect-ratio:1}
+#auto.on,#turbo.on{box-shadow:0 0 0 .6cqw var(--y),0 0 4cqw var(--o);background:#ffd54a22;animation:blinkOn 1s ease-in-out infinite alternate}
+@keyframes blinkOn{to{box-shadow:0 0 0 .6cqw #fff,0 0 6cqw var(--o)}}
+.spin{position:absolute;left:38.79%;top:80.14%;width:22.32%;aspect-ratio:1;border-radius:50%;overflow:hidden;filter:drop-shadow(0 0 2cqw #3cff6a88);z-index:3}
+.spin .crop{left:-173.8%;top:-638.1%;width:448.1%;height:796.2%}
+.spin:not(:disabled){animation:spinIdle 1.6s ease-in-out infinite}
+.spin.busy{animation:rot .45s linear infinite}
+.spin:active{transform:scale(.94)}
+@keyframes spinIdle{50%{scale:1.06;filter:drop-shadow(0 0 5cqw #ffd54a)}}
+.gift{position:absolute;left:50%;top:78.4%;translate:-50%;z-index:6;padding:.5cqw 2.5cqw;border-radius:3cqw;background:linear-gradient(#ffe36a,#ff9a1a);color:#5a1a00;font:900 3cqw system-ui;box-shadow:0 0 3cqw #ffd54a;pointer-events:none;display:none;animation:pulse .5s ease-in-out infinite alternate}
+.stage.hasGift .gift{display:block}
+.stage.hasGift .spin{filter:drop-shadow(0 0 5cqw #ffd54a)}
+#msg{left:50%;translate:-50%;top:94%;max-width:92%;width:max-content;text-align:center;font:800 3.2cqw/1.2 system-ui;color:#fff;background:#3a1a06f0;border:.3cqw solid #ff9a2aaa;border-radius:3cqw;padding:.5cqw 3cqw;z-index:8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* giros grátis */
+.free{left:8.29%;top:37.08%;width:83.74%;height:30.98%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;background:#3a1a06ee;border-radius:2cqw;z-index:6;text-align:center;border:.5cqw solid var(--y)}
+.free.show{display:flex;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.free img{width:26%;animation:hop 1s ease-in-out infinite}
+.free b,.pop b,.banner b{font:900 8cqw/1.05 system-ui;color:#ffe14a;-webkit-text-stroke:1cqw #5a1a00;paint-order:stroke fill;text-shadow:0 .7cqw 0 #5a1a00,0 0 3cqw #ff7a1a;text-align:center}
+.free span{font:800 4.4cqw system-ui}
+.stage.freespin .reel{box-shadow:inset 0 0 4cqw #ff9a2a88}
+#freeTag{left:0;right:0;top:34.4%;text-align:center;font:900 3.6cqw system-ui;color:var(--y);-webkit-text-stroke:.5cqw #5a1a00;paint-order:stroke fill;display:none;z-index:5}
+.stage.freespin #freeTag{display:block}
+/* evento: calango correndo */
+.runner{z-index:9;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 1.5cqw 1cqw #0008)}
+.banner{left:8%;top:40%;width:84%;z-index:10;pointer-events:none;background:#3a1a06f2;border:.5cqw solid var(--y);border-radius:4cqw;box-shadow:0 0 5cqw #ff7a1aaa;padding:3cqw 0;animation:bannerIn 2.2s cubic-bezier(.2,1.5,.4,1) forwards}
+.banner b{display:block;font-size:6.6cqw}
+@keyframes bannerIn{0%{transform:scale(0) rotate(-20deg);opacity:0}15%{transform:scale(1.1) rotate(3deg);opacity:1}25%{transform:scale(1) rotate(0)}80%{opacity:1}100%{transform:translateY(-60%) scale(.5);opacity:0}}
+.pop{left:8%;top:38%;width:84%;z-index:11;display:flex;flex-direction:column;align-items:center;pointer-events:none;background:#3a1a06f2;border:.5cqw solid var(--y);border-radius:4cqw;box-shadow:0 0 5cqw #ff7a1aaa;padding:2cqw 0 3cqw;animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.pop .spr{position:relative;width:38%}
+.pop b{font-size:7cqw}
+/* ganho grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle,#d0701acc,#1e0c02f0);z-index:20;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .ray{position:absolute;width:200vmax;aspect-ratio:1;background:repeating-conic-gradient(#ffd54a22 0 10deg,#0000 10deg 20deg);animation:rot 8s linear infinite;pointer-events:none}
+.overlay .spr{position:relative;width:min(300px,62vw);animation:hop 1s ease-in-out infinite}
+.overlay h2{position:relative;font:900 clamp(34px,11vw,60px)/1 system-ui;color:#fff27a;-webkit-text-stroke:6px #5a1a00;paint-order:stroke fill;text-shadow:0 5px 0 #5a1a00,0 0 24px #ff7a1a;animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{position:relative;font-size:clamp(38px,12vw,64px);font-weight:900;text-shadow:0 0 24px #ffb02a;font-variant-numeric:tabular-nums}
+.overlay small{position:relative}
+.rain{position:fixed;top:-60px;z-index:21;pointer-events:none;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid var(--y);border-radius:16px;background:#3a1a06;color:#fff;padding:16px;font:14px/1.45 system-ui}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--y);text-align:center;margin-bottom:8px}
+.pay{display:grid;grid-template-columns:46px 1fr 1fr 1fr;align-items:center;gap:4px 8px;font-variant-numeric:tabular-nums}
+.pay img{width:46px;height:46px;object-fit:contain}
+.pay small{opacity:.7}
+dialog p{margin-top:10px;opacity:.9}
+dialog button.close{margin:12px auto 0;display:block;padding:8px 24px;border-radius:20px;background:var(--y);color:#3a1a00;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff18;color:#fff;border-radius:12px;padding:10px}
+@keyframes pulse{to{transform:scale(1.1)}}
+@keyframes hop{50%{transform:translateY(-8%) scale(1.04)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes draw{from{stroke-dashoffset:1600}to{stroke-dashoffset:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes shake{20%{translate:-.8% .5%}40%{translate:.8% -.5%}60%{translate:-.5% .3%}80%{translate:.5% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Calango do Nordeste</h1>
+  <div class="sun" aria-hidden="true"></div>
+  <div class="piece big" id="big" aria-hidden="true"></div>
+  <div class="piece sign" id="sign" aria-hidden="true"></div>
+  <div class="piece jegue" id="jegue" aria-hidden="true"></div>
+  <div class="abs logo" aria-hidden="true"></div>
+  <i class="lamp" style="left:3.4%;top:43%"></i><i class="lamp" style="left:96.6%;top:43%"></i>
+  <div class="abs" id="freeTag"></div>
+  <div id="reels"></div>
+  <svg class="lines" id="lines" viewBox="78 620 788 518" preserveAspectRatio="none"></svg>
+  <div class="abs free" id="free"></div>
+  <b class="abs val" id="bal">0,00</b>
+  <button class="hit" id="down" aria-label="Diminuir aposta"></button>
+  <b class="abs val" id="bet">1,00</b>
+  <button class="hit" id="up" aria-label="Aumentar aposta"></button>
+  <b class="abs val" id="win">R$ 0,00</b>
+  <button class="hit" id="menu" aria-label="Menu"></button>
+  <button class="hit" id="info" aria-label="Tabela de pagamentos"></button>
+  <button class="spin" id="spin" aria-label="Girar (espaço)"><div class="crop"></div></button>
+  <button class="hit" id="auto" aria-label="Giro automático"></button>
+  <button class="hit" id="turbo" aria-label="Turbo"></button>
+  <div class="gift">🎁 GIRO GRÁTIS</div>
+  <div class="abs" id="msg" aria-live="polite">Toque no calango quando ele passar correndo!</div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="ray"></div>
+  <div class="spr" id="ovPose"></div>
+  <h2 id="ovTitle">GRANDE GANHO!</h2>
+  <div class="amt" id="ovAmt">0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="payDlg">
+  <h3>Tabela de Pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p>10 linhas, da esquerda pra direita, a partir do 1º rolo. O <b>Calango WILD</b> substitui qualquer símbolo, menos o SCATTER.<br><br>
+  <b>🌵 Rodadas Grátis:</b> 3, 4 ou 5 SCATTER em qualquer lugar dão <b id="fsInfo"></b> giros grátis com todos os ganhos <b id="fsMult"></b>.<br><br>
+  <b>🦎 Calango correndo:</b> de vez em quando ele atravessa a tela em disparada. Toque nele! De vez em quando (1 em 4) ele dá um <b>giro grátis</b> (até R$ 5,00).<br><br>
+  RTP (retorno médio ao jogador): <b id="rtpInfo"></b>. Prêmio máximo por rodada: <b id="maxInfo"></b> a aposta. Sorteio com gerador criptográfico do navegador.</p>
+  <button class="close" onclick="payDlg.close()">Fechar</button>
+</dialog>
+<dialog id="menuDlg">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mSfx">🔊 Som: ligado</button>
+    <button id="mMusic">🎵 Música: ligada</button>
+    <button id="mPay">📋 Tabela de pagamentos</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button class="close" onclick="menuDlg.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="calango.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('calango')</script><!-- admin assiste ao vivo -->
+<script>
+const { SYMBOLS, LINES, COLS, ROWS, WILD, SCATTER, FREE_SPINS, FREE_MULT, MAX_WIN, drawSymbol, playRound } = CA; // RTP: ler CA.RTP (muda ao vivo)
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const BETS = [0.5, 1, 2, 5, 10, 20, 50, 100], START = 20;
+// tiras de animação: [quadros, largura do quadro, altura] (saída do tools/calango_assets.py)
+const SPR = {"poses":[4,193,260],"faces":[8,244,200],"run":[2,347,200]};
+const IMG = id => `assets/calango/s_${id}.webp`;
+// colunas dos rolos na arte (x inicial, x final), janela y 620–1138
+const COLX = [[78, 233], [237, 391], [395, 549], [553, 708], [712, 866]];
+const Y0 = 620, CELL = 172.67, AX = 9.41, AY = 16.72;
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('calango.saldo') || START; } catch {}
+let pending = 0; // prêmio já salvo no saldo mas ainda não mostrado
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('calango.saldo', balance); } catch {}
+}
+
+// ---------- som (sintetizado) ----------
+let ac, sfxOn = true, musicOn = true;
+try { sfxOn = localStorage.getItem('calango.sfx') !== 'off'; musicOn = localStorage.getItem('calango.music') !== 'off'; } catch {}
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+function tone(f, t, d, { type = 'sine', vol = .2, slide = 0, vib = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  if (vib) { const l = a.createOscillator(), lg = a.createGain(); l.frequency.value = 6; lg.gain.value = vib; l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + d + .05); }
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+function noise(t, d, vol = .15, freq = 2000, type = 'bandpass', curve = 3) {
+  const a = audio(), b = a.createBuffer(1, a.sampleRate * d, a.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length) ** curve;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = b; f.type = type; f.frequency.value = freq; g.gain.value = vol;
+  s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+const now = () => audio().currentTime;
+const SFX = {
+  click() { tone(900, now(), .06, { type: 'triangle', vol: .08 }); },
+  tick() { tone(500 + Math.random() * 300, now(), .03, { type: 'triangle', vol: .03 }); },
+  stop() { tone(160, now(), .15, { vol: .25 }); },
+  coin() { const t = now(); tone(1800, t, .08, { type: 'square', vol: .03 }); tone(2400, t + .06, .12, { type: 'square', vol: .03 }); },
+  tri() { const t = now(); tone(3100, t, .5, { vol: .05 }); tone(4650, t, .35, { vol: .02 }); },
+  whoosh() { noise(now(), .6, .35, 900, 'bandpass', 1.5); },
+  hee() { const t = now(); tone(700, t, .18, { type: 'sawtooth', vol: .06, slide: 1300 }); tone(1300, t + .2, .25, { type: 'sawtooth', vol: .05, slide: 500 }); }, // zurro do jegue
+  yupi() { const t = now(); tone(900, t, .15, { type: 'triangle', vol: .12, slide: 1500 }); tone(1500, t + .16, .3, { type: 'triangle', vol: .12, slide: 2200 }); },
+  pop() { const t = now(); noise(t, .12, .5, 2500, 'highpass', 4); tone(300, t, .1, { vol: .1, slide: 900 }); },
+  win(n) { const t = now(); [523, 659, 784, 1047, 1319].slice(0, 2 + n).forEach((f, i) => tone(f, t + i * .09, .25, { type: 'triangle', vol: .15 })); this.tri(); },
+  big() { const t = now(); [523, 659, 784, 1047, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t + i * .11, .35, { type: 'square', vol: .08 })); },
+  star() { const t = now(); [1568, 2093, 2637].forEach((f, i) => tone(f, t + i * .06, .3, { vol: .1 })); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+// música: só o toque instrumental de "Asa Branca" (a introdução, antes da voz entrar), em loop; os efeitos tocam por cima
+const song = new Audio('assets/calango/musica.mp3');
+song.loop = true; song.preload = 'auto'; song.volume = .45;
+function startMusic() { if (musicOn) song.play().catch(() => {}); }
+function stopMusic() { song.pause(); }
+// nos ganhos a música abaixa um pouco pras moedas aparecerem, e volta devagar
+function duck(ms = 1500) {
+  song.volume = .18; clearInterval(duck.t);
+  setTimeout(() => { duck.t = setInterval(() => { song.volume = Math.min(.45, song.volume + .03); if (song.volume >= .45) clearInterval(duck.t); }, 80); }, ms);
+}
+// aba escondida: pausa a música (volta quando reaparece)
+document.addEventListener('visibilitychange', () => { if (document.hidden) song.pause(); else startMusic(); });
+
+// ---------- sprites e efeitos ----------
+function sprite(el, name, ms, loop = true) {
+  const [n, w, h] = SPR[name];
+  el._spr?.cancel();
+  Object.assign(el.style, { backgroundImage: `url(assets/calango/${name}.webp)`, backgroundSize: `${n * 100}% 100%`, aspectRatio: `${w} / ${h}` });
+  return el._spr = el.animate([{ backgroundPositionX: '0%' }, { backgroundPositionX: '100%' }], { duration: ms, easing: `steps(${n}, jump-none)`, iterations: loop ? Infinity : 1, fill: 'forwards' });
+}
+function div(cls, css = {}) { const d = document.createElement('div'); d.className = cls; Object.assign(d.style, css); return d; }
+const W = () => stage.clientWidth, H = () => stage.clientHeight;
+// efeito solto da folha: x, y = centro em % do palco, w = largura em % do palco
+function fx(name, x, y, w, keys, ms, z = 7) {
+  const e = div('fx', { backgroundImage: `url(assets/calango/${name}.webp)`, left: x + '%', top: y + '%', width: w + '%', aspectRatio: '1', translate: '-50% -50%', zIndex: z });
+  stage.append(e); e.animate(keys, { duration: ms, easing: 'ease-out', fill: 'forwards' }).onfinish = () => e.remove();
+  return e;
+}
+const burst = (x, y, w = 22) => fx(Math.random() < .5 ? 'spark' : 'spark2', x, y, w, [{ transform: 'scale(.2) rotate(0)', opacity: 1 }, { transform: 'scale(1.4) rotate(90deg)', opacity: 0 }], 700, 9);
+const CONF = ['#ff3a3a', '#ffd54a', '#3cb54a', '#2a8cff', '#ff7ad8', '#ff9a1a'];
+function confetti(n, x = 50, y = 20) {
+  for (let i = 0; i < n; i++) {
+    const c = div('confete', { left: x + '%', top: y + '%', background: CONF[i % CONF.length] }); stage.append(c);
+    const dx = rnd(-45, 45) * W() / 100, dy = rnd(20, 70) * H() / 100;
+    c.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${dx * .5}px,-${H() * .08}px) rotate(${rnd(200, 500)}deg)`, offset: .25 },
+      { transform: `translate(${dx}px,${dy}px) rotate(${rnd(700, 1400)}deg) rotateY(720deg)`, opacity: 0 }], { duration: rnd(1600, 2600), easing: 'ease-in' }).onfinish = () => c.remove();
+  }
+}
+
+// ---------- dinheiro pulando (coordenadas em % do palco) ----------
+function money(x, y, { kind = Math.random() < .65 ? 'coin' : 'bill', dx = rnd(-12, 12), up = rnd(8, 22), fall = rnd(6, 18), ms = rnd(900, 1500), size } = {}) {
+  const c = div(kind, { left: x + '%', top: y + '%' }); if (size) c.style.width = size + 'cqw';
+  stage.append(c);
+  const px = v => v * W() / 100, py = v => v * H() / 100, sp = kind === 'bill' ? 'rotateX' : 'rotate';
+  c.animate([
+    { transform: 'translate(-50%,-50%) scale(.6)', opacity: 1 },
+    { transform: `translate(calc(-50% + ${px(dx / 2)}px),calc(-50% - ${py(up)}px)) scale(1.1) ${sp}(${rnd(-300, 300)}deg)`, offset: .45, easing: 'ease-in' },
+    { transform: `translate(calc(-50% + ${px(dx)}px),calc(-50% + ${py(fall)}px)) scale(.9) ${sp}(${rnd(-600, 600)}deg)`, opacity: .9, offset: .9 },
+    { transform: `translate(calc(-50% + ${px(dx)}px),calc(-50% + ${py(fall - 1.5)}px)) scale(.8)`, opacity: 0 },
+  ], { duration: ms, easing: 'cubic-bezier(.3,.7,.6,1)', fill: 'forwards' }).onfinish = () => c.remove();
+}
+function moneyTo(x0, y0, x1, y1, delay = 0) {
+  const c = div('coin', { left: x0 + '%', top: y0 + '%', opacity: 0 }); stage.append(c);
+  const dx = (x1 - x0) * W() / 100, dy = (y1 - y0) * H() / 100;
+  c.animate([
+    { transform: 'translate(-50%,-50%) scale(.5)', opacity: 1 },
+    { transform: `translate(calc(-50% + ${dx * .4}px),calc(-50% + ${dy * .4 - H() * .1}px)) scale(1.2) rotate(200deg)`, offset: .45 },
+    { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.4) rotate(400deg)`, opacity: .8 },
+  ], { duration: 750, delay, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => { c.remove(); play('coin'); };
+}
+// ambiente: moedas pulando dos barris e dos cantos, faíscas no sol, o calango grande comemora sozinho
+const SPOTS = [[6, 84], [94, 84], [4, 60], [96, 60], [20, 97], [80, 97], [10, 72], [90, 72]];
+setInterval(() => { if (document.hidden) return; const [x, y] = SPOTS[Math.random() * SPOTS.length | 0]; money(x + rnd(-2, 2), y, { up: rnd(4, 10), fall: rnd(1, 4), size: rnd(3.5, 6) }); }, 330);
+setInterval(() => { if (!document.hidden) burst(rnd(10, 90), rnd(2, 30), rnd(8, 14)); }, 900);
+(function festa() { setTimeout(() => { if (!document.hidden && !spinning) { bigParty(); for (let i = 0; i < 8; i++) money(rnd(35, 65), 14, { up: rnd(6, 14), fall: rnd(8, 18) }); } festa(); }, rnd(5000, 9000)); })();
+(function jegueZurra() { setTimeout(() => { if (!document.hidden) { $('#jegue').classList.remove('hop'); $('#jegue').offsetHeight; $('#jegue').classList.add('hop'); play('hee'); } jegueZurra(); }, rnd(12000, 20000)); })();
+
+// ---------- rolos ----------
+const reels = COLX.map(([x0, x1]) => {
+  const r = document.createElement('div');
+  r.className = 'reel';
+  Object.assign(r.style, { left: x0 / AX + '%', width: (x1 - x0) / AX + '%' });
+  r.innerHTML = '<div class="strip"></div>';
+  $('#reels').append(r);
+  return r;
+});
+const cellHtml = (s, cls = '') => `<div class="cell${s === WILD ? ' wild' : ''}${cls}" data-s="${s}"><img src="${IMG(SYMBOLS[s].id)}" alt="${SYMBOLS[s].id}"></div>`;
+const col = (g, c) => [0, 1, 2].map(r => g[r * COLS + c]);
+const cellEl = i => reels[i % COLS].firstElementChild.children[(i / COLS) | 0];
+const cellXY = i => { const [x0, x1] = COLX[i % COLS]; return [(x0 + x1) / 2 / AX, (Y0 + ((i / COLS) | 0) * CELL + CELL / 2) / AY]; };
+let grid = Array.from({ length: 15 }, drawSymbol);
+reels.forEach((r, c) => r.firstElementChild.innerHTML = col(grid, c).map(s => cellHtml(s)).join(''));
+
+let turbo = false, auto = false;
+function spinReel(c, next) {
+  const reel = reels[c], strip = reel.firstElementChild;
+  const n = (turbo ? 6 : 12) + c * (turbo ? 2 : 4), dur = (turbo ? 380 : 800) + c * (turbo ? 110 : 260);
+  const final = col(next, c), filler = Array.from({ length: n }, drawSymbol);
+  strip.innerHTML = [...final, ...filler, ...col(grid, c)].map(s => cellHtml(s)).join('');
+  strip.style.transition = 'none';
+  strip.style.transform = `translateY(calc(var(--cell) * ${-(n + 3)}))`;
+  strip.offsetHeight;
+  reel.classList.add('spinning');
+  strip.style.transition = `transform ${dur}ms cubic-bezier(.25,.1,.3,1.06)`;
+  strip.style.transform = 'translateY(0)';
+  return new Promise(res => setTimeout(() => {
+    reel.classList.remove('spinning');
+    strip.style.transition = 'none';
+    strip.innerHTML = final.map(s => cellHtml(s, ' land')).join('');
+    play('stop');
+    final.forEach((s, r) => { if (s === WILD || s === SCATTER) { const [x, y] = cellXY(r * COLS + c); burst(x, y, 24); for (let k = 0; k < 6; k++) money(x, y, { up: rnd(4, 10), fall: rnd(2, 8) }); play('tri'); } });
+    res();
+  }, dur));
+}
+function clearWin() {
+  $('#lines').innerHTML = '';
+  for (let i = 0; i < 15; i++) { const c = cellEl(i); c.classList.remove('win', 'dim'); c.querySelector('.anim')?.remove(); c.querySelector('img').style.opacity = ''; }
+}
+function showWins(wins) {
+  const hit = new Set(wins.flatMap(w => w.cells));
+  for (let i = 0; i < 15; i++) {
+    const c = cellEl(i), s = +c.dataset.s;
+    c.classList.add(hit.has(i) ? 'win' : 'dim');
+    // calango (wild) que paga troca de cara sem parar
+    if (hit.has(i) && s === WILD) { const a = div('spr anim'); c.querySelector('img').style.opacity = 0; c.append(a); sprite(a, 'faces', 1200); }
+  }
+  const pt = i => { const [x0, x1] = COLX[i % COLS]; return `${(x0 + x1) / 2},${Y0 + ((i / COLS) | 0) * CELL + CELL / 2}`; };
+  $('#lines').innerHTML = wins.map(w => `<polyline points="${LINES[w.line].map(pt).join(' ')}"/>`).join('');
+  [...hit].forEach((i, k) => {
+    const [x, y] = cellXY(i);
+    burst(x, y, 20);
+    for (let j = 0; j < 4; j++) money(x, y, { up: rnd(6, 16), fall: rnd(0, 6) });
+    moneyTo(x, y, 83, 77, 150 + k * 60);
+  });
+}
+function scattersSpin(cells) {
+  cells.forEach(i => { const c = cellEl(i); c.classList.add('win'); c.querySelector('img').animate([{ transform: 'rotateY(0)' }, { transform: 'rotateY(720deg) scale(1.2)' }, { transform: 'rotateY(1080deg)' }], { duration: 1100 }); });
+  play('star');
+}
+
+// ---------- HUD ----------
+let betIdx = 1, spinning = false;
+const msg = t => $('#msg').textContent = t;
+const bump = el => { el.classList.remove('bump'); el.offsetHeight; el.classList.add('bump'); };
+function hud() { $('#bal').textContent = 'R$ ' + brl(r2(balance - pending)); $('#bet').textContent = 'R$ ' + brl(gift ?? BETS[betIdx]); }
+function countUp(el, to, ms = 800) {
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / ms); el.textContent = 'R$ ' + brl(to * k); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+function rain(n) {
+  for (let i = 0; i < n; i++) {
+    const bill = Math.random() < .35, c = div((bill ? 'bill' : 'coin') + ' rain', { left: Math.random() * 100 + 'vw', animationDuration: 1.6 + Math.random() * 1.8 + 's', animationDelay: Math.random() * 1.2 + 's', width: bill ? rnd(60, 90) + 'px' : rnd(30, 48) + 'px', fontSize: '20px' });
+    document.body.append(c); setTimeout(() => c.remove(), 4800);
+  }
+}
+function bigWin(total, bet, title) {
+  const ov = $('#overlay');
+  $('#ovTitle').textContent = title || (total >= bet * 50 ? 'MEGA GANHO!' : 'GRANDE GANHO!');
+  sprite($('#ovPose'), 'poses', 1400);
+  ov.classList.add('show'); countUp($('#ovAmt'), total, 1800); rain(60); play('big'); play('yupi'); duck(3500);
+  clearTimeout(ov.t); ov.t = setTimeout(() => ov.classList.remove('show'), 4600);
+}
+function bigParty() {
+  const b = $('#big'); b.classList.remove('party'); b.offsetHeight; b.classList.add('party'); setTimeout(() => b.classList.remove('party'), 2300);
+  for (let i = 0; i < 3; i++) setTimeout(() => burst(rnd(30, 70), rnd(3, 16), rnd(14, 22)), i * 150);
+  fx('swirl', 50, 10, 30, [{ transform: 'scale(.3) rotate(0)', opacity: 1 }, { transform: 'scale(1.3) rotate(200deg) translateY(-20%)', opacity: 0 }], 1200, 3);
+}
+
+// ---------- evento: calango passa correndo; tocar nele às vezes dá giro grátis ----------
+const GIFT_CHANCE = 1 / 4, GIFT_MAX = 5; // valor travado na hora que ganha (senão era só subir a aposta antes de girar)
+let gift = null, eventOn = false;
+function sorte(p) { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] < p * 2 ** 32; }
+async function correria() {
+  if (eventOn || $('#overlay').classList.contains('show') || stage.classList.contains('freespin')) return;
+  eventOn = true;
+  const ban = div('abs banner'); ban.innerHTML = '<b>🦎 ÊTA, CALANGO LIGEIRO!</b>'; stage.append(ban); setTimeout(() => ban.remove(), 2300);
+  play('yupi'); stage.classList.remove('shake'); stage.offsetHeight; stage.classList.add('shake');
+  await sleep(1200);
+  msg('👆 Toque no calango antes que ele suma!');
+  // na folha ele corre pra esquerda (o fogo fica atrás); da direita pra esquerda é o normal, espelha pro outro lado
+  const dir = Math.random() < .5 ? -1 : 1, y = rnd(40, 55), dur = turbo ? 2600 : 3600;
+  const run = div('spr runner', { width: '46%', top: y + '%' }); sprite(run, 'run', 260);
+  if (dir > 0) run.style.scale = '-1 1';
+  stage.append(run); play('whoosh');
+  const move = run.animate([{ left: (dir < 0 ? 104 : -50) + '%' }, { left: (dir < 0 ? -50 : 104) + '%' }], { duration: dur, fill: 'both', easing: 'cubic-bezier(.4,0,.6,1)' });
+  run.animate([{ transform: 'translateY(0) rotate(-3deg)' }, { transform: 'translateY(-10%) rotate(3deg)' }], { duration: 180, iterations: Infinity, direction: 'alternate' });
+  // poeira e moedas ficando pra trás
+  const trail = setInterval(() => {
+    const r = run.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    const bx = ((dir < 0 ? r.right - r.width * .25 : r.left + r.width * .25) - s.left) / s.width * 100, by = (r.bottom - s.top - r.height * .2) / s.height * 100;
+    fx('dust', bx, by, rnd(12, 18), [{ transform: 'scale(.4)', opacity: .9 }, { transform: `scale(1.3) translate(${-dir * 20}%,-30%)`, opacity: 0 }], 800, 8);
+    if (Math.random() < .6) money(bx, by - 4, { dx: -dir * rnd(2, 10), up: rnd(4, 12), fall: rnd(6, 16) });
+  }, 90);
+  const caught = await new Promise(res => { run.onpointerdown = e => { e.stopPropagation(); res(true); }; move.onfinish = () => res(false); });
+  clearInterval(trail);
+  if (caught) {
+    run.getAnimations().forEach(a => a.pause());
+    const r = run.getBoundingClientRect(), s = stage.getBoundingClientRect(), x = (r.left - s.left + r.width / 2) / s.width * 100;
+    run.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.2) translateY(-12%) rotate(-6deg)' }, { transform: 'scale(1)' }], { duration: 450, iterations: 2 });
+    play('pop'); play('yupi'); bigParty(); confetti(40, x, y);
+    for (let k = 0; k < 30; k++) setTimeout(() => money(Math.min(90, Math.max(10, x)), y + 6, { up: rnd(10, 28), fall: rnd(4, 28), dx: rnd(-35, 35) }), k * 25);
+    fx('coins', x, y, 50, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1.2)', opacity: 1, offset: .4 }, { transform: 'scale(1.5)', opacity: 0 }], 1300, 10);
+    await sleep(900); run.remove();
+    // de vez em quando (1 em 4) o toque vale um giro grátis de verdade; guarda no máximo 1
+    const premio = gift === null && sorte(GIFT_CHANCE);
+    if (premio) { gift = Math.min(BETS[betIdx], GIFT_MAX); stage.classList.add('hasGift'); hud(); }
+    const pop = div('abs pop'); pop.innerHTML = `<div class="spr"></div><b>${premio ? `🎁 GIRO GRÁTIS<br>de R$ ${brl(gift)}!` : 'ÔXE, PEGOU!<br>Na próxima tem mais'}</b>`;
+    stage.append(pop); sprite(pop.firstChild, 'faces', 1000); if (premio) rain(25);
+    msg(premio ? '🎁 Ganhou um giro grátis! Aperta o girar' : '😎 O calango mandou um abraço!');
+    await sleep(2300); pop.remove();
+  } else {
+    run.remove(); msg('💨 Ele passou ligeiro! Fica de olho no próximo…');
+  }
+  await sleep(600);
+  eventOn = false;
+  if (!spinning) msg('Toque no calango quando ele passar correndo!');
+}
+(function agenda() { setTimeout(() => { if (!document.hidden) correria(); agenda(); }, rnd(14000, 24000)); })();
+
+// ---------- rodada ----------
+async function showSpin(s, bet, mult) {
+  clearWin();
+  const ticker = setInterval(() => play('tick'), 80);
+  await Promise.all(reels.map((_, c) => spinReel(c, s.grid)));
+  clearInterval(ticker);
+  grid = s.grid;
+  if (s.win > 0) {
+    showWins(s.wins); play('win', Math.min(3, s.wins.length)); bigParty(); duck();
+    if (s.win >= bet * 3) confetti(Math.min(60, 15 + Math.round(s.win / bet) * 3));
+    msg(`${mult > 1 ? `x${mult} · ` : ''}Ganhou R$ ${brl(s.win)} em ${s.wins.length} linha${s.wins.length > 1 ? 's' : ''}`);
+    await sleep(turbo ? 700 : 1300);
+  }
+}
+async function spin() {
+  if (spinning) return;
+  const free = gift, bet = free ?? BETS[betIdx];
+  if (free === null && balance < bet) {
+    setAuto(false);
+    if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (!host && balance < BETS[0]) { balance = START; save(); hud(); msg('Créditos recarregados: R$ ' + brl(START)); }
+    else msg('Saldo insuficiente, diminua a aposta');
+    return;
+  }
+  spinning = true; $('#spin').disabled = true; $('#spin').classList.add('busy');
+  play('click'); msg('Boa sorte, visse!'); $('#win').textContent = 'R$ 0,00';
+  if (free !== null) { gift = null; stage.classList.remove('hasGift'); msg(`🎁 Giro grátis de R$ ${brl(bet)}!`); }
+  else balance = r2(balance - bet);
+  save(); hud();
+
+  const res = playRound(bet);
+  balance = r2(balance + res.total); pending = res.total; save(); reportarRodada('calango', free === null ? bet : 0, res.total); // o prêmio já vai pro saldo; a tela só anima
+  await showSpin(res.base, bet, 1);
+  let shown = res.base.win;
+  if (res.free.length) {
+    scattersSpin(res.base.scatters); msg(`🌵 ${res.base.scatters.length} SCATTER!`);
+    $('#sign').classList.add('bang'); setTimeout(() => $('#sign').classList.remove('bang'), 2500);
+    await sleep(1200);
+    const fr = $('#free');
+    fr.innerHTML = `<img src="${IMG('scatter')}" alt=""><b>RODADAS GRÁTIS!</b><span>${res.free.length} giros grátis · ganhos x${FREE_MULT}</span>`;
+    fr.classList.add('show'); play('yupi'); bigParty(); confetti(60); await sleep(2200); fr.classList.remove('show');
+    stage.classList.add('freespin');
+    for (let k = 0; k < res.free.length; k++) {
+      $('#freeTag').textContent = `GIRO GRÁTIS ${k + 1}/${res.free.length} · x${FREE_MULT} · R$ ${brl(shown - res.base.win)}`;
+      await showSpin(res.free[k], bet, FREE_MULT);
+      shown += res.free[k].win;
+      await sleep(turbo ? 150 : 350);
+    }
+    stage.classList.remove('freespin');
+  }
+  pending = 0; hud(); bump($('#bal'));
+  countUp($('#win'), res.total); if (res.total) bump($('#win'));
+  if (res.free.length) bigWin(res.total, bet, res.total ? 'RODADAS GRÁTIS!' : 'FIM DOS GIROS');
+  else if (res.total >= bet * 15) bigWin(res.total, bet);
+  if (res.total > 0) msg(`${res.capped ? `Prêmio máximo (${MAX_WIN}x)! ` : ''}Total: R$ ${brl(res.total)}`);
+  else {
+    msg(['Ôxe, quase!', 'Arretado! Gira de novo', 'Vixe, não foi dessa vez', 'Bora, que o calango tá de olho 👀'][Math.random() * 4 | 0]);
+    if (Math.random() < .12) setTimeout(correria, 900);
+  }
+  spinning = false; $('#spin').disabled = false; $('#spin').classList.remove('busy');
+  if (auto) setTimeout(() => auto && !$('#overlay').classList.contains('show') ? spin() : auto && setTimeout(spin, 4700), turbo ? 250 : 600);
+}
+
+// ---------- botões ----------
+function setAuto(on) { auto = on; $('#auto').classList.toggle('on', on); }
+$('#spin').onclick = spin;
+$('#up').onclick = () => { if (spinning) return; betIdx = Math.min(BETS.length - 1, betIdx + 1); play('click'); hud(); bump($('#bet')); };
+$('#down').onclick = () => { if (spinning) return; betIdx = Math.max(0, betIdx - 1); play('click'); hud(); bump($('#bet')); };
+$('#turbo').onclick = () => { turbo = !turbo; $('#turbo').classList.toggle('on', turbo); play('click'); msg(turbo ? '⚡ Turbo ligado' : 'Turbo desligado'); };
+$('#auto').onclick = () => { setAuto(!auto); play('click'); msg(auto ? '🔁 Giro automático ligado' : 'Giro automático desligado'); if (auto) spin(); };
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+function renderPay() {
+  const lb = BETS[betIdx] / LINES.length;
+  $('#payTable').innerHTML = '<span></span><small>3</small><small>4</small><small>5</small>' + SYMBOLS.map((s, i) =>
+    `<img src="${IMG(s.id)}" alt="${s.id}">` + (i === SCATTER ? `<span style="grid-column:span 3">3+ = giros grátis</span>` : s.pays.map(p => `<b>${brl(lb * p)}</b>`).join(''))).join('');
+  $('#fsInfo').textContent = Object.values(FREE_SPINS).join(', ');
+  $('#fsMult').textContent = 'x' + FREE_MULT;
+  $('#rtpInfo').textContent = (CA.RTP * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+  $('#maxInfo').textContent = MAX_WIN + 'x';
+}
+function openPay() { renderPay(); payDlg.showModal(); }
+$('#info').onclick = openPay;
+const menuTxt = () => { $('#mSfx').textContent = `🔊 Som: ${sfxOn ? 'ligado' : 'desligado'}`; $('#mMusic').textContent = `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`; };
+$('#menu').onclick = () => { menuTxt(); menuDlg.showModal(); };
+$('#mSfx').onclick = () => { sfxOn = !sfxOn; try { localStorage.setItem('calango.sfx', sfxOn ? 'on' : 'off'); } catch {} menuTxt(); };
+$('#mMusic').onclick = () => { musicOn = !musicOn; try { localStorage.setItem('calango.music', musicOn ? 'on' : 'off'); } catch {} musicOn ? startMusic() : stopMusic(); menuTxt(); };
+$('#mPay').onclick = () => { menuDlg.close(); openPay(); };
+$('#mExit').onclick = () => { if (spinning) return; host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html')); };
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !payDlg.open && !menuDlg.open) { e.preventDefault(); spin(); } });
+document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
+hud();
+setTimeout(correria, 4500); // primeira corrida logo no começo
+// RTP mudou no painel: aplica entre giros e redesenha a tabela
+rtpAoVivo('calango', CA, { ocupado: () => spinning, depois: renderPay });
+</script>
+</body>
+</html>

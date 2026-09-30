@@ -368,8 +368,10 @@ function toggleFav(e, gameId) {
 }
 
 // --- Launch Game Router ---
+// jogos de tela cheia (iframe) têm modo teste pra quem ainda não tem conta; os de modal pedem login
+const JOGOS_COM_TESTE = ['capivara', 'gatinho', 'galinha', 'papagaio', 'raspa', 'macaco', 'truco', 'sinuca', 'sapo', 'perereca', 'lulinha', 'crodila', 'pato', 'urubu', 'calango', 'velha', 'bichos'];
 function launchGame(gameId) {
-  if (!Auth.current) return Auth.show("login");
+  if (!Auth.current && !(Demo.ligado && JOGOS_COM_TESTE.includes(gameId))) return Auth.show("login");
   Sounds.playClick();
   if (gameId === 'capivara') {
     openGame('capivara.html?v=4');
@@ -395,6 +397,12 @@ function launchGame(gameId) {
     openGame('lulinha.html?v=1');
   } else if (gameId === 'crodila') {
     openGame('crodila.html?v=7');
+  } else if (gameId === 'pato') {
+    openGame('pato.html?v=2');
+  } else if (gameId === 'urubu') {
+    openGame('urubu.html?v=1');
+  } else if (gameId === 'calango') {
+    openGame('calango.html?v=5');
   } else if (gameId === 'velha') {
     openGame('velha.html?v=5');
   } else if (gameId === 'bichos') {
@@ -1038,6 +1046,8 @@ const Auth = {
     // abre sempre limpo, sem erro de tentativa anterior
     document.querySelectorAll(".auth-err, .auth-form-err").forEach(e => (e.textContent = ""));
     document.querySelectorAll(".auth-field.invalid").forEach(e => e.classList.remove("invalid"));
+    const sub = document.querySelector("#modal-register .auth-sub"); // tira a frase do convite do modo teste
+    if (sub.dataset.orig) sub.textContent = sub.dataset.orig;
     openModal("modal-" + which);
   },
 
@@ -1426,7 +1436,7 @@ function openGame(url) {
   const fr = ov.querySelector("iframe");
   ov.classList.remove("back-top");
   fr.onload = () => { try { ov.classList.toggle("back-top", fr.contentDocument.body.dataset.back === "top"); } catch {} };
-  fr.src = url;
+  fr.src = Auth.current ? url : url + (url.includes("?") ? "&" : "?") + "demo=1"; // sem conta = modo teste
   ov.classList.add("show");
   document.body.style.overflow = "hidden";
 }
@@ -1453,3 +1463,40 @@ function renderPixQr(code) {
   qr.make();
   box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
 }
+
+// --- Promoção: aparece 1x por sessão ao abrir o site; Esc fecha qualquer modal aberto ---
+document.addEventListener("DOMContentLoaded", () => {
+  let visto = false;
+  try { visto = sessionStorage.getItem("orama_promo40") === "1"; sessionStorage.setItem("orama_promo40", "1"); } catch {}
+  if (!visto) setTimeout(() => openModal("modal-promo"), 800); // fica por cima do login, que abre sozinho pra quem não entrou
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  const m = document.querySelector(".modal-overlay.show:last-of-type") || document.querySelector(".modal-overlay.show");
+  if (m) closeModal(m.id);
+});
+
+// --- Modo teste: o jogo chama isto no primeiro ganho do visitante (rodada.js) ---
+window.Demo = { // em window: o jogo (iframe) chama parent.Demo
+  // liga/desliga no painel admin (Configurações → Modo teste); sem API fica o último valor visto (começa ligado)
+  ligado: (() => { try { return localStorage.getItem("orama_modo_teste") !== "0"; } catch { return true; } })(),
+  sincronizar() {
+    fetch("api/site/config", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then(c => {
+      if (!c) return;
+      this.ligado = !!c.modoTeste;
+      try { localStorage.setItem("orama_modo_teste", this.ligado ? "1" : "0"); } catch {}
+    }).catch(() => {});
+  },
+  convite(premio) {
+    if (Auth.current) return;
+    closeGame();
+    Auth.show("register");
+    const sub = document.querySelector("#modal-register .auth-sub");
+    sub.dataset.orig ??= sub.textContent;
+    sub.textContent = premio > 0
+      ? `Você ganhou R$ ${premio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} no modo teste! Crie sua conta e jogue valendo 🎉`
+      : "Curtiu? Crie sua conta e jogue valendo 🎉";
+  },
+};
+document.addEventListener("DOMContentLoaded", () => Demo.sincronizar());
+setInterval(() => Demo.sincronizar(), 60_000);

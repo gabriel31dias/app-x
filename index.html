@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ORAMA GAMES - Diversão Premiada Todo Dia</title>
-  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=11">
   <link rel="icon" type="image/png" href="assets/coin_gold.png">
 </head>
 <body>
@@ -264,6 +264,20 @@
           </div>
         </div>
 
+        <!-- Pato Bolado Crash (novo) -->
+        <div class="game-card" data-cat="Crash" onclick="launchGame('pato')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_pato.png" alt="Pato Bolado Crash" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'pato')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Pato Bolado</span>
+            <span class="game-category">Crash</span>
+          </div>
+        </div>
+
         <!-- Sapinho Pulador Crash (novo) -->
         <div class="game-card" data-cat="Crash" onclick="launchGame('sapo')">
           <div class="game-img-wrapper">
@@ -316,6 +330,34 @@
           </div>
           <div class="game-info">
             <span class="game-title">Crodila Transex</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- Urubuzinho Carioca (novo) -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('urubu')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_urubu.png" alt="Urubuzinho Carioca" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'urubu')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Urubuzinho Carioca</span>
+            <span class="game-category">Slots</span>
+          </div>
+        </div>
+
+        <!-- Calango do Nordeste (novo) -->
+        <div class="game-card" data-cat="Slots" onclick="launchGame('calango')">
+          <div class="game-img-wrapper">
+            <img src="assets/card_grid_calango.png" alt="Calango do Nordeste" class="game-img">
+            <button class="btn-fav" onclick="toggleFav(event, 'calango')" aria-label="Favoritar">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="game-info">
+            <span class="game-title">Calango do Nordeste</span>
             <span class="game-category">Slots</span>
           </div>
         </div>
@@ -447,6 +489,16 @@
        ========================================================================== -->
 
   <!-- 1. DEPOSIT (PIX) MODAL -->
+  <!-- Promoção: abre 1x por sessão; fecha no X, fora da imagem, "Agora não" ou Esc -->
+  <div class="modal-overlay promo-overlay" id="modal-promo" onclick="if(event.target===this) closeModal('modal-promo')">
+    <div class="promo-card">
+      <button class="promo-close" onclick="closeModal('modal-promo')" aria-label="Fechar">✕</button>
+      <img src="assets/promo_40.webp" alt="Super promoção: ao colocar R$ 40 de saldo, ganhe R$ 40 de bônus" onclick="closeModal('modal-promo'); openModal('modal-deposit')">
+      <button class="promo-cta" onclick="closeModal('modal-promo'); openModal('modal-deposit')">QUERO MEU BÔNUS</button>
+      <button class="promo-skip" onclick="closeModal('modal-promo')">Agora não</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-deposit" onclick="if(event.target===this) closeModal('modal-deposit')">
     <div class="modal-card">
       <div class="modal-header">
@@ -846,6 +898,7 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-  <script src="app.js?v=37"></script>
+  <script src="app.js?v=41"></script>
+  <script src="ranzinha.js?v=1"></script><!-- ranzinha espiando da borda da tela -->
 </body>
 </html>

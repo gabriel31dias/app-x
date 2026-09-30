@@ -126,6 +126,7 @@ model Configuracao {
   infPrimeiroDepositoCentavos Int @default(500) // influencer: quando o inscrito faz o 1º depósito pago
   infComissaoBp      Int     @default(100) // influencer: % de cada depósito pago dos inscritos, em centésimos de % (100 = 1%)
   infSaqueMinimoCentavos Int @default(1000) // influencer: menor saque
+  modoTeste     Boolean   @default(true) // visitante sem conta joga os jogos de tela cheia com saldo de brincadeira; o 1º ganho abre o cadastro
   balancoAtivo  Boolean   @default(false) // RTPs estão baixados agora
   motivoBalanco String? // por que baixou: "janela" | "hora" | "janela+hora"
   rtpsAntes     String? // JSON { jogo: rtp | null } pra restaurar; null = estava no de fábrica

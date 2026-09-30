@@ -206,7 +206,7 @@ function play(k, n = 0) {
 // ---------- ESTADO ----------
 const START = 20; // saldo inicial (só quando aberto fora do site)
 // aberto dentro do site (iframe, mesma origem): usa o saldo do site
-const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
 let balance = START, betIdx = 1, spinning = false, auto = false;
 if (host) balance = host.State.balance;
 else try { balance = +localStorage.getItem('papagaio.saldo') || START; } catch {}

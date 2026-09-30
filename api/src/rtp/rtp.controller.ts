@@ -22,6 +22,9 @@ export const JOGOS: Record<string, { nome: string; fabrica: number }> = {
   sapo: { nome: 'Sapinho Pulador Crash', fabrica: 0.96 },
   lulinha: { nome: 'Lulinha', fabrica: 0.96 },
   crodila: { nome: 'Crodila Transex', fabrica: 0.96 },
+  pato: { nome: 'Pato Bolado Crash', fabrica: 0.96 },
+  urubu: { nome: 'Urubuzinho Carioca', fabrica: 0.96 },
+  calango: { nome: 'Calango do Nordeste', fabrica: 0.96 },
 };
 
 // piso de 85% (mínimo exigido pela SPA pra jogo online); acima de 99% a casa perde dinheiro na prática

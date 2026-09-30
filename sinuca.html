@@ -272,7 +272,7 @@ document.addEventListener('pointerdown', () => ac().resume?.(), { once: true });
 document.addEventListener('visibilitychange', () => { if (actx) document.hidden ? actx.suspend() : actx.resume(); });
 
 // ---------- SALDO (o do site quando aberto dentro dele) ----------
-const host = (() => { try { return window.parent !== window && window.parent.State ? window.parent : null; } catch { return null; } })();
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
 let balance = 100;
 if (host) balance = host.State.balance;
 else try { balance = +(localStorage.getItem('sinuca.saldo') ?? 100); } catch {}
