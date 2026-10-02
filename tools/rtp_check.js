@@ -1,7 +1,7 @@
 // Confere que o RTP do painel chega nos motores: `node tools/rtp_check.js`.
 // Liga todos em 90% (como o api/rtp.js faria no navegador) e mede os que convergem rápido.
 const assert = require('assert');
-globalThis.RTP_JOGOS = Object.fromEntries(['capivara', 'gatinho', 'papagaio', 'macaco', 'raspa', 'bichos', 'crash', 'truco', 'sinuca', 'velha', 'perereca', 'lulinha', 'crodila', 'pato', 'urubu', 'calango', 'penalti', 'jegues', 'tartarugas', 'lagartas', 'velhinhas', 'briga'].map(j => [j, 0.9]));
+globalThis.RTP_JOGOS = Object.fromEntries(['capivara', 'gatinho', 'papagaio', 'macaco', 'raspa', 'bichos', 'crash', 'truco', 'sinuca', 'velha', 'perereca', 'lulinha', 'crodila', 'pato', 'urubu', 'calango', 'penalti', 'jegues', 'tartarugas', 'lagartas', 'velhinhas', 'briga', 'barriga'].map(j => [j, 0.9]));
 const eng = j => require(`../${j === 'capivara' ? 'slot' : j}.js`);
 const pct = x => (x * 100).toFixed(2) + '%';
 

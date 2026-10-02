@@ -7,7 +7,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { JOGOS } from '../rtp/rtp.controller.js';
 
 type Sessao = { id: string; jogo: string; nome: string; jogador: string | null; jogadorNome: string | null; desde: string; assistindo: number };
-const JOGOS_COM_QUEDA = new Set(['crash', 'sapo', 'pato']);
+const JOGOS_COM_QUEDA = new Set(['crash', 'sapo', 'pato', 'barriga']);
 
 const sala = (id: string) => `ver:${id}`;
 const admins = () => (process.env.ADMIN_EMAILS ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);

@@ -12,7 +12,7 @@ export function AoVivoPlayer({ sessao, onClose }: { sessao: Sessao; onClose: () 
   const palco = useRef<HTMLDivElement>(null);
   const caixa = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"esperando" | "ao-vivo" | "fim">("esperando");
-  const podeDerrubar = sessao.jogo === "crash" || sessao.jogo === "sapo" || sessao.jogo === "pato";
+  const podeDerrubar = sessao.jogo === "crash" || sessao.jogo === "sapo" || sessao.jogo === "pato" || sessao.jogo === "barriga";
   const derrubar = useMutation({
     mutationFn: () => api(`/admin/ao-vivo/${encodeURIComponent(sessao.id)}/derrubar-crash`, { method: "POST" }),
     onSuccess: () => toast.success("Comando enviado", { description: "O personagem vai cair nessa sessão." }),

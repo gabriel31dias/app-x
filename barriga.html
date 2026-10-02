@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Barriguinho</title>
+<link rel="preload" as="image" href="assets/barriga/bg.webp">
+<style>
+/* Tela sobre o cenário (assets/barriga/bg.webp 941x1672, gerado por tools/barriga_assets.py a partir do mockup):
+   posições em px da arte convertidas pra % no JS (place), textos em cqw. Valores desenhados no mockup (saldo,
+   multiplicador, últimas, aposta, botão) são cobertos por caixas da mesma cor. O Barriguinho (kid.webp) é desenhado
+   num canvas linha por linha, com a barriga inchando conforme o multiplicador. */
+:root{--g:#3dff5a;--y:#ffc21a;--r:#ff3b3b}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#1a0806;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/barriga/bg.webp) center/cover;filter:blur(24px) brightness(.35);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 941 / 1672);aspect-ratio:941/1672;background:url(assets/barriga/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden}
+.stage.shake{animation:shake .5s}
+.stage.boomShake{animation:boomShake .9s}
+.stage.flashR::after,.stage.flashW::after,.stage.flashG::after{content:"";position:absolute;inset:0;z-index:60;pointer-events:none;animation:fade .8s reverse forwards}
+.stage.flashR::after{background:radial-gradient(circle,#ff1a1a99,#8a000066 70%)}
+.stage.flashW::after{background:#fff}
+.stage.flashG::after{background:radial-gradient(circle,#3dff5a44,#3dff5a00 70%)}
+.abs{position:absolute}
+.pfx{position:absolute;pointer-events:none;background:center/contain no-repeat}
+/* ---------- topo ---------- */
+#balBox{z-index:8;display:flex;align-items:center;justify-content:center;background:#181515;border-radius:1cqw;font:900 3.6cqw system-ui;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+#balBox.bump{animation:bump .5s}
+.hot{z-index:8;border-radius:2cqw}
+.hot:active{transform:scale(.92)}
+#snd{z-index:8;border-radius:50%;background:#000a;border:.35cqw solid #ffc21a88;font-size:3.6cqw;display:grid;place-items:center}
+#snd.off{opacity:.55}
+.drop{position:absolute;width:1.5cqw;aspect-ratio:.7;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 35% 35%,#fff3a0,#ffc21a 45%,#d98a00);box-shadow:0 0 1cqw #ffc21a88;z-index:3;pointer-events:none}
+/* placa do multiplicador (cobre o "2.48x" desenhado) */
+#multBox{z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(#212020,#281a16);border-radius:1.6cqw}
+#mult{font:900 17cqw/1 system-ui;letter-spacing:-.4cqw;color:#ffd84a;-webkit-text-stroke:.6cqw #6a2a00;paint-order:stroke fill;text-shadow:0 .9cqw 0 #7a3200,0 0 4cqw #ff9a1a88;font-variant-numeric:tabular-nums;white-space:nowrap}
+#mult.hot{color:#ffb02a;text-shadow:0 .9cqw 0 #7a2a00,0 0 6cqw #ff6a1a}
+#mult.fire{color:#ff6a4a;text-shadow:0 .9cqw 0 #5a0a00,0 0 7cqw #ff2a1a;animation:tremble .12s infinite}
+#mult.pop{animation:mpop .45s cubic-bezier(.3,1.8,.5,1)}
+#mult.crashed{color:#ff4a4a;-webkit-text-stroke-color:#3a0000;text-shadow:0 .9cqw 0 #3a0000,0 0 5cqw #ff0000}
+#mult.won{color:#7dff5a;-webkit-text-stroke-color:#0a3a00;text-shadow:0 .9cqw 0 #0a4a00,0 0 5cqw #3dff5a}
+#mult.small{font-size:12cqw}
+#count{display:none;width:70%;height:1.6cqw;margin-top:2cqw;border-radius:1cqw;background:#0008;border:.25cqw solid #ffc21a88;overflow:hidden}
+#count::before{content:"";display:block;height:100%;width:var(--p,100%);background:linear-gradient(90deg,#ff7a1a,#ffd84a);box-shadow:0 0 2cqw #ffc21a}
+#sub{font:900 3.6cqw system-ui;color:#fff;text-shadow:0 .3cqw 0 #000;min-height:4cqw;margin-top:.6cqw;white-space:nowrap}
+#sub.bad{color:#ff8a8a}#sub.good{color:#9dff6a}
+/* últimas (cobre os valores desenhados) */
+#hist{z-index:6;display:flex;flex-direction:column;align-items:center;gap:.95cqw;background:#211f1e;border-radius:1cqw;padding-top:.4cqw}
+#hist b{width:100%;padding:.55cqw 0;border-radius:1cqw;text-align:center;background:#1a2a17;font:900 3.3cqw system-ui;color:#4dff5a;font-variant-numeric:tabular-nums;animation:slidein .5s}
+#hist b.lo{background:#2a1716;color:#ff4a4a}
+#hist b.top{background:#2a2410;color:#ffd84a;text-shadow:0 0 1.5cqw #ffb02a}
+@keyframes slidein{from{transform:translateY(-100%);opacity:0}}
+/* medidor da barriga (os 5 desenhos do mockup) */
+.cell{z-index:6;border-radius:1.6cqw;pointer-events:none;background:#000a;transition:background .3s,box-shadow .3s}
+.cell.on{background:#0000;box-shadow:0 0 0 .6cqw #ffd84a,0 0 4cqw 1cqw #ff9a1a;animation:cellP .5s ease-in-out infinite alternate}
+.cell.past{background:#0004}
+.cell.boom{background:#0000;box-shadow:0 0 0 .7cqw #ff3b3b,0 0 6cqw 2cqw #ff0000;animation:cellP .15s infinite alternate}
+@keyframes cellP{to{transform:scale(1.04)}}
+#gaugeMask{z-index:6;background:#140f14;border-radius:1cqw;transition:top .2s}
+/* ---------- Barriguinho ---------- */
+/* o menino termina reto onde o balcão o cobria no mockup: recorta na linha do balcão e a barriga cresce por trás dele */
+#kidClip{left:0;top:0;width:100%;z-index:4;overflow:hidden;pointer-events:none}
+#kid{left:0;width:100%}
+#kid.gone{visibility:hidden}
+#kid.back{animation:back .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes back{from{transform:scale(.4) translateY(30%);opacity:0}}
+#after{z-index:4;pointer-events:none;background:center bottom/contain no-repeat;display:none;transform-origin:50% 100%}
+#after.on{display:block;animation:afterIn .5s cubic-bezier(.3,1.6,.5,1),dizzy 1.2s ease-in-out .5s infinite alternate}
+@keyframes afterIn{from{transform:scale(.2);opacity:0}}
+@keyframes dizzy{0%{transform:rotate(-3deg)}100%{transform:rotate(3deg)}}
+.burger{position:absolute;z-index:7;pointer-events:none;background:center/contain no-repeat}
+.bubble{position:absolute;z-index:20;pointer-events:none;padding:1.3cqw 2.4cqw;border-radius:3cqw;background:#fff;color:#5a1a00;font:900 3.3cqw/1.15 system-ui;box-shadow:0 1cqw 3cqw #0008;white-space:nowrap;animation:bubble 1.8s ease forwards}
+.bubble::after{content:"";position:absolute;left:20%;bottom:-1.6cqw;border:1cqw solid transparent;border-top-color:#fff}
+@keyframes bubble{0%{transform:scale(0);opacity:0}12%{transform:scale(1.1);opacity:1}20%{transform:scale(1)}80%{opacity:1}100%{transform:translateY(-40%);opacity:0}}
+.nhac{position:absolute;z-index:19;pointer-events:none;font:900 5.4cqw/1 system-ui;color:#fff;-webkit-text-stroke:.7cqw #b03a00;paint-order:stroke fill;white-space:nowrap;animation:nhac .8s ease-out forwards}
+@keyframes nhac{0%{transform:scale(.2) rotate(-12deg);opacity:0}25%{transform:scale(1.2) rotate(-6deg);opacity:1}100%{transform:translateY(-90%) scale(.9) rotate(-4deg);opacity:0}}
+.sweat{position:absolute;z-index:6;pointer-events:none;width:1.6cqw;aspect-ratio:.65;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff,#9fdcff 50%,#3a9aff)}
+.badge{position:absolute;left:50%;top:31%;translate:-50%;z-index:22;pointer-events:none;font:900 10cqw/1 system-ui;color:#fff;-webkit-text-stroke:.8cqw var(--c,#7a2a00);paint-order:stroke fill;text-shadow:0 0 5cqw var(--c,#ff9a1a);animation:badge 1.3s cubic-bezier(.2,1.5,.4,1) forwards;white-space:nowrap}
+@keyframes badge{0%{transform:scale(0) rotate(-20deg);opacity:0}20%{transform:scale(1.2) rotate(4deg);opacity:1}35%{transform:scale(1)}75%{opacity:1}100%{transform:translateY(-80%) scale(.7);opacity:0}}
+.face{position:absolute;z-index:21;pointer-events:none;background-repeat:no-repeat;animation:facepop 1.6s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes facepop{0%{transform:scale(0)}15%{transform:scale(1.15)}25%{transform:scale(1)}80%{opacity:1}100%{transform:scale(.6) translateY(-30%);opacity:0}}
+/* estouro: ketchup que gruda na tela e escorre */
+.splat{position:absolute;z-index:30;pointer-events:none;background:center/contain no-repeat;filter:drop-shadow(0 .6cqw .6cqw #5a000088)}
+.run{position:absolute;z-index:31;pointer-events:none;width:3cqw;border-radius:0 0 1.5cqw 1.5cqw;background:linear-gradient(90deg,#8a0000,#e01010 40%,#ff5a4a 55%,#c00000);transform-origin:50% 0}
+.run::after{content:"";position:absolute;left:-15%;bottom:-1.6cqw;width:130%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff6a5a,#c00000 60%)}
+#boomTxt{left:0;right:0;top:44%;z-index:40;text-align:center;pointer-events:none;font:900 15cqw/1 system-ui;color:#ffe14a;-webkit-text-stroke:1.2cqw #6a0000;paint-order:stroke fill;text-shadow:0 1.4cqw 0 #6a0000,0 0 8cqw #ff2a00;display:none}
+#boomTxt.on{display:block;animation:boomT 2s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes boomT{0%{transform:scale(4) rotate(-10deg);opacity:0}12%{transform:scale(.9) rotate(-5deg);opacity:1}20%{transform:scale(1.1) rotate(3deg)}28%{transform:scale(1) rotate(-3deg)}80%{opacity:1}100%{transform:scale(1.3);opacity:0}}
+/* ---------- aposta (cobre o desenhado) ---------- */
+#betVal{z-index:8;display:grid;place-items:center;background:linear-gradient(#0d0a0d,#0c090c);font:900 5.6cqw system-ui;color:#fff;font-variant-numeric:tabular-nums}
+#betVal.bump{animation:bump .4s}
+.chip{z-index:8;border-radius:1.4cqw;transition:box-shadow .2s}
+.chip.sel{box-shadow:0 0 0 .5cqw #ffc21a,0 0 3cqw #ffc21a}
+.chip:active{transform:scale(.93)}
+.chip:disabled,.pm:disabled{opacity:.5;cursor:default}
+.pm{z-index:8;border-radius:1.8cqw}
+#go{z-index:8;border-radius:3.2cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8cqw;font:900 7.6cqw/1 system-ui;color:#0a3a00;background:linear-gradient(#8dff6a,#3ddf3a 45%,#1aae1f);border:.5cqw solid #c8ffb0;box-shadow:0 1.2cqw 0 #0a6a10,0 0 4cqw #3dff5a88;animation:goIdle 1.4s ease-in-out infinite}
+#go small{font:900 5.6cqw system-ui;font-variant-numeric:tabular-nums}
+#go:active{transform:translateY(.6cqw);box-shadow:0 .5cqw 0 #0a6a10}
+#go.cash{background:linear-gradient(#fff39a,#ffd54a 45%,#ff9a1a);border-color:#fff6c8;box-shadow:0 1.2cqw 0 #a85a00,0 0 6cqw #ffd54aaa;color:#4a1a00;animation:cashPulse .45s ease-in-out infinite alternate}
+#go.cancel{background:linear-gradient(#ff9aa4,#ff4d5e 45%,#b0102a);border-color:#ffd0d6;box-shadow:0 1.2cqw 0 #6a0a18;color:#fff;animation:none;font-size:6.4cqw}
+#go.cancel small{font-size:3.4cqw}
+@keyframes goIdle{50%{box-shadow:0 1.2cqw 0 #0a6a10,0 0 7cqw #3dff5acc;scale:1.02}}
+@keyframes cashPulse{to{scale:1.04;box-shadow:0 1.2cqw 0 #a85a00,0 0 9cqw #ffd54a}}
+#msg{z-index:8;text-align:center;font:800 3.2cqw/1.2 system-ui;color:#fff;text-shadow:0 0 1.5cqw #000,0 .3cqw 0 #000;white-space:nowrap}
+/* ganho grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle,#c86a10cc,#1a0806f2);z-index:70;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .ray{position:absolute;width:200vmax;aspect-ratio:1;background:repeating-conic-gradient(#ffd54a22 0 10deg,#0000 10deg 20deg);animation:rot 8s linear infinite;pointer-events:none}
+.overlay .pic{position:relative;width:min(300px,64vw);aspect-ratio:1;background:url(assets/barriga/bgold.webp) center/contain no-repeat;animation:zoom .6s cubic-bezier(.2,1.6,.4,1),wob 1s ease-in-out .6s infinite alternate}
+.overlay h2{position:relative;font:900 clamp(34px,11vw,60px)/1 system-ui;color:#fff27a;-webkit-text-stroke:6px #5a2a00;paint-order:stroke fill;text-shadow:0 5px 0 #5a2a00,0 0 24px #ffd54a;animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay .amt{position:relative;font-size:clamp(38px,12vw,64px);font-weight:900;color:#7dff5a;text-shadow:0 0 24px #3dff5a;font-variant-numeric:tabular-nums}
+.overlay small{position:relative}
+.rain{position:fixed;top:-60px;z-index:71;pointer-events:none;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,420px);max-height:84vh;border:3px solid var(--y);border-radius:16px;background:#1e0d08;color:#fff;padding:16px;font:14px/1.45 system-ui;box-shadow:0 0 30px #ffc21a55}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--y);text-align:center;margin-bottom:10px}
+dialog table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+dialog td{padding:6px 4px;border-bottom:1px solid #ffffff14}
+dialog td:last-child{text-align:right}
+dialog p{margin-top:8px;opacity:.9}
+dialog .close{margin:14px auto 0;display:block;padding:8px 26px;border-radius:20px;background:var(--y);color:#3a1a00;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff14;color:#fff;border-radius:12px;padding:10px}
+@keyframes bump{50%{transform:scale(1.2);color:var(--y)}}
+@keyframes mpop{from{transform:scale(1.35)}}
+@keyframes tremble{25%{translate:-.4cqw .2cqw}75%{translate:.4cqw -.2cqw}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes wob{to{transform:rotate(8deg) scale(1.05)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes shake{20%{translate:-1.2% .6%}40%{translate:1.2% -.6%}60%{translate:-.8% .4%}80%{translate:.8% 0}}
+@keyframes boomShake{8%{translate:-3% 1.5%}16%{translate:3% -1.5%}26%{translate:-2.5% 1%}36%{translate:2.5% -1%}48%{translate:-1.5% .6%}62%{translate:1.5% -.4%}78%{translate:-.6% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Barriguinho</h1>
+  <button class="abs hot" id="menu" aria-label="Menu"></button>
+  <div class="abs" id="balBox">R$ 0,00</div>
+  <button class="abs hot" id="dep" aria-label="Depositar"></button>
+  <button class="abs" id="snd" aria-label="Som">🔊</button>
+  <div class="abs" id="multBox"><div id="mult">1.00x</div><div id="count"></div><div id="sub"></div></div>
+  <div class="abs" id="hist"></div>
+  <div id="cells"></div><div class="abs" id="gaugeMask"></div>
+
+  <div class="abs" id="kidClip"><canvas class="abs" id="kid"></canvas></div>
+  <div class="abs" id="after"></div>
+  <div id="belt"></div>
+
+  <div class="abs" id="betVal">R$ 10,00</div>
+  <button class="abs pm" id="bDown" aria-label="Diminuir aposta"></button>
+  <button class="abs pm" id="bUp" aria-label="Aumentar aposta"></button>
+  <div id="chips"></div>
+  <button class="abs" id="go">APOSTAR</button>
+  <div class="abs" id="msg" aria-live="polite"></div>
+  <div class="abs" id="boomTxt">ESTOUROU!</div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="ray"></div>
+  <div class="pic"></div>
+  <h2 id="ovTitle">RETIROU!</h2>
+  <div class="amt" id="ovAmt">R$ 0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="dlgList"><h3 id="listTitle"></h3><table id="listRows"></table><button class="close" onclick="dlgList.close()">Fechar</button></dialog>
+<dialog id="dlgRules">
+  <h3>Como jogar</h3>
+  <p>1. Escolha a aposta e toque em <b>APOSTAR</b> antes da rodada começar.</p>
+  <p>2. O Barriguinho come hambúrguer sem parar e o multiplicador sobe junto com a barriga. Toque em <b>RETIRAR</b> antes dele estourar pra levar aposta × multiplicador.</p>
+  <p>3. Se ele estourar antes de você retirar, perde a aposta. Apostou durante a rodada? Vale pra próxima.</p>
+  <p>RTP (retorno médio): <b id="rtpInfo"></b>. Multiplicador máximo: <b id="maxInfo"></b>. O ponto do estouro é sorteado antes da rodada, com gerador criptográfico do navegador; a barriga crescendo é só a encenação e não avisa a hora do estouro.</p>
+  <button class="close" onclick="dlgRules.close()">Fechar</button>
+</dialog>
+<dialog id="dlgMenu">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mMusic">🎵 Música: ligada</button>
+    <button id="mHist">📊 Histórico</button>
+    <button id="mRank">🏆 Maiores ganhos</button>
+    <button id="mRules">❔ Como jogar</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button class="close" onclick="dlgMenu.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="barriga.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('barriga')</script><!-- admin assiste ao vivo -->
+<script>
+const { MAX, drawCrash, multAt } = BR; // RTP: ler BR.RTP (muda ao vivo entre rodadas)
+const $ = s => document.querySelector(s), stage = $('#stage');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => 'R$ ' + x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fx = m => m.toFixed(2) + 'x';
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.random() * a.length | 0];
+const START = 20, WAIT_MS = 6000, AFTER_MS = 4200;
+const BETS = [1, 2, 5, 10, 25, 50, 100];
+const FACES = [10, 250, 200]; // tira das carinhas: [quadros, largura, altura] (saída do tools/barriga_assets.py)
+
+// posições na arte (px de 941x1672) -> %
+const W = 941, H = 1672;
+const place = (el, [x, y, w, h]) => Object.assign(el.style, { left: x / W * 100 + '%', top: y / H * 100 + '%', width: w / W * 100 + '%', ...(h != null ? { height: h / H * 100 + '%' } : {}) });
+const KID = [150, 500, 590, 610], CLIP = 1096;   // Barriguinho no mockup (kid.webp) e a linha do balcão que o cobre
+const PX = { menu: [24, 20, 80, 66], balBox: [704, 30, 156, 46], dep: [862, 28, 50, 50], snd: [866, 96, 52, 52], multBox: [254, 316, 444, 176],
+  hist: [28, 372, 112, 478], kidClip: [0, 0, W, CLIP], after: [255, 640, 420, 440], betVal: [126, 1450, 286, 64], bDown: [46, 1446, 76, 74], bUp: [416, 1446, 76, 74],
+  go: [516, 1404, 390, 190], msg: [20, 1356, 900, 40] };
+for (const id in PX) place($('#' + id), PX[id]);
+Object.assign($('#kid').style, { top: KID[1] / CLIP * 100 + '%', height: (CLIP - KID[1]) / CLIP * 100 + '%' }); // dentro do #kidClip
+const MOUTH = [425, 790], BELLYC = [463, 1000];                       // boca e centro da barriga (px da arte)
+function div(cls, css = {}) { const d = document.createElement('div'); d.className = cls; Object.assign(d.style, css); return d; }
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('barriga.saldo') || START; } catch {}
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('barriga.saldo', balance); } catch {}
+}
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let history = load('barriga.hist', []), mine = load('barriga.mine', []);
+
+// ---------- som (sintetizado) ----------
+let ac, sfxOn = load('barriga.sfx', true), musicOn = load('barriga.music', true), musicTimer;
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+const now = () => audio().currentTime;
+function tone(f, t, d, { type = 'sine', vol = .15, slide = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+function noise(t, d, vol = .15, freq = 1500, q = 1, to = 0) {
+  const a = audio(), b = a.createBuffer(1, Math.max(1, a.sampleRate * d | 0), a.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length) ** 2;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = b; f.type = 'bandpass'; f.frequency.setValueAtTime(freq, t); if (to) f.frequency.exponentialRampToValueAtTime(to, t + d); f.Q.value = q; g.gain.value = vol;
+  s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+// estouro: amostra feita na mão (estalo + rugido grave que despenca), saturada
+let boomBuf;
+function boomSample() {
+  const a = audio(), sr = a.sampleRate, n = sr * 1.6 | 0, b = a.createBuffer(1, n, sr), ch = b.getChannelData(0);
+  let ph = 0, lp = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sr, w = Math.random() * 2 - 1; lp += (w - lp) * (.05 + .3 * Math.exp(-t * 6));
+    ph += 2 * Math.PI * (38 + 90 * Math.exp(-t * 7)) / sr;
+    ch[i] = Math.tanh(((t < .01 ? w : 0) + lp * 2.4 * Math.exp(-t * 2.6) + Math.sin(ph) * 1.2 * Math.exp(-t * 3)) * 1.6);
+  }
+  return b;
+}
+const SFX = {
+  click() { tone(900, now(), .05, { type: 'triangle', vol: .07 }); },
+  bet() { tone(660, now(), .08, { type: 'triangle', vol: .1 }); tone(990, now() + .07, .1, { type: 'triangle', vol: .1 }); },
+  nhac() { const t = now(); noise(t, .07, .5, 900, 1.2); noise(t + .09, .06, .35, 700, 1.2); tone(140, t, .1, { vol: .12, slide: 90 }); },
+  gulp() { const t = now(); tone(180, t, .16, { vol: .22, slide: 420 }); tone(260, t + .05, .12, { vol: .1, slide: 120 }); },
+  burp() { const t = now(); const a = audio(), o = a.createOscillator(), g = a.createGain(), l = a.createOscillator(), lg = a.createGain(), f = a.createBiquadFilter();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t); o.frequency.linearRampToValueAtTime(75, t + .7); l.frequency.value = 28; lg.gain.value = 22; l.connect(lg).connect(o.frequency);
+    f.type = 'lowpass'; f.frequency.value = 700; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.32, t + .04); g.gain.exponentialRampToValueAtTime(.0001, t + .75);
+    o.connect(f).connect(g).connect(a.destination); o.start(t); l.start(t); o.stop(t + .8); l.stop(t + .8); },
+  ronco() { const t = now(); tone(70, t, .8, { type: 'triangle', vol: .14, slide: 50 }); tone(95, t + .3, .6, { type: 'triangle', vol: .1, slide: 60 }); },
+  stretch() { tone(rnd(300, 500), now(), .25, { type: 'sawtooth', vol: .035, slide: rnd(700, 900) }); },
+  boom() { const a = audio(), s = a.createBufferSource(), g = a.createGain(); s.buffer = boomBuf ||= boomSample(); g.gain.value = 1; s.connect(g).connect(a.destination); s.start(); },
+  splat(v = .35) { const t = now(); noise(t, .18, v, 600, .8, 180); tone(220, t, .12, { vol: v * .4, slide: 70 }); },
+  eww() { const t = now(); for (let i = 0; i < 6; i++) tone(rnd(260, 380), t + rnd(0, .1), 1, { type: 'sawtooth', vol: .02, slide: rnd(150, 200) }); },
+  milestone(n) { const t = now(); [659, 784, 988, 1319].slice(0, 2 + Math.min(2, n)).forEach((f, i) => tone(f, t + i * .07, .2, { type: 'triangle', vol: .12 })); },
+  cash() { const t = now(); [784, 988, 1175, 1568, 1976].forEach((f, i) => tone(f, t + i * .07, .25, { type: 'triangle', vol: .12 })); },
+  coin() { tone(1800 + Math.random() * 600, now(), .08, { type: 'square', vol: .025 }); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+// musiquinha de lanchonete (órgão de parque + baixo saltitante); acelera com o multiplicador
+const BASS = [131, 0, 196, 0, 147, 0, 196, 0], MEL = [523, 659, 784, 659, 587, 698, 880, 698];
+let tempo = 1;
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  let step = 0;
+  (function tick() {
+    const t = now(), b = BASS[step % 8];
+    if (b) tone(b * (step % 32 >= 16 ? 1.335 : 1), t, .2, { type: 'triangle', vol: .1 });
+    if (step % 2 === 0) tone(MEL[(step >> 1) % 8] * (step % 32 >= 16 ? 1.335 : 1), t, .14, { type: 'square', vol: .016 });
+    if (step % 4 === 2) noise(t, .05, .05, 6000, 3);
+    step++;
+    musicTimer = setTimeout(tick, 170 / tempo);
+  })();
+}
+const stopMusic = () => { clearTimeout(musicTimer); musicTimer = null; };
+
+// ---------- efeitos ----------
+/** peça da folha (assets/barriga/<name>.webp) animada uma vez e removida; (x, y) = centro, s = largura (px da arte) */
+function fxOnce(name, x, y, s, keys, ms, z = 25, ease = 'ease-out', ratio = 1) {
+  const e = div('pfx', { backgroundImage: `url(assets/barriga/${name}.webp)`, left: (x - s / 2) / W * 100 + '%', top: (y - s * ratio / 2) / H * 100 + '%', width: s / W * 100 + '%', height: s * ratio / H * 100 + '%', zIndex: z });
+  stage.append(e); e.animate(keys, { duration: ms, easing: ease, fill: 'forwards' }).onfinish = () => e.remove(); return e;
+}
+/** pedaço voando com gravidade (sobe, gira e cai pra fora) */
+function voa(name, x, y, s, { dx = rnd(-300, 300), up = rnd(150, 450), ms = rnd(1100, 1800), z = 26, rot = rnd(-720, 720) } = {}) {
+  const sw = stage.clientWidth / W;
+  fxOnce(name, x, y, s, [{ transform: 'translate(0,0) rotate(0) scale(.5)' }, { transform: `translate(${dx * .5 * sw}px,${-up * sw}px) rotate(${rot / 2}deg) scale(1.1)`, offset: .35 },
+    { transform: `translate(${dx * sw}px,${(H - y + 200) * sw}px) rotate(${rot}deg) scale(1)` }], ms, z, 'cubic-bezier(.25,.6,.6,1)');
+}
+function badge(text, color) { stage.querySelectorAll('.badge').forEach(b => b.remove()); const b = div('badge'); b.textContent = text; b.style.setProperty('--c', color); stage.append(b); setTimeout(() => b.remove(), 1400); }
+function flash(c) { stage.classList.remove('flashR', 'flashW', 'flashG'); stage.offsetHeight; stage.classList.add(c); setTimeout(() => stage.classList.remove(c), 850); }
+function shake(c = 'shake') { stage.classList.remove('shake', 'boomShake'); stage.offsetHeight; stage.classList.add(c); }
+function say(text, x, y) {
+  stage.querySelectorAll('.bubble').forEach(b => b.remove());
+  const b = div('bubble', { top: y / H * 100 + '%' }); b.textContent = text; stage.append(b);
+  b.style.left = Math.max(1, Math.min(x / W * 100, 99 - b.offsetWidth / stage.clientWidth * 100)) + '%';
+  setTimeout(() => b.remove(), 1900);
+}
+function nhac(txt) { const e = div('nhac', { left: (MOUTH[0] + rnd(-60, 80)) / W * 100 + '%', top: (MOUTH[1] - rnd(120, 180)) / H * 100 + '%' }); e.textContent = txt; stage.append(e); setTimeout(() => e.remove(), 850); }
+// carinhas da folha: 0 feliz … 9 lambuzado de ketchup
+function faceAt(i, x, y, s = 150) {
+  stage.querySelectorAll('.face').forEach(b => b.remove());
+  const [n, fw, fh] = FACES, f = div('face', { left: (x - s / 2) / W * 100 + '%', top: (y - s * fh / fw / 2) / H * 100 + '%', width: s / W * 100 + '%', aspectRatio: `${fw} / ${fh}`,
+    backgroundImage: 'url(assets/barriga/faces.webp)', backgroundSize: `${n * 100}% 100%`, backgroundPosition: `${i / (n - 1) * 100}% 0` });
+  stage.append(f); setTimeout(() => f.remove(), 1700);
+}
+
+// ---------- cenário vivo: queijo pingando do logo ----------
+const DRIPS = [[300, 262], [360, 270], [420, 266], [480, 274], [540, 268], [600, 262], [660, 258]];
+setInterval(() => {
+  if (document.hidden) return;
+  const [x, y] = pick(DRIPS), d = div('drop', { left: x / W * 100 + '%', top: y / H * 100 + '%' }); stage.append(d);
+  d.animate([{ transform: 'scaleY(.3)', opacity: 0 }, { transform: 'scaleY(1.2)', opacity: 1, offset: .25 }, { transform: `translateY(${stage.clientHeight * .05}px) scaleY(1.5)`, opacity: 0 }],
+    { duration: 1500, easing: 'cubic-bezier(.6,0,.9,.6)' }).onfinish = () => d.remove();
+}, 600);
+
+// ---------- esteira de hambúrgueres ----------
+const BURG = ['b1', 'b2', 'b3', 'b4', 'b5', 'b1', 'b3', 'bgold', 'bchili'];
+const BELT_Y = 1172, GAP = 310;
+let belt = [], beltX = 0;
+for (let k = 0; k < 5; k++) { const e = div('burger', { backgroundImage: `url(assets/barriga/${pick(BURG)}.webp)` }); $('#belt').append(e); belt.push(e); }
+function drawBelt(dt, speed) {
+  beltX = (beltX + speed * dt) % GAP;
+  belt.forEach((e, k) => {
+    const x = -180 + k * GAP + beltX, s = 190;
+    place(e, [x - s / 2, BELT_Y - s * .42, s, s * .84]);
+    e.style.transform = `translateY(${Math.sin((x + k * 50) / 40) * 2}%)`;
+    if (x > 1000 - speed * dt * 1.5 && x <= 1000) e.style.backgroundImage = `url(assets/barriga/${pick(BURG)}.webp)`; // troca o lanche quando some na direita
+  });
+}
+
+// ---------- Barriguinho: barriga incha com o multiplicador ----------
+const kid = $('#kid'), ctx = kid.getContext('2d'), KS = 1.5, kidImg = new Image();
+kidImg.src = 'assets/barriga/kid.webp';
+kid.width = W * KS; kid.height = (CLIP - KID[1]) * KS;
+let chew = 0;                                  // 0..1: quanto o corpo afunda na mordida
+const inchado = m => Math.min(1, Math.log(Math.max(1, m)) / Math.log(25)); // 1x -> 0, 25x -> 1
+// O menino é UMA imagem desenhada linha por linha: cada linha da barriga fica mais larga (e mais alta) conforme o
+// "abaulado" naquela altura, então ela incha numa curva lisa, sem emenda. O corpo de cima afunda na mordida.
+function drawKid(t, m) {
+  if (!kidImg.complete || !kidImg.naturalWidth) return;
+  const g = inchado(m), treme = g > .45 ? (g - .45) * 9 : 0;
+  const jx = Math.sin(t / 37) * treme, jy = Math.cos(t / 29) * treme * .6;   // tremedeira perto do limite
+  const wob = Math.sin(t / 180) * (1.5 + g * 4) / 100;                      // barriga balançando
+  const Gx = g * .75 + wob, Gy = g * .42 - wob * .5, bob = chew * 13 + Math.sin(t / 420) * 3, C = KID[0] + KID[2] / 2 + jx;
+  ctx.setTransform(KS, 0, 0, KS, 0, 0); ctx.clearRect(0, 0, W, CLIP - KID[1]);
+  let dy = 0;
+  for (let r = 0; r < KID[3] && r + dy < CLIP - KID[1]; r++) {
+    const ya = KID[1] + r, d = Math.min(1, Math.max(0, (ya - 870) / 226));
+    const b = Math.sin(Math.PI * d * .72);                        // 0 na camiseta, máximo no meio da barriga
+    const up = ya < 900 ? 1 : Math.max(0, 1 - (ya - 900) / 70);   // quanto a linha acompanha a mordida
+    const sx = 1 + g * .06 + Gx * b, h = 1 + Gy * b, w = KID[2] * sx;
+    ctx.drawImage(kidImg, 0, r, KID[2], 1, C - w / 2, r + dy + bob * up + jy, w, h + .7);
+    dy += h - 1;
+  }
+  kid.style.filter = `saturate(${1 + g * .7}) hue-rotate(${-g * 10}deg) brightness(${1 + g * .05})`;
+}
+function sweat() {
+  const e = div('sweat', { left: (rnd(250, 640)) / W * 100 + '%', top: rnd(570, 700) / H * 100 + '%' }); stage.append(e);
+  e.animate([{ transform: 'translateY(0) scale(.6)', opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .2 }, { transform: `translateY(${stage.clientWidth * .12}px)`, opacity: 0 }], { duration: 1100, easing: 'ease-in' }).onfinish = () => e.remove();
+}
+// mordida: um lanche pula da esteira pra boca, o corpo afunda, migalhas voam
+function morde(m) {
+  const sw = stage.clientWidth / W, g = inchado(m);
+  const fromX = rnd(250, 700);
+  fxOnce(pick(BURG), fromX, BELT_Y - 40, 130, [{ transform: 'translate(0,0) scale(1) rotate(0)' }, { transform: `translate(${(MOUTH[0] - fromX) * .5 * sw}px,${-260 * sw}px) scale(.9) rotate(180deg)`, offset: .55 },
+    { transform: `translate(${(MOUTH[0] - fromX) * sw}px,${(MOUTH[1] - BELT_Y + 40) * sw}px) scale(.25) rotate(360deg)`, opacity: .3 }], 420, 9, 'ease-in');
+  setTimeout(() => {
+    chew = 1; play('nhac'); if (Math.random() < .55) nhac(pick(['NHAC!', 'NHOM!', 'CHOMP!', 'HMMM!', 'GLUP!']));
+    for (let k = 0; k < 4 + g * 6; k++) voa(pick(['bun', 'lettuce', 'tomato', 'cheese', 'pickle', 'onion']), MOUTH[0] + rnd(-30, 50), MOUTH[1] + rnd(-10, 30), rnd(28, 50), { dx: rnd(-220, 220), up: rnd(60, 200), ms: rnd(800, 1300), z: 9 });
+    if (g > .3 && Math.random() < .5) voa(pick(['splat4', 'dots']), MOUTH[0] + 20, MOUTH[1] + 20, rnd(50, 80), { dx: rnd(-200, 200), up: rnd(40, 140), ms: 1000, z: 9 });
+    setTimeout(() => { chew = 0; play('gulp'); }, 170);
+    if (g > .2) play('stretch');
+  }, 400);
+}
+
+// ---------- medidor: estágios da barriga ----------
+const CELLS = [[800, 322, 120, 118], [800, 447, 120, 116], [800, 567, 120, 124], [800, 695, 120, 142], [796, 842, 128, 172]];
+const STAGE_AT = [1, 1.6, 3, 7];                        // multiplicador em que entra em cada estágio (o 5º é o estouro)
+const cells = CELLS.map(p => { const c = div('abs cell'); place(c, p); $('#cells').append(c); return c; });
+const GAUGE = { x: 781, y0: 338, y1: 1004, w: 18 };
+function drawGauge(m, boom = false) {
+  const st = boom ? 4 : STAGE_AT.filter(v => m >= v).length - 1;
+  cells.forEach((c, k) => { c.classList.toggle('on', k === st && !boom); c.classList.toggle('boom', boom && k === 4); c.classList.toggle('past', k < st); });
+  const p = boom ? 1 : Math.min(.9, inchado(m) * .95 + .05), y = GAUGE.y0 + (GAUGE.y1 - GAUGE.y0) * p;
+  place($('#gaugeMask'), [GAUGE.x, y, GAUGE.w, Math.max(0, GAUGE.y1 - y)]);
+  return st;
+}
+
+// ---------- estado ----------
+let state = 'wait', t0 = performance.now(), crashAt = 1, curMult = 1, nextMark = 0, stg = 0, nextBite = 0, lastSweat = 0, lastT = performance.now();
+let betIdx = BETS.indexOf(10), active = null, queued = null, quedaManualPendente = false;
+const MARKS = [[2, '2x! 🍔', '#3dff5a'], [5, '5x! BARRIGUDO!', '#ffb02a'], [10, '10x 🔥', '#ff6a1a'], [20, '20x VAI ESTOURAR!', '#ff2a2a'], [50, '50x 🤯', '#ff2a8a'], [100, '100x!!!', '#ffd54a'], [250, '250x', '#ffd54a'], [500, '500x', '#ffd54a'], [1000, '1000x', '#ffd54a']];
+const msg = (t, c = '#fff') => { $('#msg').textContent = t; $('#msg').style.color = c; };
+const bump = el => { el.classList.remove('bump'); el.offsetHeight; el.classList.add('bump'); };
+const chipEls = [[45, 1540, 103, 56, 5], [160, 1540, 102, 56, 25], [274, 1540, 104, 56, 50], [390, 1540, 102, 56, 100]].map(([x, y, w, h, v]) => {
+  const b = document.createElement('button'); b.className = 'abs chip'; b.dataset.v = v; b.setAttribute('aria-label', 'Aposta R$ ' + v); place(b, [x, y, w, h]); $('#chips').append(b); return b;
+});
+
+function hud() {
+  $('#balBox').textContent = brl(balance);
+  $('#betVal').textContent = brl(BETS[betIdx]);
+  const locked = state === 'wait' && active;
+  chipEls.forEach(b => { b.classList.toggle('sel', +b.dataset.v === BETS[betIdx]); b.disabled = !!locked; });
+  $('#bDown').disabled = $('#bUp').disabled = !!locked;
+  const go = $('#go'); go.className = 'abs';
+  if (state === 'fly' && active && !active.cashed) { go.classList.add('cash'); go.innerHTML = `RETIRAR<small>${brl(r2(active.bet * curMult))}</small>`; }
+  else if (state === 'wait' && active) { go.classList.add('cancel'); go.innerHTML = `CANCELAR<small>aposta de ${brl(active.bet)}</small>`; }
+  else if (queued) { go.classList.add('cancel'); go.innerHTML = `CANCELAR<small>aposta da próxima rodada</small>`; }
+  else go.innerHTML = state === 'wait' ? 'APOSTAR' : 'APOSTAR<small style="font-size:3.4cqw">na próxima rodada</small>';
+}
+function renderHist() { $('#hist').innerHTML = history.slice(0, 8).map(m => `<b class="${m >= 10 ? 'top' : m < 1.2 ? 'lo' : ''}">${fx(m)}</b>`).join(''); }
+
+function startWait() {
+  state = 'wait'; t0 = performance.now(); curMult = 1; nextMark = 0; tempo = 1; stg = 0;
+  active = queued; queued = null;
+  // limpa o estouro e o Barriguinho volta
+  stage.querySelectorAll('.splat,.run').forEach(e => e.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' }).onfinish = () => e.remove());
+  $('#after').classList.remove('on'); kid.classList.remove('gone', 'back'); kid.offsetHeight; kid.classList.add('back');
+  $('#mult').className = 'small'; $('#count').style.display = 'block'; $('#sub').textContent = 'PRÓXIMA RODADA'; $('#sub').className = '';
+  drawGauge(1);
+  say(pick(['Tô com fome de novo! 🍔', 'Mais um rodízio, por favor!', 'Bora comer!', 'Cadê meu lanche?']), MOUTH[0] - 140, MOUTH[1] - 300);
+  hud();
+}
+function startFly() {
+  state = 'fly'; t0 = performance.now(); crashAt = drawCrash(); nextBite = 0;
+  $('#count').style.display = 'none'; $('#mult').className = ''; $('#mult').textContent = '1.00x'; $('#sub').textContent = '';
+  flash('flashG'); play('bet');
+  say(pick(['Hora do rango! 😋', 'Desafio aceito!', 'Só mais um... 🍔', 'Vou comer tudo!']), MOUTH[0] - 120, MOUTH[1] - 300);
+  if (active) msg(`Apostou ${brl(active.bet)} · retire antes de estourar!`); else msg('Aposte pra próxima rodada!', '#ffd84a');
+  hud();
+  if (quedaManualPendente) setTimeout(derrubarPorAdmin, 250);
+}
+function cashOut(at) {
+  if (!active || active.cashed) return;
+  active.cashed = true;
+  const pay = r2(active.bet * at);
+  balance = r2(balance + pay); save(); reportarRodada('barriga', active.bet, pay);
+  mine.unshift({ bet: active.bet, at, pay, crash: null }); mine = mine.slice(0, 30); store('barriga.mine', mine);
+  $('#mult').classList.add('won'); $('#sub').textContent = `Retirou ${brl(pay)}!`; $('#sub').className = 'good';
+  msg(`Você retirou em ${fx(at)} e ganhou ${brl(pay)} 💰`, '#9dff6a');
+  play('cash'); play('burp'); bump($('#balBox'));
+  say(pick(['BURRRP! 😮‍💨', 'Arrotei! Valeu!', 'Esse foi por sua conta!']), MOUTH[0] - 100, MOUTH[1] - 300);
+  const g = $('#go').getBoundingClientRect(), s = stage.getBoundingClientRect(), bx = (g.left + g.width / 2 - s.left) / s.width * W;
+  for (let i = 0; i < 14; i++) setTimeout(() => { voa('bonus', bx, 1450, rnd(50, 80), { dx: rnd(-260, 260), up: rnd(200, 420) }); play('coin'); }, i * 40);
+  fxOnce('spark', BELLYC[0], BELLYC[1] - 200, 280, [{ transform: 'scale(.2) rotate(0)', opacity: 1 }, { transform: 'scale(1.4) rotate(90deg)', opacity: 0 }], 900);
+  faceAt(1, 640, 700);
+  if (at >= 5) bigWin(pay, at);
+  hud();
+}
+
+// ---------- o estouro ----------
+function respingo(x, y, s, delay = 0) {
+  // ketchup voa do centro e gruda na tela (fica até a próxima rodada), depois escorre
+  setTimeout(() => {
+    const sw = stage.clientWidth / W, e = div('splat', { backgroundImage: `url(assets/barriga/${pick(['splat1', 'splat2', 'splat3', 'splat1', 'splat2', 'dots', 'splat5', 'splat6'])}.webp)`,
+      left: (x - s / 2) / W * 100 + '%', top: (y - s / 2) / H * 100 + '%', width: s / W * 100 + '%', height: s / H * 100 + '%' });
+    stage.append(e);
+    const rot = rnd(0, 360);
+    e.animate([{ transform: `translate(${(BELLYC[0] - x) * sw}px,${(BELLYC[1] - y) * sw}px) scale(.1) rotate(${rot}deg)` }, { transform: `translate(0,0) scale(1.15) rotate(${rot}deg)`, offset: .8 }, { transform: `scale(1) rotate(${rot}deg)` }],
+      { duration: rnd(180, 320), easing: 'cubic-bezier(.2,.8,.4,1)', fill: 'forwards' });
+    play('splat', .25);
+    if (Math.random() < .55) setTimeout(() => escorre(x + rnd(-s * .2, s * .2), y + s * .2, rnd(.6, 1.3)), rnd(200, 700));
+  }, delay);
+}
+function escorre(x, y, k = 1) {
+  const r = div('run', { left: x / W * 100 + '%', top: y / H * 100 + '%', height: '0', width: 2.2 * k + 'cqw' }); stage.append(r);
+  r.animate([{ height: '0cqw' }, { height: rnd(10, 26) * k + 'cqw' }], { duration: rnd(1800, 3200), easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' });
+}
+function crash() {
+  state = 'crash'; t0 = performance.now(); curMult = crashAt; tempo = 1;
+  $('#mult').textContent = fx(crashAt); $('#mult').className = 'crashed';
+  $('#sub').textContent = pick(['ESTOUROU! 💥', 'EXPLODIU DE TANTO COMER!', 'BUM! 🍔💥']); $('#sub').className = 'bad';
+  if (active && !active.cashed) {
+    reportarRodada('barriga', active.bet, 0);
+    mine.unshift({ bet: active.bet, at: null, pay: 0, crash: crashAt }); mine = mine.slice(0, 30); store('barriga.mine', mine);
+    msg(`Estourou em ${fx(crashAt)} · perdeu ${brl(active.bet)}`, '#ff8a8a');
+  } else if (!active) msg(`Estourou em ${fx(crashAt)}`);
+  if (mine[0]?.pay && mine[0].crash === null) { mine[0].crash = crashAt; store('barriga.mine', mine); }
+  history.unshift(crashAt); history = history.slice(0, 100); store('barriga.hist', history); renderHist();
+  drawGauge(crashAt, true);
+  // 1) clarão e a barriga some numa bola de fogo de ketchup
+  const [bx, by] = BELLYC;
+  kid.classList.add('gone'); flash('flashW'); setTimeout(() => flash('flashR'), 120); shake('boomShake'); play('boom');
+  $('#boomTxt').classList.remove('on'); $('#boomTxt').offsetHeight; $('#boomTxt').classList.add('on');
+  fxOnce('boom', bx, by - 40, 900, [{ transform: 'scale(.15) rotate(-10deg)', opacity: 1 }, { transform: 'scale(1.1) rotate(4deg)', opacity: 1, offset: .35 }, { transform: 'scale(1.5) rotate(8deg)', opacity: 0 }], 1300, 27, 'ease-out', .38);
+  fxOnce('spark', bx, by - 60, 520, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(2.2)', opacity: 0 }], 600, 28);
+  // 2) fumaça subindo
+  for (let k = 0; k < 9; k++) fxOnce(pick(['smoke1', 'smoke2', 'smoke3', 'smoke4', 'puff']), bx + rnd(-260, 260), by + rnd(-160, 60), rnd(220, 380),
+    [{ transform: 'scale(.3)', opacity: .95 }, { transform: `translate(${rnd(-30, 30)}%,${rnd(-80, -30)}%) scale(${rnd(1.4, 2.1)})`, opacity: 0 }], rnd(1600, 2600), 24);
+  // 3) pedaços de lanche e ketchup voando pra todo lado
+  for (let k = 0; k < 30; k++) voa(pick(['bun', 'patty', 'cheese', 'lettuce', 'tomato', 'onion', 'pickle', 'bacon', 'egg', 'b2', 'bopen', 'bbite', 'squirt', 'squirt2', 'splat4']),
+    bx + rnd(-60, 60), by + rnd(-60, 40), rnd(50, 120), { dx: rnd(-650, 650), up: rnd(250, 750), ms: rnd(1300, 2300), z: 29 });
+  for (let k = 0; k < 8; k++) voa(pick(['meteor', 'bfire', 'bchili']), bx, by - 40, rnd(90, 140), { dx: rnd(-700, 700), up: rnd(400, 800), ms: rnd(1500, 2200), z: 29 });
+  // 4) ketchup grudando na tela (em cima de tudo, até do multiplicador) e escorrendo
+  for (let k = 0; k < 22; k++) respingo(rnd(40, 900), rnd(260, 1300), rnd(110, 280), rnd(30, 380));
+  for (let k = 0; k < 7; k++) setTimeout(() => escorre(rnd(30, 910), -10, rnd(.8, 1.5)), rnd(200, 900)); // escorrendo do topo da tela
+  // 5) o Barriguinho reaparece chamuscado, lambuzado e tonto numa poça de ketchup
+  setTimeout(() => {
+    $('#after').style.backgroundImage = `url(assets/barriga/${pick(['aftermath1', 'aftermath2', 'aftermath3'])}.webp)`; $('#after').classList.add('on');
+    fxOnce('splat3', BELLYC[0], 1070, 520, [{ transform: 'scaleY(.35) scaleX(.2)', opacity: 1 }, { transform: 'scaleY(.35) scaleX(1)', opacity: 1, offset: .3 }, { transform: 'scaleY(.35) scaleX(1.05)', opacity: 1 }], AFTER_MS - 900, 3);
+    fxOnce('spark', BELLYC[0], 640, 160, [{ transform: 'rotate(0) scale(.6)', opacity: .9 }, { transform: 'rotate(720deg) scale(.8)', opacity: 0 }], 2000, 6);
+    play('eww'); play('splat', .5);
+    say(pick(['Ai... acho que exagerei 🤢', 'Cadê a sobremesa? 😵', 'Nunca mais... até amanhã', 'Alguém tem guardanapo?']), MOUTH[0] - 150, 560);
+  }, 700);
+  active = null;
+  hud();
+}
+function derrubarPorAdmin() {
+  if (state === 'fly') { quedaManualPendente = false; crashAt = Math.max(1, curMult); msg('Estouro manual acionado pelo admin', '#ff8a8a'); crash(); return; }
+  if (state === 'wait') { quedaManualPendente = true; msg('Estouro manual armado para a próxima rodada', '#ffcf5c'); }
+}
+
+function frame(t) {
+  const el = t - t0, dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
+  if (state === 'wait') {
+    const left = Math.max(0, WAIT_MS - el);
+    $('#mult').textContent = Math.ceil(left / 1000) + 's';
+    $('#count').style.setProperty('--p', (left / WAIT_MS) * 100 + '%');
+    drawKid(t, 1); drawBelt(dt, 120);
+    if (left === 0) startFly();
+  } else if (state === 'fly') {
+    const m = Math.min(multAt(el), crashAt);
+    curMult = m; tempo = Math.min(1.9, 1 + Math.log(m) / 3);
+    const g = inchado(m);
+    drawKid(t, m); drawBelt(dt, 160 + g * 520);
+    if (t >= nextBite) { morde(m); nextBite = t + Math.max(330, 1050 - g * 760) * rnd(.85, 1.15); }
+    if (g > .35 && t - lastSweat > 380 - g * 250) { lastSweat = t; sweat(); }
+    $('#mult').textContent = fx(m);
+    $('#mult').classList.toggle('hot', m >= 3 && m < 10 && !$('#mult').classList.contains('won'));
+    $('#mult').classList.toggle('fire', m >= 10 && !$('#mult').classList.contains('won'));
+    const s = drawGauge(m);
+    if (s > stg) { stg = s; play('ronco'); faceAt([0, 2, 5, 7][s], 650, 690); say(pick([['Tá cabendo mais!', 'Hmm, delícia!'], ['Ufa, tô cheio...', 'Só mais um!'], ['Acho que vai explodir...', 'Minha barriga tá roncando!'], ['NÃO AGUENTO MAIS!', 'SOCORRO! 😱']][s]), MOUTH[0] - 140, MOUTH[1] - 300); }
+    while (nextMark < MARKS.length && m >= MARKS[nextMark][0]) {
+      const [, txt, c] = MARKS[nextMark++]; badge(txt, c); play('milestone', nextMark); flash('flashG');
+      $('#mult').classList.remove('pop'); $('#mult').offsetHeight; $('#mult').classList.add('pop');
+    }
+    if (active && !active.cashed) $('#go small').textContent = brl(r2(active.bet * m));
+    if (multAt(el) >= crashAt) crash();
+  } else if (state === 'crash') {
+    drawBelt(dt, 40);
+    if (el > AFTER_MS) startWait();
+  }
+  requestAnimationFrame(frame);
+}
+
+function bigWin(pay, at) {
+  const ov = $('#overlay');
+  $('#ovTitle').textContent = at >= 20 ? 'BARRIGA DE OURO!' : 'RETIROU BONITO!';
+  ov.classList.add('show');
+  const t0 = performance.now(); (function up(t) { const k = Math.min(1, (t - t0) / 1500); $('#ovAmt').textContent = brl(pay * k); if (k < 1) requestAnimationFrame(up); })(t0);
+  for (let i = 0; i < 40; i++) {
+    const c = div('rain', { left: Math.random() * 100 + 'vw', width: rnd(36, 60) + 'px', aspectRatio: '1', background: `url(assets/barriga/${pick(['b1', 'b3', 'bgold', 'bonus', 'bonus'])}.webp) center/contain no-repeat`, animationDuration: rnd(1.6, 3.2) + 's', animationDelay: rnd(0, 1.2) + 's' });
+    document.body.append(c); setTimeout(() => c.remove(), 4600);
+  }
+  clearTimeout(ov.t); ov.t = setTimeout(() => ov.classList.remove('show'), 4000);
+}
+$('#overlay').onclick = () => $('#overlay').classList.remove('show');
+
+// ---------- botões ----------
+function placeBet() {
+  const bet = BETS[betIdx];
+  if (balance < bet) {
+    if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito', '#ff8a8a'); setTimeout(() => host.openModal('modal-deposit'), 1000); }
+    else if (!host && balance < BETS[0]) { balance = START; save(); msg('Créditos recarregados: ' + brl(START)); }
+    else msg('Saldo insuficiente, diminua a aposta', '#ff8a8a');
+    return hud();
+  }
+  balance = r2(balance - bet); save(); play('bet');
+  queued = { bet, cashed: false };
+  if (state === 'wait') { active = queued; queued = null; msg(`Aposta de ${brl(bet)} feita · bom apetite! 🍔`, '#ffd84a'); }
+  else msg(`Aposta de ${brl(bet)} vale pra próxima rodada`);
+  hud();
+}
+function cancelActive() { if (state === 'wait' && active) { balance = r2(balance + active.bet); active = null; save(); msg('Aposta cancelada'); hud(); } }
+$('#go').onclick = () => {
+  play('click');
+  if (state === 'fly' && active && !active.cashed) return cashOut(curMult);
+  if (state === 'wait' && active) return cancelActive();
+  if (queued) { balance = r2(balance + queued.bet); queued = null; save(); msg('Aposta cancelada'); return hud(); }
+  placeBet();
+};
+const setBet = i => { if (state === 'wait' && active) return; betIdx = Math.max(0, Math.min(BETS.length - 1, i)); play('click'); bump($('#betVal')); hud(); };
+$('#bDown').onclick = () => setBet(betIdx - 1);
+$('#bUp').onclick = () => setBet(betIdx + 1);
+chipEls.forEach(b => b.onclick = () => setBet(BETS.indexOf(+b.dataset.v)));
+$('#dep').onclick = () => { play('click'); if (host) host.openModal('modal-deposit'); };
+const sndIco = () => { $('#snd').classList.toggle('off', !sfxOn); $('#snd').textContent = sfxOn ? '🔊' : '🔇'; };
+$('#snd').onclick = () => { sfxOn = !sfxOn; store('barriga.sfx', sfxOn); sndIco(); }; sndIco();
+const musicTxt = () => `🎵 Música: ${musicOn ? 'ligada' : 'desligada'}`;
+$('#menu').onclick = () => { play('click'); $('#mMusic').textContent = musicTxt(); dlgMenu.showModal(); };
+$('#mRules').onclick = () => { dlgMenu.close(); dlgRules.showModal(); };
+$('#mMusic').onclick = () => { musicOn = !musicOn; store('barriga.music', musicOn); musicOn ? startMusic() : stopMusic(); $('#mMusic').textContent = musicTxt(); };
+function list(title, rows) { dlgMenu.close(); $('#listTitle').textContent = title; $('#listRows').innerHTML = rows; dlgList.showModal(); }
+$('#mHist').onclick = () => {
+  const n = history.length, over = x => n ? Math.round(history.filter(m => m >= x).length / n * 100) + '%' : '—';
+  list(`📊 Últimas ${n} rodadas`, n ? [1.5, 2, 5, 10, 20].map(x => `<tr><td>Passou de ${fx(x)}</td><td>${over(x)}</td></tr>`).join('') + `<tr><td>Maior barriga</td><td>${fx(Math.max(...history))}</td></tr>` +
+    '<tr><td colspan="2" style="padding-top:12px;color:#ffd84a">Suas últimas apostas</td></tr>' + mine.slice(0, 8).map(b => `<tr><td>${brl(b.bet)} ${b.at ? '· retirou em ' + fx(b.at) : ''}</td><td style="color:${b.pay ? '#9dff6a' : '#ff8a8a'}">${b.pay ? '+' + brl(b.pay) : 'estourou ' + fx(b.crash)}</td></tr>`).join('')
+    : '<tr><td>Nenhuma rodada ainda</td></tr>');
+};
+$('#mRank').onclick = () => {
+  const best = mine.filter(b => b.pay).sort((a, b) => b.pay - a.pay).slice(0, 10);
+  list('🏆 Seus maiores ganhos', best.length ? best.map((b, i) => `<tr><td>${['🥇', '🥈', '🥉'][i] || i + 1 + 'º'} ${brl(b.bet)} em ${fx(b.at)}</td><td style="color:#9dff6a">+${brl(b.pay)}</td></tr>`).join('') : '<tr><td>Nenhum ganho ainda. Bora comer!</td></tr>');
+};
+function sair() {
+  if (active && !active.cashed && state === 'fly') return alert('Espere a rodada acabar ou retire antes de sair.');
+  if (active && state === 'wait') cancelActive();
+  if (queued) { balance = r2(balance + queued.bet); queued = null; save(); }
+  host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html'));
+}
+$('#mExit').onclick = sair;
+// tocar no Barriguinho: ele reage (só diversão)
+let lastPoke = 0;
+$('#kid').style.pointerEvents = 'auto';
+$('#kid').onpointerdown = () => {
+  const t = performance.now(); if (t - lastPoke < 500 || state === 'crash') return; lastPoke = t;
+  play(Math.random() < .5 ? 'burp' : 'gulp'); faceAt(pick([0, 1, 3, 4]), 650, 690);
+  say(pick(state === 'fly' ? ['Não me cutuca que eu estouro! 😰', 'Tô comendo, pô!', 'Mais um! Mais um!'] : ['Me dá um lanche aí!', 'Aposta que eu como 50!', 'Tô só no esquenta 😋']), MOUTH[0] - 140, MOUTH[1] - 300);
+};
+$('#rtpInfo').textContent = (BR.RTP * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+$('#maxInfo').textContent = fx(MAX);
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !document.querySelector('dialog[open]')) { e.preventDefault(); $('#go').click(); } });
+document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
+window.addEventListener('orama:controle', e => { if (e.detail?.tipo === 'crash:derrubar') derrubarPorAdmin(); });
+// sair do jogo (fechar o iframe) com aposta na espera ou na fila: devolve
+addEventListener('pagehide', () => { if (state === 'wait' && active) cancelActive(); if (queued) { balance = r2(balance + queued.bet); queued = null; save(); } });
+// RTP mudou no painel: aplica entre rodadas (o ponto do estouro é sorteado no começo)
+rtpAoVivo('barriga', BR, { ocupado: () => state === 'fly', depois: r => $('#rtpInfo').textContent = (r * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' });
+
+renderHist();
+startWait();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
