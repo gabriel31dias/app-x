@@ -369,7 +369,7 @@ function toggleFav(e, gameId) {
 
 // --- Launch Game Router ---
 // jogos de tela cheia (iframe) têm modo teste pra quem ainda não tem conta; os de modal pedem login
-const JOGOS_COM_TESTE = ['capivara', 'gatinho', 'galinha', 'papagaio', 'raspa', 'macaco', 'truco', 'sinuca', 'sapo', 'perereca', 'lulinha', 'crodila', 'pato', 'urubu', 'calango', 'penalti', 'jegues', 'tartarugas', 'lagartas', 'velhinhas', 'briga', 'barriga', 'velha', 'bichos'];
+const JOGOS_COM_TESTE = ['capivara', 'gatinho', 'galinha', 'papagaio', 'raspa', 'macaco', 'truco', 'sinuca', 'sapo', 'perereca', 'lulinha', 'crodila', 'pato', 'urubu', 'calango', 'penalti', 'jegues', 'tartarugas', 'lagartas', 'velhinhas', 'briga', 'barriga', 'dragao', 'velha', 'bichos'];
 function launchGame(gameId) {
   if (!Auth.current && !(Demo.ligado && JOGOS_COM_TESTE.includes(gameId))) return Auth.show("login");
   Sounds.playClick();
@@ -405,6 +405,8 @@ function launchGame(gameId) {
     openGame('calango.html?v=5');
   } else if (gameId === 'barriga') {
     openGame('barriga.html?v=4');
+  } else if (gameId === 'dragao') {
+    openGame('dragao.html?v=1');
   } else if (gameId === 'briga') {
     openGame('briga.html?v=4');
   } else if (gameId === 'velhinhas') {
