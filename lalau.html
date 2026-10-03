@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jogo do Lalau</title>
+<style>
+/* Tela sobre a arte (assets/lalau/bg.webp 1024x1536, gerada por tools/lalau_assets.py).
+   --u = 1 pixel da arte: posições usam as coordenadas do desenho direto (calc(var(--u) * x)). */
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{overflow:hidden;background:#06231a;color:#fff;font-family:system-ui,sans-serif;display:grid;place-items:center;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/lalau/bg.webp) center/cover;filter:blur(26px) brightness(.5);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 1024 / 1536);aspect-ratio:1024/1536;background:url(assets/lalau/bg.webp) 0 0/100% 100%;container-type:inline-size;overflow:hidden;--u:calc(100cqw / 1024)}
+.stage.shake{animation:shake .45s}
+.a{position:absolute;pointer-events:none}
+.fxl{position:absolute;inset:0;pointer-events:none;z-index:8}
+.fxl img,.fxl div{position:absolute;pointer-events:none}
+.glow{mix-blend-mode:screen}
+
+/* ---- lago, letreiro e bichos vivos ---- */
+.water{position:absolute;left:0;width:100%;pointer-events:none;mix-blend-mode:screen;animation:water 6s linear infinite}
+#lake{top:calc(var(--u)*170);height:calc(var(--u)*140);background:repeating-linear-gradient(172deg,#fff0 0 calc(var(--u)*22),#bff4ff38 calc(var(--u)*25),#fff0 calc(var(--u)*30)) 0 0/200% 100%;-webkit-mask:linear-gradient(#0000,#000 35%,#000 75%,#0000);mask:linear-gradient(#0000,#000 35%,#000 75%,#0000);z-index:0}
+#pond{top:calc(var(--u)*1320);height:calc(var(--u)*130);background:repeating-linear-gradient(8deg,#fff0 0 calc(var(--u)*20),#a8f6ff40 calc(var(--u)*24),#fff0 calc(var(--u)*30)) 0 0/200% 100%;animation-direction:reverse;animation-duration:4.5s;z-index:1;-webkit-mask:linear-gradient(#0000,#000 25%,#000 70%,#0000);mask:linear-gradient(#0000,#000 25%,#000 70%,#0000)}
+#hero{left:calc(var(--u)*20);top:0;width:calc(var(--u)*984);z-index:4;transform-origin:50% 100%;animation:heroBob 3.4s ease-in-out infinite}
+#hero img{display:block;width:100%}
+#shine{position:absolute;inset:0;-webkit-mask:url(assets/lalau/hero.webp) 0 0/100% 100%;mask:url(assets/lalau/hero.webp) 0 0/100% 100%;background:linear-gradient(100deg,#fff0 42%,#fffbe8c0 50%,#fff0 58%) 0 0/300% 100% no-repeat;animation:shine 5s ease-in-out infinite;mix-blend-mode:screen}
+#hero.hop{animation:hop .55s cubic-bezier(.3,1.6,.5,1)}
+#hero.party{animation:party .5s ease-in-out infinite}
+.bubble{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#fff8 40%,#ffe9a066);z-index:5;pointer-events:none;animation:bubble ease-out forwards}
+.swim{position:absolute;z-index:2;pointer-events:none}
+.jump{position:absolute;z-index:1;pointer-events:none}
+.leaf{position:absolute;z-index:6;pointer-events:none;animation:leafFall linear forwards}
+.twinkle{position:absolute;pointer-events:none;z-index:5;mix-blend-mode:screen;animation:twinkle ease-in-out infinite}
+.fly{position:absolute;width:calc(var(--u)*10);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#fffbb0,#d8ff6a88 40%,#0000 70%);pointer-events:none;z-index:6;animation:firefly ease-in-out infinite}
+
+/* ---- grade: 5 colunas x 3 linhas, passo 188 x 180 ---- */
+.col{position:absolute;top:calc(var(--u)*598);width:calc(var(--u)*186);height:calc(var(--u)*540);overflow:hidden;z-index:3}
+.col.tease{box-shadow:0 0 0 calc(var(--u)*4) #ffd23f,0 0 calc(var(--u)*40) #7dff5a;animation:tease .35s ease-in-out infinite alternate}
+.col.grow{box-shadow:inset 0 0 calc(var(--u)*40) #ffd23f,0 0 calc(var(--u)*40) #ffb300}
+.strip{position:absolute;left:0;right:0;top:0}
+.strip.blur{filter:blur(calc(var(--u)*2.5)) brightness(1.1)}
+.cell{position:absolute;left:0;width:100%;height:calc(var(--u)*180);display:grid;place-items:center;transition:filter .25s}
+.cell>img{width:94%;height:94%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 calc(var(--u)*5) calc(var(--u)*5) #0008)}
+.cell.small>img{width:80%;height:80%}
+.cell.win{z-index:2}
+.cell.win>img{animation:winPulse .45s ease-in-out infinite alternate}
+.cell.win::after{content:"";position:absolute;inset:calc(var(--u)*4);border-radius:calc(var(--u)*14);box-shadow:inset 0 0 0 calc(var(--u)*4) #ffd23f,0 0 calc(var(--u)*22) #7dff5a;animation:frameGlow .45s ease-in-out infinite alternate;pointer-events:none}
+.cell.dim{filter:brightness(.35) saturate(.5)}
+.cell.wild>img{animation:wildBeat 1.1s ease-in-out infinite}
+.cell.scat>img{animation:scatBob 1.6s ease-in-out infinite;filter:drop-shadow(0 0 calc(var(--u)*12) #ffcf4aaa)}
+.cell.land>img{animation:land .5s cubic-bezier(.2,1.8,.4,1)}
+.cell.flip>img{animation:flip .55s ease-in-out}
+#boardDim{left:calc(var(--u)*44);top:calc(var(--u)*598);width:calc(var(--u)*938);height:calc(var(--u)*540);background:radial-gradient(ellipse,#0000,#000a);opacity:0;transition:opacity .4s;z-index:4}
+#boardDim.on{opacity:1}
+.stage.free .col{box-shadow:inset 0 0 calc(var(--u)*24) #ffd23f55}
+#fsBar{left:50%;top:calc(var(--u)*1146);translate:-50% 0;padding:calc(var(--u)*5) calc(var(--u)*26);border-radius:calc(var(--u)*30);background:linear-gradient(#5fd13a,#1c6b12);border:calc(var(--u)*4) solid #ffd23f;box-shadow:0 0 calc(var(--u)*24) #7dff5a;font:900 calc(var(--u)*28)/1 system-ui,sans-serif;white-space:nowrap;z-index:7;display:none;text-shadow:0 calc(var(--u)*2) 0 #0b3a06}
+.stage.free #fsBar{display:block}
+#fsBar b{color:#ffe066}
+#fsBar.up{animation:multUp .6s cubic-bezier(.2,1.8,.4,1)}
+
+/* ---- números e botões sobre a arte ---- */
+.num{position:absolute;display:grid;place-items:center;font:900 calc(var(--u)*32)/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 calc(var(--u)*2) 0 #000c;white-space:nowrap;z-index:7;pointer-events:none}
+#bet{left:calc(var(--u)*226);top:calc(var(--u)*1268);width:calc(var(--u)*148);height:calc(var(--u)*42)}
+.plank{position:absolute;top:calc(var(--u)*1420);width:calc(var(--u)*300);height:calc(var(--u)*96);background:url(assets/lalau/plank.webp) 0 0/100% 100%;z-index:7;pointer-events:none;filter:drop-shadow(0 calc(var(--u)*6) calc(var(--u)*6) #0009)}
+.plank small{position:absolute;left:0;right:0;top:calc(var(--u)*8);text-align:center;font:800 calc(var(--u)*18)/1 system-ui,sans-serif;letter-spacing:.12em;color:#ffe2a0;text-shadow:0 calc(var(--u)*2) 0 #3a1800}
+.plank .num{left:0;right:0;top:calc(var(--u)*34);height:calc(var(--u)*46)}
+#plBal{left:calc(var(--u)*30)}
+#plWin{left:calc(var(--u)*694)}
+#bal{color:#ffe9a0}
+#win{font-size:calc(var(--u)*36);background:linear-gradient(#fffbe0,#ffd23f 50%,#e08a00);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 calc(var(--u)*3) 0 #3a1800)}
+#win.pop{animation:pop .4s cubic-bezier(.2,1.8,.4,1)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+.hit{position:absolute;border-radius:50%;z-index:7;transition:transform .1s,background .15s,box-shadow .25s}
+.hit:active{transform:scale(.92);background:#fff3}
+.hit:focus-visible{outline:calc(var(--u)*4) solid #ffd23f}
+#menu{left:calc(var(--u)*26);top:calc(var(--u)*1240);width:calc(var(--u)*92);aspect-ratio:1}
+#betDown{left:calc(var(--u)*146);top:calc(var(--u)*1242);width:calc(var(--u)*68);aspect-ratio:1;border-radius:calc(var(--u)*14)}
+#betUp{left:calc(var(--u)*385);top:calc(var(--u)*1242);width:calc(var(--u)*68);aspect-ratio:1;border-radius:calc(var(--u)*14)}
+#coins{left:calc(var(--u)*218);top:calc(var(--u)*1240);width:calc(var(--u)*164);height:calc(var(--u)*74);border-radius:calc(var(--u)*16)}
+#auto{left:calc(var(--u)*678);top:calc(var(--u)*1232);width:calc(var(--u)*220);height:calc(var(--u)*88);border-radius:calc(var(--u)*18)}
+.hit.on{box-shadow:0 0 0 calc(var(--u)*5) #ffd23f,0 0 calc(var(--u)*34) #7dff5a;animation:beat .8s ease-in-out infinite}
+/* girar: recorte do botão da própria arte, que gira junto */
+.spin{position:absolute;left:calc(var(--u)*460);top:calc(var(--u)*1176);width:calc(var(--u)*212);aspect-ratio:1;border-radius:50%;z-index:7;filter:drop-shadow(0 0 calc(var(--u)*18) #7dff5a88)}
+.spin img{width:100%;height:100%;display:block;pointer-events:none;clip-path:circle(46%)}
+.spin:not(.busy){animation:spinIdle 2.2s ease-in-out infinite}
+.spin:active{transform:scale(.94)}
+.spin.busy img{animation:rot .55s linear infinite}
+.spin.free{filter:drop-shadow(0 0 calc(var(--u)*26) #ffd23f)}
+
+/* ---- Lalau passeando (clicável) e Lalau festejando ---- */
+#walker{position:absolute;left:0;top:calc(var(--u)*1236);width:calc(var(--u)*290);height:calc(var(--u)*297);z-index:9;display:none;cursor:pointer;padding:0}
+#walker.on{display:block}
+#walker .body{position:absolute;inset:0;animation:walkBob .28s ease-in-out infinite alternate}
+#walker img{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;filter:drop-shadow(0 calc(var(--u)*8) calc(var(--u)*6) #0008)}
+#walker img.on{opacity:1}
+#walker .tip{position:absolute;left:50%;top:calc(var(--u)*-30);translate:-50% 0;padding:calc(var(--u)*8) calc(var(--u)*18);border-radius:calc(var(--u)*20);background:linear-gradient(#ffe066,#ff9d00);border:calc(var(--u)*3) solid #fff;color:#4a2300;font:900 calc(var(--u)*24)/1 system-ui,sans-serif;white-space:nowrap;box-shadow:0 0 calc(var(--u)*20) #ffd23f;animation:beat .6s ease-in-out infinite}
+#walker .tip::after{content:"";position:absolute;left:50%;bottom:calc(var(--u)*-14);translate:-50% 0;border:calc(var(--u)*10) solid #0000;border-top-color:#fff}
+#walker.got{cursor:default}
+#walker.got .body{animation:party .4s ease-in-out infinite}
+#walker.got .tip{display:none}
+#walker:focus-visible{outline:calc(var(--u)*4) solid #ffd23f;border-radius:calc(var(--u)*20)}
+#dancer{position:absolute;left:calc(var(--u)*367);top:calc(var(--u)*1150);width:calc(var(--u)*290);height:calc(var(--u)*297);z-index:9;pointer-events:none;display:none}
+#dancer.on{display:block;animation:dancerIn .5s cubic-bezier(.2,1.7,.4,1)}
+#dancer .body{position:absolute;inset:0;animation:party .45s ease-in-out infinite}
+#dancer img{position:absolute;inset:0;width:100%;height:100%;opacity:0;filter:drop-shadow(0 0 calc(var(--u)*18) #ffd23f)}
+#dancer img.on{opacity:1}
+
+/* ---- valor flutuante, faixas, telas cheias ---- */
+.float{position:absolute;left:50%;transform:translate(-50%,-50%);font:900 calc(var(--u)*76)/1 system-ui,sans-serif;background:linear-gradient(#fffbe0,#ffd23f 55%,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 calc(var(--u)*4) 0 #3a1800) drop-shadow(0 0 calc(var(--u)*16) #7dff5a);white-space:nowrap;z-index:9;pointer-events:none;animation:floatUp 1.3s ease-out forwards}
+.float em{font-style:italic;font-size:.6em;-webkit-text-fill-color:#fff}
+.banner{position:absolute;left:0;right:0;top:calc(var(--u)*760);text-align:center;font:900 calc(var(--u)*84)/1.05 system-ui,sans-serif;background:linear-gradient(#fff,#d6ff9a 40%,#3fd12a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 calc(var(--u)*5) 0 #0b3a06) drop-shadow(0 0 calc(var(--u)*24) #ffd23f);z-index:10;pointer-events:none;animation:bannerIn 1.9s cubic-bezier(.2,1.6,.4,1) forwards}
+.overlay{position:absolute;inset:0;z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at 50% 42%,#2fa83add,#0b4a1af2 60%,#021a0afa);overflow:hidden;cursor:pointer}
+.overlay.show{display:flex;animation:fade .35s}
+.overlay>*{position:relative;z-index:1}
+.overlay .rays{position:absolute;left:50%;top:40%;width:180cqw;aspect-ratio:1;translate:-50% -50%;background:repeating-conic-gradient(#ffd23f30 0 9deg,#0000 9deg 18deg);border-radius:50%;-webkit-mask:radial-gradient(circle,#000 20%,#0000 65%);mask:radial-gradient(circle,#000 20%,#0000 65%);animation:rot 14s linear infinite;z-index:0}
+.overlay .dance{position:relative;width:62cqw;height:63cqw;margin-bottom:-2cqw}
+.overlay .dance img{position:absolute;inset:0;width:100%;height:100%;opacity:0;filter:drop-shadow(0 0 4cqw #ffd23f)}
+.overlay .dance img.on{opacity:1}
+.overlay .dance .body{position:absolute;inset:0;animation:party .45s ease-in-out infinite}
+.overlay h2{font:900 10cqw/1 system-ui,sans-serif;letter-spacing:-.02em;background:linear-gradient(#fff,#ffe066 40%,#ff9d00 70%,#c43c00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1cqw 0 #0b3a06) drop-shadow(0 0 4cqw #7dff5a);animation:titleIn .7s cubic-bezier(.2,1.7,.4,1),beat 1s ease-in-out .7s infinite}
+.overlay .amt{margin-top:2cqw;font:900 12cqw/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 .8cqw 0 #0b3a06,0 0 5cqw #ffb300}
+.overlay small{margin-top:4cqw;font-size:3.6cqw;opacity:.85;letter-spacing:.06em}
+.overlay .sub{font:800 5cqw/1.25 system-ui,sans-serif;color:#eaffd8;text-shadow:0 .5cqw 0 #0b3a06;margin-top:2cqw;padding:0 6cqw}
+.overlay .chest{width:40cqw;filter:drop-shadow(0 0 6cqw #ffd23f);animation:titleIn .8s cubic-bezier(.2,1.7,.4,1),scatBob 1.4s ease-in-out .8s infinite}
+.overlay .fsbig{font:900 28cqw/1 system-ui,sans-serif;background:linear-gradient(#fff,#ffe066 45%,#ff9d00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1.2cqw 0 #0b3a06) drop-shadow(0 0 6cqw #7dff5a);animation:beat .9s ease-in-out infinite}
+.drop{position:absolute;top:-12cqw;z-index:2!important;pointer-events:none;animation:fall linear forwards}
+.boom{position:absolute;z-index:1!important;pointer-events:none;mix-blend-mode:screen;animation:boomFx 1.1s ease-out forwards}
+dialog{margin:auto;max-width:400px;width:calc(100% - 32px);max-height:88dvh;border:3px solid #c98a3a;border-radius:18px;background:linear-gradient(#1d5a26,#062512);color:#f0ffe8;padding:16px;box-shadow:0 0 40px #7dff5a55}
+dialog::backdrop{background:#000b}
+dialog h3{text-align:center;color:#ffd23f;margin:4px 0 10px;font:900 22px system-ui,sans-serif}
+.pay{display:grid;grid-template-columns:60px 1fr;gap:8px 10px;align-items:center}
+.pay img{width:60px;height:56px;object-fit:contain}
+.pay span{font-size:13px;line-height:1.35}
+.pay b{color:#ffd23f}
+dialog p{font-size:13px;opacity:.92;margin-top:10px;line-height:1.45}
+dialog .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+dialog .row button,dialog .close{padding:9px 16px;border-radius:20px;background:#0b3a16;border:2px solid #c98a3a;color:#f0ffe8;font-weight:800}
+dialog .row button.on{background:linear-gradient(#ffe066,#e08a00);color:#3a1800}
+dialog .close{display:block;margin:14px auto 0;background:linear-gradient(#5fd13a,#1c6b12);border-color:#ffd23f;color:#fff}
+.bets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bets button{padding:12px 0;border-radius:12px;background:#0b3a16;border:2px solid #c98a3a;color:#f0ffe8;font-weight:900}
+.bets button.on{background:linear-gradient(#ffe066,#e08a00);color:#3a1800}
+
+@keyframes heroBob{0%,100%{transform:none}50%{transform:translateY(calc(var(--u)*-6)) scale(1.012)}}
+@keyframes hop{40%{transform:translateY(calc(var(--u)*-30)) scale(1.04,.98)}70%{transform:translateY(0) scale(1.03,.96)}}
+@keyframes party{0%,100%{transform:rotate(-4deg) translateY(0)}50%{transform:rotate(4deg) translateY(calc(var(--u)*-20))}}
+@keyframes shine{0%,55%{background-position:100% 0}100%{background-position:0 0}}
+@keyframes water{to{background-position:200% 0}}
+@keyframes bubble{0%{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),calc(var(--u)*-110)) scale(1.1)}}
+@keyframes leafFall{0%{opacity:0;transform:translate(0,0) rotate(0)}10%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translate(var(--dx),calc(var(--u)*1500)) rotate(var(--rot))}}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+@keyframes firefly{0%,100%{opacity:.1;transform:translate(0,0)}25%{opacity:1}50%{opacity:.4;transform:translate(calc(var(--u)*40),calc(var(--u)*-30))}75%{opacity:1;transform:translate(calc(var(--u)*-20),calc(var(--u)*-50))}}
+@keyframes walkBob{to{transform:translateY(calc(var(--u)*-8)) rotate(1.5deg)}}
+@keyframes dancerIn{from{transform:translateY(calc(var(--u)*300)) scale(.5)}}
+@keyframes beat{50%{transform:scale(1.1)}}
+@keyframes multUp{0%{transform:scale(2.2) rotate(-6deg);filter:brightness(2.5)}100%{transform:scale(1)}}
+@keyframes tease{to{box-shadow:0 0 0 calc(var(--u)*6) #fff3a0,0 0 calc(var(--u)*70) #7dff5a}}
+@keyframes winPulse{to{transform:scale(1.08);filter:brightness(1.25) drop-shadow(0 0 calc(var(--u)*10) #ffd23f)}}
+@keyframes frameGlow{to{box-shadow:inset 0 0 0 calc(var(--u)*6) #fff3a0,0 0 calc(var(--u)*40) #7dff5a}}
+@keyframes wildBeat{0%,100%{transform:scale(1);filter:brightness(1)}15%{transform:scale(1.08) rotate(-3deg);filter:brightness(1.25)}30%{transform:scale(1)}45%{transform:scale(1.05) rotate(3deg);filter:brightness(1.15)}}
+@keyframes scatBob{50%{transform:translateY(calc(var(--u)*-6)) scale(1.06) rotate(-3deg)}}
+@keyframes land{0%{transform:scale(1.6);filter:brightness(2.5)}100%{transform:scale(1)}}
+@keyframes flip{0%{transform:rotateY(0)}50%{transform:rotateY(90deg) scale(1.2);filter:brightness(3)}100%{transform:rotateY(0)}}
+@keyframes pop{0%{transform:scale(1.5)}100%{transform:scale(1)}}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,-30%) scale(.3)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}35%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%) scale(1)}}
+@keyframes bannerIn{0%{opacity:0;transform:scale(.2)}25%{opacity:1;transform:scale(1.1)}35%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(1.3)}}
+@keyframes titleIn{from{transform:scale(.1) rotate(-6deg);opacity:0}}
+@keyframes spinIdle{50%{scale:1.04;filter:drop-shadow(0 0 calc(var(--u)*30) #b8ff7a)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes fade{from{opacity:0}}
+@keyframes fall{to{transform:translateY(130cqh) rotate(720deg)}}
+@keyframes boomFx{0%{opacity:0;transform:scale(.2)}20%{opacity:1}100%{opacity:0;transform:scale(1.4)}}
+@keyframes shake{10%,50%,90%{transform:translate(-1.2%,.6%)}30%,70%{transform:translate(1.2%,-.6%)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Jogo do Lalau</h1>
+  <div class="water" id="lake"></div>
+  <div class="water" id="pond"></div>
+  <div class="a" id="hero"><img src="assets/lalau/hero.webp" alt=""><div id="shine"></div></div>
+
+  <div id="board"></div>
+  <div class="a" id="boardDim"></div>
+  <div class="a" id="fsBar">FESTA DO LALAU · GRÁTIS <b id="fsN">8</b> · <b>x2</b></div>
+  <div class="fxl" id="fx"></div>
+
+  <b class="num" id="bet">1,00</b>
+  <div class="plank" id="plBal"><small>SALDO</small><b class="num" id="bal">0,00</b></div>
+  <div class="plank" id="plWin"><small>GANHO</small><b class="num" id="win" aria-live="polite">0,00</b></div>
+  <button class="hit" id="menu" aria-label="Menu, regras e som"></button>
+  <button class="hit" id="coins" aria-label="Escolher aposta"></button>
+  <button class="hit" id="betDown" aria-label="Diminuir aposta"></button>
+  <button class="hit" id="betUp" aria-label="Aumentar aposta"></button>
+  <button class="spin" id="spin" aria-label="Girar (espaço)"><img src="assets/lalau/spinbtn.webp" alt=""></button>
+  <button class="hit" id="auto" aria-label="Giro automático"></button>
+  <button id="walker" aria-label="Clique no Lalau e ganhe rodadas grátis"><div class="body"></div><div class="tip">CLIQUE NO LALAU!</div></button>
+  <div id="dancer"><div class="body"></div></div>
+
+  <div class="overlay" id="bigOv" aria-live="assertive">
+    <div class="rays"></div>
+    <div class="dance" id="bigDance"><div class="body"></div></div>
+    <h2 id="bigTitle">GRANDE GANHO!</h2>
+    <div class="amt" id="bigAmt">0,00</div>
+    <small>toque para continuar</small>
+  </div>
+  <div class="overlay" id="fsOv" aria-live="assertive">
+    <div class="rays"></div>
+    <img class="chest" id="fsImg" src="assets/lalau/s_chest.webp" alt="">
+    <h2 id="fsTitle">RODADAS GRÁTIS</h2>
+    <div class="fsbig" id="fsCount">8</div>
+    <div class="sub" id="fsSub">Ganhos em dobro e o WILD toma o rolo inteiro!</div>
+    <small>toque para começar</small>
+  </div>
+</main>
+
+<dialog id="menuDlg">
+  <h3>Jogo do Lalau</h3>
+  <div class="row"><button id="tMusic">♪ Música</button><button id="tSfx">🔊 Efeitos</button></div>
+  <h3 style="margin-top:14px">Tabela de pagamentos</h3>
+  <div class="pay" id="payTable"></div>
+  <p><b>243 caminhos:</b> símbolos iguais em rolos vizinhos, a partir do 1º da esquerda (3, 4 ou 5 rolos). Paga o número de caminhos × o valor da tabela.<br>
+  <b>WILD</b> aparece nos rolos 2 a 4 e substitui tudo, menos o baú.<br>
+  <b>🐊 Lalau passeando:</b> de vez em quando o Lalau atravessa o pântano. Clique nele antes que ele vá embora e ganhe <b>5 rodadas grátis</b>!<br>
+  <b>Festa do Lalau (rodadas grátis):</b> 3 baús = 8 rodadas (+2 por baú a mais). Todos os ganhos <b>x2</b> e o WILD cresce e toma o rolo inteiro. Saiu 3 baús de novo: ganha mais.<br>
+  <span id="rtpInfo"></span></p>
+  <button class="close" onclick="menuDlg.close()">Voltar ao jogo</button>
+</dialog>
+<dialog id="betDlg">
+  <h3>Valor da aposta</h3>
+  <div class="bets" id="betList"></div>
+  <button class="close" onclick="betDlg.close()">OK</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="lalau.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('lalau')</script><!-- admin assiste ao vivo -->
+<script>
+// ---------- SOM (Web Audio, tudo sintetizado): marimba de praia no pântano ----------
+let ac, master, musicBus, sfxBus, verb, sfxOn = true, musicOn = true;
+try { ({ sfxOn = true, musicOn = true } = JSON.parse(localStorage.getItem('lalau.som')) || {}); } catch {}
+function audio() {
+  if (!ac) {
+    ac = new AudioContext();
+    master = ac.createGain(); master.gain.value = .5; master.connect(ac.destination);
+    verb = ac.createConvolver();
+    const len = ac.sampleRate * 1.4, ir = ac.createBuffer(2, len, ac.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3; }
+    verb.buffer = ir;
+    const wet = ac.createGain(); wet.gain.value = .22; verb.connect(wet).connect(master);
+    musicBus = ac.createGain(); musicBus.gain.value = musicOn ? .6 : 0; musicBus.connect(master); musicBus.connect(verb);
+    sfxBus = ac.createGain(); sfxBus.gain.value = 1; sfxBus.connect(master); sfxBus.connect(verb);
+  }
+  if (ac.state === 'suspended') ac.resume();
+  return ac;
+}
+const now = () => audio().currentTime;
+function osc(freq, t0, dur, { type = 'sine', vol = .2, slide = 0, bus = sfxBus, attack = .004 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t0);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t0 + dur);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+  g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  o.connect(g).connect(bus || sfxBus); o.start(t0); o.stop(t0 + dur + .05);
+}
+let noiseBuf;
+function noise(t0, dur, { vol = .2, f = 1200, q = 1, type = 'bandpass', sweep = 0, bus = sfxBus } = {}) {
+  const a = audio();
+  if (!noiseBuf) { noiseBuf = a.createBuffer(1, a.sampleRate, a.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = noiseBuf; s.loop = true; fl.type = type; fl.Q.value = q; fl.frequency.setValueAtTime(f, t0);
+  if (sweep) fl.frequency.exponentialRampToValueAtTime(sweep, t0 + dur);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  s.connect(fl).connect(g).connect(bus || sfxBus); s.start(t0); s.stop(t0 + dur + .05);
+}
+const kick = (t, vol = .5, bus) => { osc(130, t, .25, { vol, slide: 45, bus }); };
+const shaker = (t, vol = .04, bus) => noise(t, .05, { vol, f: 6500, type: 'highpass', bus });
+const conga = (t, f = 320, vol = .14, bus) => { osc(f, t, .16, { vol, slide: f * .8, bus }); noise(t, .02, { vol: vol * .4, f: 2000, bus }); };
+const clap = (t, vol = .18, bus) => [0, .012, .024].forEach(d => noise(t + d, .08, { vol, f: 1400, q: 1.5, bus }));
+// fá maior pentatônico: alegre, de praia
+const SCALE = [174.61, 196, 220, 261.63, 293.66, 349.23, 392, 440, 523.25, 587.33, 698.46, 783.99, 880, 1046.5, 1174.66, 1396.91];
+// marimba: seno + harmônico 4x curtinho
+const mar = (f, t, vol = .14, dur = .35, bus) => { osc(f, t, dur, { vol, bus }); osc(f * 4, t, dur * .2, { vol: vol * .25, bus }); };
+const SFX = {
+  click() { const t = now(); osc(1400, t, .05, { vol: .08 }); },
+  tick() { shaker(now(), .02 + Math.random() * .015); },
+  stop() { const t = now(); conga(t, 180, .22); },
+  scatter(n) { const t = now(); [0, 2, 4].forEach((j, i) => mar(SCALE[6 + n + j] || 1396, t + i * .07, .16, .5)); osc(2637, t, .2, { vol: .04 }); },
+  tease() { const t = now(); for (let i = 0; i < 16; i++) mar(SCALE[3 + (i % 8)], t + i * .07, .05 + i * .004, .12); noise(t, 1.1, { vol: .05, f: 400, sweep: 4000 }); },
+  win(k = 0) { const t = now(); [0, 2, 4, 7].forEach((j, i) => mar(SCALE[(j + k) % 12 + 3], t + i * .08, .18, .4)); },
+  coin() { const t = now(); osc(2093 + Math.random() * 400, t, .07, { vol: .04 }); osc(3136, t + .03, .06, { vol: .03 }); },
+  splash() { const t = now(); noise(t, .45, { vol: .22, f: 900, sweep: 300, q: .6 }); for (let i = 0; i < 6; i++) osc(700 + Math.random() * 900, t + Math.random() * .3, .06, { vol: .03, slide: 1800 }); },
+  wild() { const t = now(); this.splash(); osc(392, t, .3, { type: 'triangle', vol: .12, slide: 784 }); osc(1568, t + .1, .3, { vol: .05 }); },
+  // risada do Lalau: "ha-ha-ha" grave com vibrato
+  laugh() { const t = now(); for (let i = 0; i < 4; i++) { osc(210 - i * 12, t + i * .13, .1, { type: 'sawtooth', vol: .07, slide: 160 - i * 10 }); noise(t + i * .13, .08, { vol: .08, f: 700, q: 2 }); } },
+  burp() { const t = now(); osc(95, t, .5, { type: 'sawtooth', vol: .12, slide: 70 }); noise(t, .45, { vol: .06, f: 300, q: 3 }); },
+  step() { const t = now(); conga(t, 110 + Math.random() * 30, .08); },
+  pop() { const t = now(); osc(600, t, .1, { vol: .2, slide: 1400 }); noise(t, .05, { vol: .1, f: 3000 }); },
+  big() {
+    const t = now(); this.laugh();
+    const fan = [3, 5, 7, 9, 7, 9, 11, 13];
+    fan.forEach((j, i) => { mar(SCALE[j], t + .2 + i * .12, .22, .4); osc(SCALE[j] / 2, t + .2 + i * .12, .3, { type: 'triangle', vol: .06 }); });
+    [0, .48, .72, .96, 1.2, 1.44].forEach(d => { kick(t + .2 + d, .45); clap(t + .44 + d, .14); });
+    setTimeout(() => this.burp(), 1900);
+  },
+  freeStart() { const t = now(); this.splash(); for (let i = 0; i < 14; i++) mar(SCALE[i % 16], t + .2 + i * .06, .16, .3); [0, .24, .48, .72].forEach(d => { kick(t + .2 + d, .4); clap(t + .32 + d, .12); }); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+
+// música: balanço de praia (bumbo, conga, chocalho) + baixo + marimba; nas grátis acelera e ganha palmas
+const BASSL = [87.31, 87.31, 116.54, 130.81, 87.31, 87.31, 98, 130.81];
+const LEAD = [8, null, 10, 9, 8, null, 6, null, 7, 8, null, 6, 5, null, 6, null, 8, null, 10, null, 11, 10, 9, null, 8, null, 7, 6, 5, null, 3, null];
+const KICKS = new Set([0, 6, 8, 14]), CONGA = new Set([3, 7, 10, 11, 15]);
+let musicTimer = null, mStep = 0, mNext = 0, freeMusic = false;
+function startMusic() {
+  if (musicTimer || !musicOn) return;
+  audio(); mNext = now() + .1;
+  musicTimer = setInterval(() => {
+    const dur = freeMusic ? .115 : .135;
+    while (mNext < ac.currentTime + .15) {
+      const t = mNext, s = mStep % 16, bar = (mStep >> 4) % BASSL.length;
+      if (KICKS.has(s)) kick(t, .28, musicBus);
+      if (CONGA.has(s)) conga(t, s % 2 ? 330 : 250, .1, musicBus);
+      if (freeMusic && (s === 4 || s === 12)) clap(t, .1, musicBus);
+      shaker(t, s % 2 ? .02 : .035, musicBus);
+      if (s === 0 || s === 3 || s === 8 || s === 11) osc(BASSL[bar], t, .25, { type: 'triangle', vol: .2, bus: musicBus });
+      const n = LEAD[mStep % LEAD.length];
+      if (n !== null && (mStep >> 5) % 2 === 1) mar(SCALE[n], t, .07, .3, musicBus);
+      mStep++; mNext += dur;
+    }
+  }, 30);
+}
+const stopMusic = () => { clearInterval(musicTimer); musicTimer = null; };
+const saveSom = () => { try { localStorage.setItem('lalau.som', JSON.stringify({ sfxOn, musicOn })); } catch {} };
+
+// ---------- JOGO ----------
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), fx = $('#fx');
+const A = n => `assets/lalau/${n}.webp`;
+const CX = [44, 232, 420, 608, 796], TOP = 598, ROW = 180;
+const BETS = [0.5, 1, 2, 5, 10, 20, 50, 100];
+const money = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const U = () => stage.clientWidth / 1024; // px por pixel da arte (pras animações em JS)
+const SMALL = new Set(['hook', 'lily', 'beer', 'crown']); // ícones soltos ficam menores que os quadros
+const IMG = s => A('s_' + SYMBOLS[s].id);
+const WALK = ['walk1', 'walk3', 'walk2', 'walk3'], PARTY = ['dance', 'kick', 'dance', 'beer', 'walk2'];
+// pré-carrega tudo que aparece no meio da jogada
+[...SYMBOLS.map(s => 's_' + s.id), 's_lalau2', 'star', 'spark', 'coinburst', 'pile', 'splash1', 'splash2', 'fish', 'leaf1',
+ ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => 'coin' + i), ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => 'sw_' + i),
+ 'w_walk1', 'w_walk2', 'w_walk3', 'w_beer', 'w_kick', 'w_dance', 'w_lounge'].forEach(n => { new Image().src = A(n); });
+
+let betIdx = 1, spinning = false, auto = false, hurry = false, grid = spinGrid();
+const START = 20; // saldo inicial e recarga (só quando aberto fora do site)
+// aberto dentro do site (iframe, mesma origem): usa o saldo do site em vez do próprio
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('lalau.saldo') || START; } catch {}
+// prêmio já salvo no saldo mas ainda não mostrado (fechar no meio da animação não perde o prêmio)
+let pending = 0;
+const save = () => {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('lalau.saldo', balance); } catch {}
+};
+// rodadas grátis em andamento ficam salvas: fechou no meio, volta e continua
+const loadFs = () => { try { return JSON.parse(localStorage.getItem('lalau.gratis')); } catch { return null; } };
+const storeFs = fs => { try { fs ? localStorage.setItem('lalau.gratis', JSON.stringify(fs)) : localStorage.removeItem('lalau.gratis'); } catch {} };
+
+const spd = () => (hurry ? .3 : 1);
+const sleep = ms => new Promise(r => setTimeout(r, ms * spd()));
+
+function updHud() {
+  $('#bal').textContent = 'R$ ' + money(r2(balance - pending));
+  $('#bet').textContent = 'R$ ' + money(BETS[betIdx]);
+}
+function setWin(v, pop = true) {
+  const w = $('#win');
+  w.textContent = 'R$ ' + money(v);
+  if (pop) { w.classList.remove('pop'); w.offsetWidth; w.classList.add('pop'); }
+}
+
+// ---- Lalau do letreiro: pula nos ganhos, dança nos grandes; a cerveja solta espuma ----
+const hero = $('#hero');
+function heroAct(cls, ms = 600) {
+  hero.classList.remove('hop', 'party'); hero.offsetWidth; hero.classList.add(cls);
+  clearTimeout(hero.t); hero.t = setTimeout(() => hero.classList.remove(cls), ms);
+}
+function foam(n = 3) {
+  const u = U();
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement('div'); b.className = 'bubble';
+    const w = (8 + Math.random() * 14) * u;
+    b.style.cssText = `left:${(700 + Math.random() * 70) * u}px;top:${(40 + Math.random() * 30) * u}px;width:${w}px;height:${w}px;--dx:${(Math.random() - .3) * 60 * u}px;animation-duration:${1.4 + Math.random()}s;animation-delay:${i * .18}s`;
+    hero.after(b); setTimeout(() => b.remove(), 3000);
+  }
+}
+
+// quadros de personagem: troca a imagem visível dentro de .body
+function framesInto(el, names) {
+  el.innerHTML = names.map(n => `<img src="${A('w_' + n)}" data-n="${n}" alt="">`).join('');
+}
+function showFrame(el, n) { el.querySelectorAll('img').forEach(i => i.classList.toggle('on', i.dataset.n === n)); }
+
+// ---- grade ----
+const board = $('#board');
+const cols = CX.map(x => {
+  const el = document.createElement('div');
+  el.className = 'col';
+  el.style.left = `calc(var(--u)*${x})`;
+  board.appendChild(el);
+  return el;
+});
+const cellCls = s => 'cell' + (s === WILD ? ' wild' : '') + (s === SCATTER ? ' scat' : '') + (SMALL.has(SYMBOLS[s].id) ? ' small' : '');
+const cellHtml = (s, r) => `<div class="${cellCls(s)}" style="top:calc(var(--u)*${r * ROW})"><img src="${IMG(s)}" alt="${SYMBOLS[s].id}"></div>`;
+const cellEl = (c, r) => cols[c].children[r];
+function renderCol(c, col) { cols[c].innerHTML = col.map(cellHtml).join(''); }
+function setCell(c, r, s) { const e = cellEl(c, r); e.className = cellCls(s); e.firstChild.src = IMG(s); }
+const cellCenter = (c, r) => [CX[c] + 93, TOP + r * ROW + 90];
+
+// giro: tira com o resultado em cima, sorteio no meio e a tela anterior embaixo; desce até o resultado
+function spinCol(c, target, dur) {
+  const n = 12 + c * 3, u = U();
+  const filler = Array.from({ length: n }, () => drawCell(c));
+  const all = [...target[c], ...filler, ...grid[c]];
+  cols[c].innerHTML = `<div class="strip blur">${all.map(cellHtml).join('')}</div>`;
+  const strip = cols[c].firstChild;
+  const anim = strip.animate([{ transform: `translateY(${-(H + n) * ROW * u}px)` }, { transform: 'translateY(0)' }],
+    { duration: dur, easing: 'cubic-bezier(.35,.05,.35,1.08)', fill: 'forwards' });
+  setTimeout(() => strip.classList.remove('blur'), dur * .8);
+  return anim.finished.then(() => {
+    renderCol(c, target[c]);
+    play('stop');
+    const sc = target[c].map((x, r) => x === SCATTER ? r : -1).filter(r => r >= 0);
+    sc.forEach(r => cellEl(c, r).classList.add('land'));
+    target[c].forEach((x, r) => { if (x === WILD) cellEl(c, r).classList.add('land'); });
+    return sc.length;
+  });
+}
+
+async function spinReels(target) {
+  const ticker = setInterval(() => play('tick'), 70);
+  let scat = 0, extra = 0;
+  const runs = [];
+  // os rolos param em ordem; com 2 baús na tela os que faltam seguram com suspense
+  for (let c = 0; c < R; c++) {
+    const before = target.slice(0, c).reduce((a, col) => a + col.filter(x => x === SCATTER).length, 0);
+    const tease = before >= 2 && !hurry;
+    if (tease) extra += 1300;
+    const dur = (750 + c * 200 + extra) * (hurry ? .4 : 1);
+    if (tease) setTimeout(() => { cols[c].classList.add('tease'); play('tease'); }, Math.max(0, dur - 1350));
+    runs.push(spinCol(c, target, dur).then(n => {
+      cols[c].classList.remove('tease');
+      if (n) { scat += n; play('scatter', Math.min(scat, 4)); }
+    }));
+  }
+  await Promise.all(runs);
+  clearInterval(ticker);
+  grid = target.map(col => col.slice());
+}
+
+// ---- efeitos ----
+function fxImg(src, x, y, w, { glow = false, parent = fx } = {}) {
+  const u = U(), el = new Image();
+  el.src = A(src);
+  if (glow) el.className = 'glow';
+  el.style.cssText = `left:${x * u}px;top:${y * u}px;width:${w * u}px;transform:translate(-50%,-50%)`;
+  parent.appendChild(el);
+  return el;
+}
+function burst(x, y, w = 220, src) {
+  const b = fxImg(src || (Math.random() < .5 ? 'star' : 'spark'), x, y, w, { glow: true });
+  b.animate([{ transform: 'translate(-50%,-50%) scale(.2) rotate(0)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1.3) rotate(50deg)', opacity: 0 }], { duration: 560, easing: 'ease-out' }).finished.then(() => b.remove());
+}
+function splash(x, y, w = 240) {
+  const b = fxImg('splash' + (1 + (Math.random() * 2 | 0)), x, y, w);
+  b.animate([{ transform: 'translate(-50%,-30%) scale(.3,.1)', opacity: 1 }, { transform: 'translate(-50%,-60%) scale(1.2)', opacity: 1, offset: .5 }, { transform: 'translate(-50%,-50%) scale(1.3,.9)', opacity: 0 }], { duration: 700, easing: 'ease-out' }).finished.then(() => b.remove());
+}
+// moeda girando: troca os 9 quadros enquanto voa
+function spinCoin(el, ms = 50) {
+  let i = Math.random() * 9 | 0;
+  const t = setInterval(() => { i = (i + 1) % 9; el.src = A('coin' + (i + 1)); }, ms);
+  return () => clearInterval(t);
+}
+// moedas voam da casa até o GANHO
+function coinsTo(x, y, n = 3) {
+  for (let i = 0; i < n; i++) {
+    const c = fxImg('coin1', x, y, 52), stop = spinCoin(c);
+    const u = U(), dx = (844 - x) * u, dy = (1478 - y) * u, mx = (Math.random() - .5) * 220 * u, my = -(80 + Math.random() * 140) * u;
+    c.animate([
+      { transform: 'translate(-50%,-50%) scale(.6)', offset: 0 },
+      { transform: `translate(calc(-50% + ${mx}px),calc(-50% + ${my}px)) scale(1.25)`, offset: .4 },
+      { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.5)`, offset: 1 },
+    ], { duration: (700 + i * 90) * spd() + 200, easing: 'cubic-bezier(.4,0,.6,1)', delay: i * 60 }).finished.then(() => { stop(); c.remove(); play('coin'); });
+  }
+}
+// chuva de moedas girando que pula do letreiro
+function coinFountain(n = 14, from = [512, 420]) {
+  const u = U();
+  for (let i = 0; i < n; i++) {
+    const e = fxImg('coin1', from[0], from[1], 46 + Math.random() * 26), stop = spinCoin(e, 40 + Math.random() * 40);
+    const dx = (Math.random() - .5) * 900 * u, up = -(120 + Math.random() * 260) * u, dy = (700 + Math.random() * 500) * u;
+    e.animate([
+      { transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${dx * .45}px),calc(-50% + ${up}px)) scale(1)`, opacity: 1, offset: .35 },
+      { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.9)`, opacity: 0 },
+    ], { duration: 1300 + Math.random() * 900, delay: i * 40, easing: 'cubic-bezier(.3,.5,.5,1)' }).finished.then(() => { stop(); e.remove(); });
+  }
+}
+function floatText(html, y = 870) {
+  const f = document.createElement('div');
+  f.className = 'float'; f.innerHTML = html; f.style.top = `calc(var(--u)*${y})`;
+  stage.appendChild(f);
+  setTimeout(() => f.remove(), 1400);
+}
+function banner(txt) {
+  const b = document.createElement('div');
+  b.className = 'banner'; b.innerHTML = txt;
+  stage.appendChild(b);
+  setTimeout(() => b.remove(), 2000);
+}
+function shake() { stage.classList.remove('shake'); stage.offsetWidth; stage.classList.add('shake'); }
+
+// ---- Lalau festejando em cima dos botões (ganhos médios) ----
+const dancer = $('#dancer');
+framesInto(dancer.firstChild, PARTY);
+let danceT;
+function celebrate(ms = 2200) {
+  clearInterval(danceT); clearTimeout(dancer.t);
+  dancer.classList.remove('on'); dancer.offsetWidth; dancer.classList.add('on');
+  let f = 0; showFrame(dancer, PARTY[0]);
+  danceT = setInterval(() => showFrame(dancer, PARTY[++f % PARTY.length]), 190);
+  play('laugh'); splash(512, 1400, 320);
+  dancer.t = setTimeout(() => { clearInterval(danceT); dancer.classList.remove('on'); }, ms * spd());
+}
+
+async function showWins(res) {
+  const hit = new Set(res.wins.flatMap(w => w.cells.map(([c, r]) => c + ',' + r)));
+  grid.forEach((col, c) => col.forEach((_, r) => cellEl(c, r).classList.add(hit.has(c + ',' + r) ? 'win' : 'dim')));
+  play('win', res.wins.length);
+  heroAct('hop'); foam(5);
+  // Lalau do quadro ri: alterna as duas caras
+  const la = SYMBOLS.findIndex(s => s.id === 'lalau');
+  const faces = [...hit].map(k => k.split(',').map(Number)).filter(([c, r]) => grid[c][r] === la);
+  let fl = 0;
+  const faceT = setInterval(() => faces.forEach(([c, r]) => { cellEl(c, r).firstChild.src = A(fl % 2 ? 's_lalau' : 's_lalau2'); }), 220);
+  const tick = setInterval(() => fl++, 220);
+  const seen = new Set();
+  res.wins.forEach(w => w.cells.forEach(([c, r]) => { const key = c + ',' + r; if (seen.has(key)) return; seen.add(key); if (Math.random() < .5) { const [x, y] = cellCenter(c, r); burst(x, y, 190); coinsTo(x, y, 1); } }));
+  floatText(`R$ ${money(res.total)}${res.mult > 1 ? ` <em>x${res.mult}</em>` : ''}`);
+  if (res.total >= res.bet * 4 && res.total < res.bet * 10) celebrate();
+  await sleep(1400);
+  clearInterval(faceT); clearInterval(tick);
+  faces.forEach(([c, r]) => { cellEl(c, r).firstChild.src = A('s_lalau'); });
+  grid.forEach((col, c) => col.forEach((_, r) => cellEl(c, r).classList.remove('win', 'dim')));
+}
+
+// nas grátis o WILD mergulha e espirra: toma o rolo inteiro
+async function growWilds(res) {
+  for (const c of res.grows) {
+    cols[c].classList.add('grow');
+    play('wild'); shake();
+    for (let r = 0; r < H; r++) {
+      if (grid[c][r] === WILD) continue;
+      const [x, y] = cellCenter(c, r);
+      splash(x, y, 260); burst(x, y, 200);
+      grid[c][r] = WILD; setCell(c, r, WILD); cellEl(c, r).classList.add('flip');
+      await sleep(160);
+    }
+    await sleep(250);
+  }
+  if (res.grows.length) await sleep(350);
+  cols.forEach(c => c.classList.remove('grow'));
+}
+
+// ---- grande ganho: o Lalau dança, moedas chovem ----
+let bigT;
+function bigWin(total, bet, title) {
+  return new Promise(res => {
+    const ov = $('#bigOv'), x = total / bet, body = $('#bigDance .body');
+    $('#bigTitle').textContent = title || (x >= 50 ? 'SUPER MEGA GANHO!' : x >= 25 ? 'MEGA GANHO!' : 'GRANDE GANHO!');
+    framesInto(body, PARTY);
+    let f = 0; clearInterval(bigT); showFrame(body, PARTY[0]);
+    bigT = setInterval(() => showFrame(body, PARTY[++f % PARTY.length]), 180);
+    ov.querySelectorAll('.drop,.boom').forEach(e => e.remove());
+    for (let i = 0; i < 46; i++) {
+      const s = new Image();
+      s.src = A(i % 7 === 0 ? 'leaf1' : 'coin' + (1 + i % 9));
+      s.className = 'drop';
+      s.style.cssText = `left:${Math.random() * 100}%;width:${4 + Math.random() * 5}cqw;animation-duration:${1.6 + Math.random() * 1.8}s;animation-delay:${Math.random() * 2.5}s`;
+      ov.appendChild(s);
+    }
+    const fw = setInterval(() => {
+      const s = new Image(); s.src = A(['star', 'spark', 'coinburst', 'splash1'][Math.random() * 4 | 0]); s.className = 'boom';
+      const w = 22 + Math.random() * 22;
+      s.style.cssText = `left:${Math.random() * 80}%;top:${Math.random() * 50}%;width:${w}cqw`;
+      ov.appendChild(s); setTimeout(() => s.remove(), 1200);
+    }, 300);
+    ov.classList.add('show');
+    heroAct('party', 5000); coinFountain(20);
+    play('big');
+    const dur = Math.min(5600, 2000 + x * 60), t0 = performance.now();
+    let done = false, lastCoin = 0;
+    (function step(tm) {
+      if (done) return;
+      const k = Math.min(1, (tm - t0) / dur), e = 1 - (1 - k) ** 2;
+      $('#bigAmt').textContent = 'R$ ' + money(total * e);
+      if (tm - lastCoin > 70 && k < 1) { play('coin'); lastCoin = tm; }
+      if (k < 1) requestAnimationFrame(step); else finish(1900);
+    })(t0);
+    let closeT;
+    function finish(wait) {
+      done = true; $('#bigAmt').textContent = 'R$ ' + money(total);
+      clearTimeout(closeT); closeT = setTimeout(close, wait);
+    }
+    function close() { ov.classList.remove('show'); clearInterval(bigT); clearInterval(fw); ov.onclick = null; hero.classList.remove('party'); res(); }
+    ov.onclick = () => (done ? close() : finish(900));
+  });
+}
+
+function fsOverlay(n, title, sub, btn = 'toque para começar', img = 's_chest') {
+  return new Promise(res => {
+    const ov = $('#fsOv');
+    $('#fsTitle').textContent = title; $('#fsCount').textContent = n; $('#fsCount').style.fontSize = typeof n === 'string' ? '13cqw' : ''; $('#fsSub').textContent = sub;
+    $('#fsImg').src = A(img);
+    ov.querySelector('small').textContent = btn;
+    ov.classList.add('show');
+    let t;
+    const close = () => { clearTimeout(t); ov.classList.remove('show'); ov.onclick = null; res(); };
+    ov.onclick = close;
+    t = setTimeout(close, auto ? 2600 : 4500);
+  });
+}
+
+// ---- Lalau passeando: atravessa o cais; clicou nele = rodadas grátis ----
+const walker = $('#walker'), wBody = walker.firstChild;
+framesInto(wBody, [...new Set([...WALK, ...PARTY])]);
+let walk = null; // { bet, anim, timer }
+function startWalker(bet) {
+  if (walk) return;
+  const u = U();
+  walker.className = 'on'; showFrame(wBody, WALK[0]);
+  let f = 0;
+  const timer = setInterval(() => { showFrame(wBody, WALK[++f % WALK.length]); if (f % 2) play('step'); }, 150);
+  const anim = walker.animate([{ transform: `translateX(${-300 * u}px)` }, { transform: `translateX(${1040 * u}px)` }], { duration: 9500, easing: 'linear', fill: 'forwards' });
+  walk = { bet, anim, timer };
+  play('laugh'); splash(60, 1460, 200);
+  anim.finished.then(() => { if (walk && walk.anim === anim) endWalker(); }).catch(() => {});
+}
+function endWalker() {
+  if (!walk) return;
+  clearInterval(walk.timer); walk.anim.cancel();
+  walker.className = ''; walk = null;
+}
+walker.onclick = async () => {
+  if (!walk || walker.classList.contains('got')) return;
+  const { bet, anim, timer } = walk;
+  anim.pause(); clearInterval(timer);
+  walker.classList.add('got');
+  let f = 0;
+  const dance = setInterval(() => showFrame(wBody, PARTY[++f % PARTY.length]), 190);
+  play('laugh'); play('pop'); setTimeout(() => play('burp'), 900);
+  const r = walker.getBoundingClientRect(), s = stage.getBoundingClientRect(), u = U();
+  const cx = (r.left - s.left + r.width / 2) / u, cy = (r.top - s.top + r.height / 3) / u;
+  burst(cx, cy, 300); coinFountain(16, [cx, cy]); heroAct('party', 1600);
+  banner(`O LALAU TE DEU<br>${WALK_SPINS} GIROS GRÁTIS!`);
+  // ponytail: grátis do clique entram na fila das grátis em andamento (mesma aposta) ou abrem uma sessão nova
+  if (fs) { fs.n += WALK_SPINS; storeFs(fs); fsHud(true); }
+  else { fs = { n: WALK_SPINS, bet, total: 0, walk: true }; storeFs(fs); }
+  setTimeout(() => { clearInterval(dance); walk = { bet, anim, timer: 0 }; endWalker(); }, 1800);
+  if (!spinning) { await new Promise(r => setTimeout(r, 1900)); if (!spinning) spin(); }
+};
+
+// ---- uma rodada ----
+let fs = null; // { n, bet, total, walk? } rodadas grátis em andamento
+function fsHud(up) {
+  $('#fsN').textContent = fs ? fs.n : 0;
+  if (up) { const b = $('#fsBar'); b.classList.remove('up'); b.offsetWidth; b.classList.add('up'); }
+}
+
+async function round(free) {
+  const bet = free ? fs.bet : BETS[betIdx];
+  const res = playRound(bet, free);
+  res.bet = bet;
+  balance = r2(balance + res.total); pending = res.total; save();
+  reportarRodada('lalau', free ? 0 : bet, res.total);
+  if (free) { fs.n--; fs.total = r2(fs.total + res.total); fs.n += res.freeSpins; storeFs(fs); fsHud(); }
+
+  if (!free) setWin(0, false);
+  await spinReels(res.start);
+  if (res.grows.length) await growWilds(res);
+  if (res.wins.length) {
+    await showWins(res);
+    setWin(free ? fs.total : res.total);
+  }
+  pending = 0; updHud();
+  if (res.total >= bet * 10) await bigWin(res.total, bet);
+  else if (res.total > 0) await sleep(250);
+
+  if (res.freeSpins) {
+    // baús comemoram antes da tela das grátis
+    grid.forEach((col, c) => col.forEach((x, r) => { if (x === SCATTER) { cellEl(c, r).classList.add('win'); const [px, py] = cellCenter(c, r); burst(px, py, 280, 'coinburst'); } }));
+    play('scatter', 4); heroAct('hop'); coinFountain(12); await sleep(1100);
+    grid.forEach((col, c) => col.forEach((_, r) => cellEl(c, r).classList.remove('win')));
+    if (free) { banner(`+${res.freeSpins}<br>GRÁTIS!`); play('freeStart'); await sleep(1700); }
+    else {
+      fs = fs ? { ...fs, n: fs.n + res.freeSpins } : { n: res.freeSpins, bet, total: 0 };
+      fs.walk = false; storeFs(fs);
+      play('freeStart');
+      await fsOverlay(fs.n, 'FESTA DO LALAU', 'Rodadas grátis: ganhos em dobro e o WILD toma o rolo inteiro!');
+    }
+  }
+  if (res.walker) startWalker(bet);
+  return res;
+}
+
+async function freeSession() {
+  if (fs.walk) {
+    fs.walk = false; storeFs(fs); play('freeStart');
+    await fsOverlay(fs.n, 'PRESENTE DO LALAU', 'Rodadas grátis: ganhos em dobro e o WILD toma o rolo inteiro!', 'toque para começar', 'w_dance');
+  }
+  stage.classList.add('free'); $('#spin').classList.add('free'); freeMusic = true; fsHud();
+  setWin(fs.total, false);
+  while (fs.n > 0) { await round(true); await sleep(450); }
+  const tot = fs.total, bet = fs.bet;
+  fs = null; storeFs(null);
+  stage.classList.remove('free'); $('#spin').classList.remove('free'); freeMusic = false;
+  if (tot >= bet * 10) await bigWin(tot, bet, 'TOTAL DA FESTA!');
+  else { play('win', 2); if (tot > 0) celebrate(); await fsOverlay('R$ ' + money(tot), 'FIM DA FESTA', 'Total ganho nas rodadas grátis', 'toque para continuar'); }
+  setWin(tot);
+}
+
+async function spin() {
+  if (spinning) { hurry = true; document.getAnimations().forEach(a => { if (a.playState === 'running' && a.effect?.target?.closest?.('.col')) a.playbackRate = 3; }); return; }
+  const bet = BETS[betIdx];
+  if (!fs && balance < bet) {
+    setAuto(false);
+    if (balance < BETS[0] && host) { banner('Saldo<br>acabou'); setTimeout(() => { host.closeGame(); host.openModal('modal-deposit'); }, 1200); }
+    else if (balance < BETS[0]) { balance = START; save(); updHud(); banner('Créditos<br>recarregados'); }
+    else banner('Diminua<br>a aposta');
+    return;
+  }
+  spinning = true; hurry = false; $('#spin').classList.add('busy');
+  audio(); startMusic(); play('click');
+  try {
+    if (fs) await freeSession(); // grátis que ficaram pela metade (ou presente do Lalau)
+    else {
+      balance = r2(balance - bet); save(); updHud();
+      await round(false);
+      if (fs) await freeSession();
+    }
+  } finally {
+    spinning = false; hurry = false; $('#spin').classList.remove('busy');
+  }
+  if (fs) return spin(); // clicou no Lalau enquanto a rodada terminava
+  if (auto) setTimeout(() => auto && !spinning && spin(), 400);
+}
+
+// ---- pântano vivo ----
+function ambient() {
+  // brilhos no letreiro e na cerveja
+  [[300, 340], [560, 330], [760, 300], [250, 470], [700, 470], [480, 440], [740, 70], [140, 1250], [900, 1270]].forEach(([x, y]) => {
+    const s = new Image(); s.src = A('star'); s.className = 'twinkle';
+    s.style.cssText = `left:calc(var(--u)*${x - 36});top:calc(var(--u)*${y - 40});width:calc(var(--u)*72);animation-duration:${1.8 + Math.random() * 2}s;animation-delay:${-Math.random() * 3}s`;
+    stage.appendChild(s);
+  });
+  // vaga-lumes
+  for (let i = 0; i < 12; i++) {
+    const b = document.createElement('div'); b.className = 'fly';
+    b.style.cssText = `left:calc(var(--u)*${Math.random() * 1000});top:calc(var(--u)*${Math.random() < .5 ? 120 + Math.random() * 300 : 1330 + Math.random() * 180});animation-duration:${3 + Math.random() * 4}s;animation-delay:${-Math.random() * 5}s`;
+    stage.appendChild(b);
+  }
+  const loop = (fn, min, max) => (function go() { setTimeout(() => { if (!document.hidden) fn(); go(); }, min + Math.random() * (max - min)); })();
+  // espuma da cerveja do Lalau
+  loop(() => foam(2 + (Math.random() * 3 | 0)), 1500, 3500);
+  // folhas caindo
+  loop(() => {
+    const l = new Image(); l.src = A('leaf1'); l.className = 'leaf';
+    const u = U();
+    l.style.cssText = `left:${Math.random() * 1000 * u}px;top:${-60 * u}px;width:${(36 + Math.random() * 30) * u}px;--dx:${(Math.random() - .5) * 500 * u}px;--rot:${(Math.random() - .5) * 1080}deg;animation-duration:${7 + Math.random() * 5}s`;
+    stage.appendChild(l); setTimeout(() => l.remove(), 12500);
+  }, 2500, 6000);
+  // peixe pulando no lago (atrás do letreiro, nas bordas) e no laguinho de baixo
+  loop(() => {
+    const top = Math.random() < .5, u = U();
+    const x = top ? (Math.random() < .5 ? 60 + Math.random() * 90 : 880 + Math.random() * 100) : 140 + Math.random() * 740, y = top ? 270 : 1400;
+    const f = fxImg('fish', x, y, top ? 70 : 110, { parent: stage }); f.classList.add('jump'); f.style.zIndex = top ? 0 : 2;
+    const dir = Math.random() < .5 ? -1 : 1;
+    f.animate([
+      { transform: `translate(-50%,-50%) scale(${dir},1) rotate(40deg)`, opacity: 0 },
+      { transform: `translate(calc(-50% + ${dir * 40 * u}px),calc(-50% - ${(top ? 70 : 120) * u}px)) scale(${dir},1) rotate(-10deg)`, opacity: 1, offset: .45 },
+      { transform: `translate(calc(-50% + ${dir * 80 * u}px),-50%) scale(${dir},1) rotate(-60deg)`, opacity: 0 },
+    ], { duration: 1100, easing: 'ease-in-out' }).finished.then(() => f.remove());
+    if (!top) setTimeout(() => splash(x + dir * 80, y + 10, 140), 1000);
+  }, 4000, 9000);
+  // Lalau nadando: põe a cabeça pra fora no laguinho, ri e afunda
+  loop(() => {
+    if (walk) return;
+    const u = U(), x = 120 + Math.random() * 600, el = new Image(), w = 230;
+    el.className = 'swim'; el.src = A('sw_1');
+    el.style.cssText = `left:${x * u}px;top:${1292 * u}px;width:${w * u}px`;
+    if (Math.random() < .5) el.style.transform = 'scaleX(-1)';
+    stage.appendChild(el);
+    const seq = [1, 2, 3, 4, 5, 6, 5, 4, 7, 8, 3, 2, 1];
+    let i = 0;
+    const t = setInterval(() => {
+      if (++i >= seq.length) { clearInterval(t); el.remove(); return; }
+      el.src = A('sw_' + seq[i]);
+      if (seq[i] === 5 && seq[i - 1] === 4) play('splash');
+    }, 160);
+    el.animate([{ opacity: 0, translate: `0 ${30 * u}px` }, { opacity: 1, translate: '0 0', offset: .12 }, { opacity: 1, offset: .85 }, { opacity: 0, translate: `0 ${30 * u}px` }], { duration: 160 * seq.length });
+  }, 7000, 14000);
+}
+
+// ---- controles ----
+function setAuto(v) { auto = v; $('#auto').classList.toggle('on', v); }
+function setBet(i) { if (spinning) return; betIdx = Math.max(0, Math.min(BETS.length - 1, i)); play('click'); updHud(); }
+$('#spin').onclick = spin;
+$('#betUp').onclick = () => setBet(betIdx + 1);
+$('#betDown').onclick = () => setBet(betIdx - 1);
+$('#auto').onclick = () => { setAuto(!auto); play('click'); if (auto && !spinning) spin(); };
+function renderPay() {
+  const unit = BETS[betIdx] / 20;
+  $('#payTable').innerHTML = `<img src="${A('s_wild')}" alt=""><span><b>WILD</b> (rolos 2 a 4) substitui todos, menos o baú. Nas grátis toma o rolo inteiro.</span>
+    <img src="${A('s_chest')}" alt=""><span><b>BAÚ</b> 3 ou mais em qualquer lugar = Festa do Lalau (rodadas grátis)</span>
+    <img src="${A('w_walk1')}" alt=""><span><b>LALAU PASSEANDO</b> clique nele = ${WALK_SPINS} rodadas grátis</span>` +
+    SYMBOLS.slice(2).map(s => `<img src="${A('s_' + s.id)}" alt=""><span>3 <b>${money(s.pay[0] * unit)}</b> · 4 <b>${money(s.pay[1] * unit)}</b> · 5 <b>${money(s.pay[2] * unit)}</b><br><small>por caminho</small></span>`).join('');
+  $('#rtpInfo').textContent = `RTP ${(LALAU_RTP * 100).toFixed(1).replace('.', ',')}%.`;
+}
+const togg = () => { $('#tMusic').classList.toggle('on', musicOn); $('#tSfx').classList.toggle('on', sfxOn); };
+$('#menu').onclick = () => { play('click'); renderPay(); togg(); menuDlg.showModal(); };
+$('#tMusic').onclick = () => { musicOn = !musicOn; audio(); musicBus.gain.value = musicOn ? .6 : 0; musicOn ? startMusic() : stopMusic(); saveSom(); togg(); };
+$('#tSfx').onclick = () => { sfxOn = !sfxOn; saveSom(); togg(); play('click'); };
+$('#coins').onclick = () => {
+  if (spinning) return;
+  play('click');
+  $('#betList').innerHTML = BETS.map((b, i) => `<button class="${i === betIdx ? 'on' : ''}" data-i="${i}">${money(b)}</button>`).join('');
+  betDlg.showModal();
+};
+$('#betList').onclick = e => { const i = e.target.dataset?.i; if (i == null) return; setBet(+i); betDlg.close(); };
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !menuDlg.open && !betDlg.open && document.activeElement !== walker) { e.preventDefault(); spin(); } });
+// navegadores só liberam áudio após interação: música começa no primeiro toque
+document.addEventListener('pointerdown', () => { audio(); startMusic(); }, { once: true });
+
+// ---------- INICIALIZAÇÃO ----------
+cols.forEach((_, c) => renderCol(c, grid[c]));
+updHud(); setWin(0, false); ambient();
+fs = loadFs();
+if (fs && fs.n > 0) {
+  fsHud();
+  if (fs.walk) spin();
+  else fsOverlay(fs.n, 'FESTA DO LALAU', 'Você ainda tem rodadas grátis!', 'toque para continuar').then(() => spin());
+} else { fs = null; storeFs(null); }
+// RTP mudou no painel: aplica entre giros e redesenha a tabela
+rtpAoVivo('lalau', { get RTP() { return LALAU_RTP; }, FABRICA: LALAU_FABRICA, setRtp }, { ocupado: () => spinning, depois: renderPay });
+</script>
+</body>
+</html>
