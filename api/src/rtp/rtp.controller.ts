@@ -36,6 +36,9 @@ export const JOGOS: Record<string, { nome: string; fabrica: number }> = {
   hipopota: { nome: 'Hipopota do Job', fabrica: 0.965 },
   tigrinho: { nome: 'Tigrinho Bolado', fabrica: 0.965 },
   lalau: { nome: 'Jogo do Lalau', fabrica: 0.965 },
+  roleta: { nome: 'Roleta do Inferno', fabrica: 0.973 },
+  hell: { nome: 'Hell Slots', fabrica: 0.965 },
+  girafa: { nome: 'Girafa Doidona', fabrica: 0.965 },
 };
 
 // piso de 85% (mínimo exigido pela SPA pra jogo online); acima de 99% a casa perde dinheiro na prática
