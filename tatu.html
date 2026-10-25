@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Tatu na BR</title>
+<link rel="preload" as="image" href="assets/tatu/side.webp">
+<style>
+/* Tela 1024x1536 (a arte de assets/tatu/mockup.png, fatiada pelo tools/tatu_assets.py). Tudo dentro de #game é em px da
+   arte e o #game inteiro é escalado pro tamanho da tela. #world é a estrada (rola pra cima quando tem mais de 6 faixas). */
+:root{--g:#5dff5a;--y:#ffd54a;--r:#ff4d5e}
+*{box-sizing:border-box;margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+html,body{height:100%}
+body{background:#2a1406;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;color:#fff}
+body::before{content:"";position:fixed;inset:-40px;background:url(assets/tatu/side.webp) center/cover;filter:blur(24px) brightness(.35);z-index:-1}
+.stage{position:relative;width:min(100vw,100dvh * 1024 / 1536);aspect-ratio:1024/1536;overflow:hidden;background:#3a2414}
+#game{position:absolute;left:0;top:0;width:1024px;height:1536px;transform-origin:0 0}
+#game.shake{animation:shake .5s}
+.abs{position:absolute}
+#world{position:absolute;left:0;top:0;width:1024px;will-change:transform}
+#world img.bgp{position:absolute;left:0;width:1024px;display:block;pointer-events:none}
+.veh{position:absolute;left:0;top:0;background:0 0/100% 100% no-repeat;pointer-events:none;will-change:transform}
+.veh::before{content:"";position:absolute;right:96%;top:38%;width:110px;height:34%;border-radius:40px;opacity:var(--s,0);
+  background:linear-gradient(90deg,#fff0,#fff6);filter:blur(3px)}
+.veh i{position:absolute;width:16px;height:9px;border-radius:5px;top:3%;animation:siren .36s steps(1) infinite}
+.veh i+i{animation-delay:-.18s}
+@keyframes siren{0%{background:#ff2a2a;box-shadow:0 0 22px 10px #ff2a2acc}50%{background:#2a6bff;box-shadow:0 0 22px 10px #2a6bffcc}}
+.spr{position:absolute;pointer-events:none;background:center/contain no-repeat}
+.bump{position:absolute;background:0 0/100% 100% no-repeat;pointer-events:none;transition:filter .3s}
+.plq{position:absolute;display:grid;place-items:center;background:url(assets/tatu/plank.webp) 0 0/100% 100%;pointer-events:none;
+  font:900 31px/1 system-ui;color:#ffe9b0;-webkit-text-stroke:5px #3a1a06;paint-order:stroke fill;font-variant-numeric:tabular-nums;letter-spacing:-.5px;
+  transition:filter .3s,opacity .3s;filter:drop-shadow(0 4px 3px #0007)}
+.plq.next{animation:nextP .7s ease-in-out infinite alternate;filter:drop-shadow(0 0 16px #ffd54a) drop-shadow(0 0 4px #fff6);color:#fff27a}
+.plq.done{color:#b9ff8a;-webkit-text-stroke-color:#0d3a08;filter:drop-shadow(0 0 10px #5dff5a99) saturate(.6) brightness(1.15)}
+.plq.far{opacity:.75;filter:brightness(.8) drop-shadow(0 4px 3px #0007)}
+@keyframes nextP{from{scale:1}to{scale:1.09}}
+.skid{position:absolute;pointer-events:none;background:url(assets/tatu/skid.webp) center/100% 100% no-repeat;opacity:.55}
+.cone{position:absolute;pointer-events:none;background:url(assets/tatu/cone.webp) center/contain no-repeat}
+/* tatu: #tatu fica no pé; o quadro (.body) cresce pra cima a partir dele */
+#tatu{position:absolute;width:0;height:0;pointer-events:none}
+#tatu .body{position:absolute;background:center bottom/contain no-repeat;transform-origin:50% 100%}
+#tatu .body.breath{animation:breath 1.3s ease-in-out infinite}
+@keyframes breath{50%{scale:1.03 .97}}
+#tatu .shadow{position:absolute;left:-55px;top:-14px;width:110px;height:28px;border-radius:50%;background:radial-gradient(#000a,#0000 70%)}
+/* efeitos */
+.txt{position:absolute;pointer-events:none;white-space:nowrap;font:900 64px/1 system-ui;color:#fff27a;-webkit-text-stroke:9px #3a1a06;paint-order:stroke fill;
+  text-shadow:0 6px 0 #3a1a06,0 0 30px #ffb02a;translate:-50% -50%}
+.txt.g{color:#b9ff8a;-webkit-text-stroke-color:#0d3a08;text-shadow:0 6px 0 #0d3a08,0 0 30px #5dff5a}
+.bubble{position:absolute;pointer-events:none;padding:10px 20px;border-radius:26px;background:#fff;color:#c00;font:900 38px/1 system-ui;white-space:nowrap;
+  box-shadow:0 8px 20px #0008;border:5px solid #c00;translate:-50% -100%;animation:bubble .9s ease forwards}
+@keyframes bubble{0%{transform:scale(0) rotate(-10deg)}15%{transform:scale(1.2) rotate(4deg)}25%{transform:scale(1) rotate(0)}80%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
+.ring{position:absolute;pointer-events:none;border-radius:50%;border:10px solid #ffd54a;box-shadow:0 0 30px #ffd54a,inset 0 0 20px #ffd54a;translate:-50% -50%}
+.mote{position:absolute;width:7px;height:7px;border-radius:50%;background:#ffe2a0;opacity:0;pointer-events:none;filter:blur(1px);animation:mote linear infinite}
+@keyframes mote{0%{transform:translate(0,0);opacity:0}15%{opacity:.55}85%{opacity:.4}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+#glare{position:absolute;left:520px;top:-260px;width:800px;height:800px;border-radius:50%;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(#ffd27a55,#ff9a2a22 40%,#0000 70%);animation:glare 6s ease-in-out infinite alternate}
+@keyframes glare{to{opacity:.55;scale:1.12}}
+#vig{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .6s;box-shadow:inset 0 0 160px 40px #ff1a1aaa}
+#vig.on{opacity:1;animation:vig .8s ease-in-out infinite alternate}
+@keyframes vig{to{box-shadow:inset 0 0 220px 70px #ff1a1acc}}
+#flash{position:absolute;inset:0;pointer-events:none;opacity:0}
+.sign{position:absolute;pointer-events:none;background:center/contain no-repeat;translate:-50% -50%}
+.sign b{position:absolute;left:50%;bottom:-40px;translate:-50%;font:900 72px/1 system-ui;color:#fff;-webkit-text-stroke:10px #0d3a08;paint-order:stroke fill;
+  text-shadow:0 6px 0 #0d3a08,0 0 36px #5dff5a;white-space:nowrap;font-variant-numeric:tabular-nums}
+/* topo: saldo, recado, menu e som */
+.pill{position:absolute;display:flex;align-items:center;justify-content:center;gap:10px;background:#1c0d05d9;border:4px solid #c9873c;border-radius:30px;
+  box-shadow:0 6px 16px #0008,inset 0 0 14px #000a;font:800 24px system-ui;color:#f4d9a8}
+#balBox{left:18px;top:16px;height:64px;padding:0 22px 0 12px;z-index:30}
+#balBox i{width:42px;height:42px;background:url(assets/tatu/coin.webp) center/contain no-repeat}
+#balBox b{font:900 32px system-ui;color:#fff;font-variant-numeric:tabular-nums}
+#balBox.bump b{animation:bump .5s}
+#menu,#snd{top:16px;width:64px;height:64px;border-radius:50%;padding:0;font-size:30px;z-index:30}
+#menu{right:96px}#snd{right:18px}
+#snd.off{filter:grayscale(1) brightness(.7)}
+#msg{left:50%;translate:-50%;top:96px;height:52px;padding:0 26px;z-index:30;font:800 25px system-ui;color:#fff;white-space:nowrap;transition:opacity .3s}
+#msg:empty{opacity:0}
+/* painel de baixo: desenho da arte com botões por cima */
+#panel{position:absolute;left:0;top:1176px;width:1024px;height:360px;background:url(assets/tatu/panel.webp) 0 0/100% 100%;z-index:20}
+.risk{position:absolute;z-index:21;border-radius:16px;transition:transform .15s,filter .3s,box-shadow .3s}
+.risk.on{box-shadow:0 0 0 5px #fff27a,0 0 28px 8px #ffd54a;animation:riskOn 1s ease-in-out infinite alternate}
+@keyframes riskOn{to{box-shadow:0 0 0 5px #fff,0 0 40px 14px #ffd54a}}
+.risk:active{transform:scale(.92)}
+.risk.lock{filter:grayscale(.8) brightness(.55)}
+.risk.lock.on{filter:none}
+.pm{position:absolute;z-index:21;border-radius:12px}
+.pm:active{transform:scale(.9)}
+.pm:disabled{filter:grayscale(1) brightness(.6);background:#0006}
+#bet{position:absolute;z-index:21;display:grid;place-items:center;border-radius:12px;background:linear-gradient(#20100a,#2e1a0e);box-shadow:inset 0 3px 10px #000c;
+  font:900 38px system-ui;color:#fff;font-variant-numeric:tabular-nums}
+#bet.bump{animation:bump .4s}
+.chip{position:absolute;z-index:21;display:grid;place-items:center;border-radius:12px;background:linear-gradient(#7a4520,#552c12);border:4px solid #2a1608;
+  box-shadow:inset 0 2px 0 #b57a45,0 3px 0 #1a0c04;font:900 31px system-ui;color:#f6dcae}
+.chip.on{background:linear-gradient(#ffc04a,#e8740e);border-color:#ffe08a;color:#3a1a00;box-shadow:inset 0 2px 0 #fff3b0,0 0 18px #ffb02a}
+.chip:active{transform:scale(.92)}
+.chip:disabled{filter:grayscale(.7) brightness(.6)}
+.big{position:absolute;z-index:22;background:0 0/100% 100% no-repeat;transition:filter .25s,transform .1s}
+.big:active{transform:scale(.95) translateY(3px)}
+.big:disabled{filter:grayscale(1) brightness(.55);cursor:default}
+#go{background-image:url(assets/tatu/btnGo.webp)}
+#go.pulse{animation:goP 1.2s ease-in-out infinite}
+@keyframes goP{0%,60%,100%{transform:none;filter:none}30%{transform:scale(1.04);filter:brightness(1.15) drop-shadow(0 0 18px #ffb02a)}}
+#cash{background-image:url(assets/tatu/btnSacar.webp)}
+#cash.pulse{animation:cashP .55s ease-in-out infinite alternate}
+@keyframes cashP{to{transform:scale(1.04);filter:brightness(1.12) drop-shadow(0 0 22px #5dff5a)}}
+#cashVal{position:absolute;z-index:23;left:744px;top:1354px;translate:-50%;padding:6px 20px;border-radius:22px;background:#0d3a08;border:4px solid #b9ff8a;
+  font:900 30px system-ui;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap;box-shadow:0 0 18px #5dff5a99;pointer-events:none;transition:opacity .25s,transform .25s}
+#cashVal.hide{opacity:0;transform:translateY(16px) scale(.8)}
+#cashVal.bump{animation:bump .4s}
+/* ganho grande */
+.overlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:min(10px,1.2vh);background:radial-gradient(circle,#c8780ecc,#1a0a02f2);z-index:40;text-align:center;padding:16px;overflow:hidden}
+.overlay.show{display:flex;animation:fade .3s}
+.overlay .ray{position:absolute;width:200vmax;aspect-ratio:1;background:repeating-conic-gradient(#ffd54a2a 0 10deg,#0000 10deg 20deg);animation:rot 8s linear infinite;pointer-events:none}
+.overlay #ovTatu{position:relative;height:min(28vh,240px);aspect-ratio:1;background:center bottom/contain no-repeat}
+.overlay img{position:relative;width:min(380px,80vw);max-height:22vh;object-fit:contain;animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+.overlay h2{position:relative;font:900 min(9vw,5.5vh,50px)/1 system-ui;color:#fff27a;-webkit-text-stroke:6px #3a2a00;paint-order:stroke fill;text-shadow:0 5px 0 #3a2a00,0 0 24px #ffd54a}
+.overlay .amt{position:relative;font-size:min(12vw,7vh,64px);font-weight:900;text-shadow:0 0 24px var(--g);font-variant-numeric:tabular-nums}
+.overlay small{position:relative}
+.rain{position:fixed;top:-80px;z-index:41;pointer-events:none;width:46px;height:46px;background:url(assets/tatu/coin.webp) center/contain no-repeat;animation:fall linear forwards}
+dialog{margin:auto;max-width:min(92vw,440px);max-height:84vh;border:3px solid #c9873c;border-radius:16px;background:#1c0d05;color:#fff;padding:16px;font:14px/1.45 system-ui;box-shadow:0 0 30px #ffb02a44}
+dialog::backdrop{background:#000b}
+dialog h3{color:var(--y);text-align:center;margin-bottom:10px}
+dialog table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+dialog td,dialog th{padding:6px 4px;border-bottom:1px solid #ffffff14;text-align:left}
+dialog td:last-child,dialog th:last-child{text-align:right}
+dialog p{margin-top:8px;opacity:.9}
+dialog .close{margin:14px auto 0;display:block;padding:8px 26px;border-radius:20px;background:var(--y);color:#3a1a00;font-weight:900}
+.menuBtns button{display:block;width:100%;margin:8px 0 0;background:#ffffff14;color:#fff;border-radius:12px;padding:10px}
+@keyframes bump{50%{transform:scale(1.25);color:var(--y)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes fade{from{opacity:0}}
+@keyframes zoom{from{transform:scale(.2)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes shake{20%{translate:-14px 7px}40%{translate:14px -7px}60%{translate:-9px 4px}80%{translate:9px 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <h1 hidden>Tatu na BR</h1>
+  <div id="game">
+    <div id="world"></div>
+    <div id="glare"></div>
+    <div id="motes"></div>
+    <div id="vig"></div>
+    <div id="flash"></div>
+    <div class="pill" id="balBox"><i></i><b id="bal">R$ 0,00</b></div>
+    <div class="pill" id="msg" aria-live="polite"></div>
+    <button class="pill" id="menu" aria-label="Menu">☰</button>
+    <button class="pill" id="snd" aria-label="Som">🔊</button>
+    <div id="panel"></div>
+    <button class="risk" data-n="0" aria-label="Risco fácil"></button>
+    <button class="risk" data-n="1" aria-label="Risco médio"></button>
+    <button class="risk" data-n="2" aria-label="Risco difícil"></button>
+    <button class="risk" data-n="3" aria-label="Risco destemido"></button>
+    <button class="pm" id="bDown" aria-label="Diminuir aposta"></button>
+    <div id="bet">2,00</div>
+    <button class="pm" id="bUp" aria-label="Aumentar aposta"></button>
+    <button class="chip" data-v="5">5</button><button class="chip" data-v="10">10</button><button class="chip" data-v="25">25</button><button class="chip" data-v="50">50</button>
+    <button class="big" id="go" aria-label="Atravessar"></button>
+    <button class="big" id="cash" aria-label="Sacar"></button>
+    <div id="cashVal" class="hide">R$ 0,00</div>
+  </div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="ray"></div>
+  <div id="ovTatu"></div>
+  <img src="assets/tatu/sacou.webp" alt="">
+  <h2 id="ovTitle">PRÊMIO MÁXIMO!</h2>
+  <div class="amt" id="ovAmt">R$ 0,00</div>
+  <small>toque para continuar</small>
+</div>
+
+<dialog id="dlgList"><h3 id="listTitle"></h3><table id="listRows"></table><button class="close" onclick="dlgList.close()">Fechar</button></dialog>
+<dialog id="dlgRules">
+  <h3>Como jogar</h3>
+  <p>1. Escolha o <b>nível de risco</b> e a aposta, e toque em <b>ATRAVESSAR</b>: o tatu pula pra próxima faixa da BR.</p>
+  <p>2. Passou? O prêmio sobe pro multiplicador da placa. Aí você escolhe: <b>SACAR</b> ou atravessar mais uma faixa.</p>
+  <p>3. Foi atropelado, perde a aposta. Chegou do outro lado da estrada, saca sozinho o prêmio máximo.</p>
+  <table id="rulesTbl"></table>
+  <p>RTP (retorno médio): <b id="rtpInfo"></b>, igual em qualquer nível e qualquer faixa em que você sacar. Cada faixa é sorteada com o gerador criptográfico do navegador.</p>
+  <p>Teclado: <b>↑</b> ou <b>Enter</b> atravessa, <b>Espaço</b> saca.</p>
+  <button class="close" onclick="dlgRules.close()">Fechar</button>
+</dialog>
+<dialog id="dlgMenu">
+  <h3>Menu</h3>
+  <div class="menuBtns">
+    <button id="mMusic">🪗 Forró: ligado</button>
+    <button id="mHist">📊 Histórico</button>
+    <button id="mRules">❔ Como jogar</button>
+    <button id="mExit">🚪 Voltar ao lobby</button>
+  </div>
+  <button class="close" onclick="dlgMenu.close()">Fechar</button>
+</dialog>
+
+<script src="api/rtp.js"></script><!-- RTP do painel admin; sem API fica o de fábrica -->
+<script src="tatu.js"></script>
+<script src="rodada.js"></script>
+<script src="rtp-live.js"></script>
+<script src="vendor/socket.io.min.js"></script><script src="vendor/rrweb-record.min.js"></script><script src="ao-vivo.js"></script><script>aoVivo('tatu')</script><!-- admin assiste ao vivo -->
+<script>
+const { NIVEIS, mult, passa, fim, premio } = TT; // RTP: ler TT.RTP (muda ao vivo entre séries)
+const $ = s => document.querySelector(s), game = $('#game'), world = $('#world');
+const r2 = x => Math.round(x * 100) / 100;
+const brl = x => 'R$ ' + x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.random() * a.length | 0];
+const fx = m => m.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'x';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const START = 20, BETS = [1, 2, 5, 10, 25, 50];
+// tamanhos dos recortes (saída do tools/tatu_assets.py)
+const META = {"v_kombi":[233,158],"v_melancia":[299,146],"v_onibus":[269,146],"v_moto":[144,140],"v_hatch":[210,115],"v_pickup":[242,133],"v_carroca":[231,154],"v_lixo":[256,151],"v_policia":[195,128],"v_tanque":[268,151],"bump":[204,55],"bumpgold":[221,99],"plank":[169,76],"pothole":[181,120],"cone":[85,104],"barrier":[121,125],"dust":[176,132],"skid":[209,132],"coin":[106,111],"coins":[176,134],"sparkle":[140,143],"boom":[165,135],"t0":[162,215],"t1":[156,218],"t2":[148,212],"t3":[158,211],"t4":[194,206],"t5":[181,203],"t6":[173,192],"t7":[202,146],"t8":[184,205],"t9":[142,147],"t10":[199,167],"t11":[157,175],"t12":[190,224],"t13":[222,214],"t14":[221,212],"t15":[198,220],"logo":[470,232],"sacou":[440,227],"atropelou":[463,217],"btnSacar":[366,101],"btnGo":[381,100],"risk0":[116,129],"risk1":[116,131],"risk2":[115,130],"risk3":[124,134],"bigcoin":[115,122]};
+const A = n => `url(assets/tatu/${n}.webp)`;
+// pré-carrega os quadros (troca de quadro sem piscar)
+for (const n in META) { const i = new Image(); i.src = `assets/tatu/${n}.webp`; }
+
+// ---------- tela: o #game (1024x1536) acompanha o tamanho do palco ----------
+const W = 1024, H = 1536;
+let K = 1;
+function fit() { K = $('#stage').clientWidth / W; game.style.transform = `scale(${K})`; }
+addEventListener('resize', fit); fit();
+const place = (el, [x, y, w, h]) => Object.assign(el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+document.querySelectorAll('.risk').forEach((b, i) => place(b, [[55, 1258, 93, 100], [157, 1258, 90, 100], [257, 1258, 92, 100], [358, 1258, 94, 100]][i]));
+place($('#bDown'), [543, 1247, 67, 53]); place($('#bet'), [616, 1249, 251, 49]); place($('#bUp'), [876, 1247, 68, 53]);
+document.querySelectorAll('.chip').forEach((b, i) => place(b, [540 + i * 103.5, 1310, 96, 52]));
+place($('#go'), [66, 1382, 450, 118]); place($('#cash'), [536, 1382, 416, 118]);
+
+// ---------- saldo: no site usa a carteira do pai; sozinho usa créditos fictícios ----------
+const host = (() => { try { return window.parent !== window && window.parent.State && !DEMO ? window.parent : null; } catch { return null; } })();
+let balance = START;
+if (host) balance = host.State.balance;
+else try { balance = +localStorage.getItem('tatu.saldo') || START; } catch {}
+function save() {
+  if (host) { host.State.balance = balance; host.updateBalanceUI(false); return; }
+  try { localStorage.setItem('tatu.saldo', balance); } catch {}
+}
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let mine = load('tatu.mine', []);
+
+// ---------- som (sintetizado): trânsito, pulo, pneu cantando, buzina, batida, moedas, forró ----------
+let ac, sfxOn = load('tatu.sfx', true), musicOn = load('tatu.music', true), musicTimer, roadBed, tempo = 1;
+function audio() { ac ||= new AudioContext(); if (ac.state === 'suspended') ac.resume(); return ac; }
+const now = () => audio().currentTime;
+function out(pan = 0) { const a = audio(); if (!pan || !a.createStereoPanner) return a.destination; const p = a.createStereoPanner(); p.pan.value = pan; p.connect(a.destination); return p; }
+function tone(f, t, d, { type = 'sine', vol = .15, slide = 0, pan = 0 } = {}) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(out(pan)); o.start(t); o.stop(t + d + .05);
+}
+let noiseBuf;
+function noiseSrc() {
+  const a = audio();
+  if (!noiseBuf) { noiseBuf = a.createBuffer(1, a.sampleRate * 2, a.sampleRate); const ch = noiseBuf.getChannelData(0); let p = 0; for (let i = 0; i < ch.length; i++) { p = p * .7 + (Math.random() * 2 - 1) * .3; ch[i] = p * 2.2; } }
+  const s = a.createBufferSource(); s.buffer = noiseBuf; s.loop = true; return s;
+}
+function noise(t, d, vol = .15, freq = 1500, q = 1, { pan = 0, to = 0 } = {}) {
+  const a = audio(), s = noiseSrc(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = 'bandpass'; f.frequency.setValueAtTime(freq, t); if (to) f.frequency.exponentialRampToValueAtTime(to, t + d); f.Q.value = q;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  s.connect(f).connect(g).connect(out(pan)); s.start(t, Math.random()); s.stop(t + d + .05);
+}
+// ronco da estrada sempre ligado (bem baixo)
+function startRoad() {
+  if (roadBed || !sfxOn) return;
+  const a = audio(), s = noiseSrc(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = 'lowpass'; f.frequency.value = 260; g.gain.value = .05;
+  s.connect(f).connect(g).connect(a.destination); s.start(); roadBed = { s };
+}
+function stopRoad() { if (!roadBed) return; try { roadBed.s.stop(); } catch {} roadBed = null; }
+const SFX = {
+  click() { tone(900, now(), .05, { type: 'triangle', vol: .07 }); },
+  bet() { tone(660, now(), .08, { type: 'triangle', vol: .1 }); tone(990, now() + .07, .1, { type: 'triangle', vol: .1 }); },
+  jump() { const t = now(); tone(260, t, .2, { type: 'triangle', vol: .14, slide: 720 }); noise(t, .08, .08, 600, 1); },
+  land() { const t = now(); tone(120, t, .12, { vol: .2, slide: 60 }); noise(t, .1, .12, 400, 1); },
+  pass(k) { const t = now(), f = 523 * 2 ** (Math.min(k, 15) / 12); tone(f, t, .18, { type: 'triangle', vol: .12 }); tone(f * 1.5, t + .08, .25, { type: 'triangle', vol: .1 }); tone(f * 2, t + .16, .3, { type: 'sine', vol: .06 }); },
+  screech(pan) { const t = now(); noise(t, .55, .14, 3200, 6, { pan, to: 2200 }); tone(1900, t, .5, { type: 'square', vol: .018, slide: 1300, pan }); },
+  whoosh(pan) { const t = now(); noise(t, .45, .1, 500, 1.4, { pan, to: 1800 }); },
+  horn(pan) { const t = now(); [392, 494].forEach(f => tone(f, t, .55, { type: 'sawtooth', vol: .07, pan })); [392, 494].forEach(f => tone(f, t + .62, .3, { type: 'sawtooth', vol: .07, pan })); },
+  crash() { const t = now(); tone(90, t, .4, { vol: .45, slide: 35 }); noise(t, .6, .45, 900, .5); noise(t + .02, .35, .25, 3000, .8);
+    for (let i = 0; i < 7; i++) tone(rnd(2200, 4200), t + .05 + i * .04, .2, { type: 'triangle', vol: .04 }); },
+  boing() { const t = now(); tone(180, t, .35, { type: 'sine', vol: .14, slide: 90 }); },
+  tock() { const t = now(); tone(620, t, .07, { type: 'square', vol: .05 }); noise(t, .06, .1, 1200, 2); },
+  poof() { noise(now(), .3, .12, 700, .8, { to: 300 }); },
+  coin() { tone(1800 + Math.random() * 600, now(), .08, { type: 'square', vol: .025 }); },
+  cash() { const t = now(); [784, 988, 1175, 1568, 1976].forEach((f, i) => tone(f, t + i * .07, .25, { type: 'triangle', vol: .12 })); },
+  lose() { const t = now(); [392, 370, 349, 262].forEach((f, i) => tone(f, t + i * .2, i === 3 ? .6 : .2, { type: 'sawtooth', vol: .05 })); },
+  heart() { const t = now(); tone(70, t, .12, { vol: .3, slide: 45 }); tone(65, t + .16, .12, { vol: .22, slide: 45 }); },
+  fanfare() { const t = now(); [523, 659, 784, 1047, 784, 1047].forEach((f, i) => { tone(f, t + i * .12, .3, { type: 'sawtooth', vol: .05 }); tone(f / 2, t + i * .12, .3, { type: 'triangle', vol: .06 }); }); },
+};
+const play = (k, ...a) => { if (sfxOn) try { SFX[k](...a); } catch {} };
+// forró: zabumba, triângulo e sanfona (acordes) — acelera conforme o tatu avança
+const CHORDS = [[262, 330, 392], [196, 247, 294], [220, 262, 330], [175, 220, 262]];
+function startMusic() {
+  if (musicTimer || !musicOn || !sfxOn) return;
+  let step = 0;
+  (function tick() {
+    const t = now(), s = step % 16, ch = CHORDS[(step >> 4) % 4];
+    if (s === 0 || s === 6 || s === 10) tone(s ? 85 : 70, t, .3, { vol: .17, slide: 45 });            // zabumba
+    if (s === 4 || s === 12) noise(t, .08, .05, 2400, 1.2);                                             // bacalhau
+    noise(t, s % 2 ? .03 : .06, s % 4 === 2 ? .035 : .015, 7000, 3);                                    // triângulo
+    if (s % 4 === 2) ch.forEach(f => tone(f, t, .18, { type: 'sawtooth', vol: .018 }));                 // sanfona no contratempo
+    if (s === 0) tone(ch[0] / 2, t, .5, { type: 'triangle', vol: .05 });
+    step++;
+    musicTimer = setTimeout(tick, 115 / tempo);
+  })();
+}
+const stopMusic = () => { clearTimeout(musicTimer); musicTimer = null; };
+
+// ---------- efeitos ----------
+function div(cls, css = {}, parent = world) { const d = document.createElement('div'); d.className = cls; Object.assign(d.style, css); parent.append(d); return d; }
+const tween = (ms, fn, ease = k => k) => new Promise(res => { const t0 = performance.now(); (function f(t) { const k = Math.min(1, (t - t0) / ms); fn(ease(k), k); k < 1 ? requestAnimationFrame(f) : res(); })(t0); });
+const easeOut = k => 1 - (1 - k) ** 2, easeIn = k => k * k;
+/** sprite que aparece e some (keys = keyframes do WAAPI), centrado em (x, y) do mundo (ou da tela com parent=game) */
+function burst(name, x, y, w, keys, ms, { z = 300, parent = world, blend = '' } = {}) {
+  const [mw, mh] = META[name], h = w * mh / mw;
+  const e = div('spr', { left: x - w / 2 + 'px', top: y - h / 2 + 'px', width: w + 'px', height: h + 'px', backgroundImage: A(name), zIndex: z, mixBlendMode: blend }, parent);
+  e.animate(keys, { duration: ms, easing: 'ease-out', fill: 'forwards' }).onfinish = () => e.remove();
+  return e;
+}
+const dust = (x, y, w = 140, z = 300) => burst('dust', x, y, w, [{ transform: 'scale(.4)', opacity: .95 }, { transform: `scale(1.4) translate(${rnd(-20, 20)}px,-20px)`, opacity: 0 }], 700, { z });
+function popText(text, x, y, cls = '', parent = world, z = 400) {
+  const e = div('txt ' + cls, { left: x + 'px', top: y + 'px', zIndex: z }, parent); e.textContent = text;
+  e.animate([{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.25)', opacity: 1, offset: .15 }, { transform: 'scale(1)', offset: .3 }, { transform: 'translateY(-110px) scale(.9)', opacity: 0 }],
+    { duration: 1300, easing: 'ease-out', fill: 'forwards' }).onfinish = () => e.remove();
+}
+function ringAt(x, y, s, color = '#ffd54a', parent = world, z = 290) {
+  const r = div('ring', { left: x + 'px', top: y + 'px', width: s + 'px', height: s + 'px', borderColor: color, boxShadow: `0 0 30px ${color}`, zIndex: z }, parent);
+  r.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(2.2)', opacity: 0 }], { duration: 700, easing: 'ease-out', fill: 'forwards' }).onfinish = () => r.remove();
+}
+/** moedas pulando com gravidade a partir de (x, y) do mundo */
+function coinFountain(x, y, n = 8, spread = 260) {
+  for (let i = 0; i < n; i++) {
+    const s = rnd(34, 54), e = div('spr', { left: x - s / 2 + 'px', top: y - s / 2 + 'px', width: s + 'px', height: s + 'px', backgroundImage: A('coin'), zIndex: 420 });
+    const dx = rnd(-spread, spread), up = rnd(160, 320), ms = rnd(800, 1200);
+    e.animate([{ transform: 'translate(0,0) rotateY(0)' }, { transform: `translate(${dx * .5}px,${-up}px) rotateY(540deg)`, offset: .4, easing: 'ease-in' },
+      { transform: `translate(${dx}px,${rnd(60, 160)}px) rotateY(1080deg)`, opacity: 0 }], { duration: ms, easing: 'ease-out', fill: 'forwards' }).onfinish = () => e.remove();
+    setTimeout(() => play('coin'), i * 45);
+  }
+}
+/** moedas voando de (x, y) da tela até o saldo */
+function coinsToBalance(x, y, n = 10) {
+  for (let i = 0; i < n; i++) setTimeout(() => {
+    const e = div('spr', { left: x - 26 + 'px', top: y - 26 + 'px', width: '52px', height: '52px', backgroundImage: A('coin'), zIndex: 35 }, game);
+    const mx = rnd(-160, 160), my = rnd(-200, -60);
+    e.animate([{ transform: 'translate(0,0) scale(.5)' }, { transform: `translate(${mx}px,${my}px) scale(1.1)`, offset: .35 }, { transform: `translate(${60 - x}px,${48 - y}px) scale(.5)`, opacity: .8 }],
+      { duration: 900, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' }).onfinish = () => { e.remove(); play('coin'); bump($('#balBox')); };
+  }, i * 60);
+}
+function flash(color, ms = 600) { $('#flash').animate([{ background: color, opacity: 1 }, { background: color, opacity: 0 }], { duration: ms, easing: 'ease-out' }); }
+function shake() { game.classList.remove('shake'); game.offsetHeight; game.classList.add('shake'); }
+const bump = el => { el.classList.remove('bump'); el.offsetHeight; el.classList.add('bump'); };
+let msgT;
+const msg = (t, c = '#fff', ms = 0) => { const m = $('#msg'); m.textContent = t; m.style.color = c; clearTimeout(msgT); if (ms) msgT = setTimeout(() => m.textContent = '', ms); };
+/** letreiro grande (sacou / atropelou) no meio da tela */
+function sign(name, y, w, ms, amt) {
+  const [mw, mh] = META[name], e = div('sign', { left: '512px', top: y + 'px', width: w + 'px', height: w * mh / mw + 'px', backgroundImage: A(name), zIndex: 36 }, game);
+  if (amt) e.innerHTML = `<b>${amt}</b>`;
+  e.animate([{ transform: 'scale(0) rotate(-14deg)', opacity: 0 }, { transform: 'scale(1.2) rotate(4deg)', opacity: 1, offset: .12 }, { transform: 'scale(1) rotate(0)', offset: .2 },
+    { transform: 'scale(1.04) rotate(-2deg)', offset: .6 }, { transform: 'scale(.7) translateY(-30%)', opacity: 0 }], { duration: ms, easing: 'ease-out', fill: 'forwards' }).onfinish = () => e.remove();
+}
+
+// ---------- estrada: topo, N faixas e calçada empilhados; as faixas extras repetem as 4 de baixo da arte ----------
+const SEP = [212, 316, 433, 562, 688, 817, 945], TOP_H = SEP[0], SIDE_H = H - SEP[6];
+const LANE_H = SEP.slice(1).map((y, t) => y - SEP[t]);  // altura de cada faixa da arte (t = 0 em cima)
+const CX = 512, ZONE = 52;                               // o tatu atravessa no meio; meia largura dele pra batida
+const VEIC = { kombi: [205, 1], melancia: [285, .82], onibus: [275, .85], moto: [112, 1.25], hatch: [165, 1.08], pickup: [205, 1.05],
+  carroca: [190, .42], lixo: [240, .8], policia: [172, 1.22], tanque: [285, .8] };               // comprimento na tela e velocidade relativa
+const VNAMES = ['hatch', 'hatch', 'hatch', 'kombi', 'kombi', 'pickup', 'pickup', 'policia', 'moto', 'moto', 'carroca', 'onibus', 'melancia', 'lixo', 'tanque']; // carro pequeno é mais comum
+const RISK_SPEED = [.85, 1, 1.15, 1.32], RISK_DENS = [.8, 1, 1.15, 1.35];
+let lanes = [], worldH = H, camY = 0, camT = 0, nivel = load('tatu.nivel', 1);
+
+function buildWorld() {
+  world.innerHTML = '';
+  const N = NIVEIS[nivel].faixas;
+  // k = 1 é a faixa de baixo; as duas de cima são sempre as do topo da arte (encostam no cenário de cima)
+  const art = k => k > N - 2 ? N - k : [5, 4, 3, 2][(k - 1) % 4];
+  lanes = [null];
+  let y = TOP_H;
+  const order = [];
+  for (let k = N; k >= 1; k--) { const t = art(k), h = LANE_H[t]; order.push({ k, t, top: y, h }); y += h; }
+  worldH = y + SIDE_H;
+  world.style.height = worldH + 'px';
+  const bg = (src, top, h) => { const i = document.createElement('img'); i.className = 'bgp'; i.src = src; i.style.top = top + 'px'; i.style.height = h + 'px'; i.alt = ''; world.append(i); };
+  bg('assets/tatu/top.webp', 0, TOP_H);
+  bg('assets/tatu/side.webp', y, SIDE_H);
+  for (const L of order.reverse()) { // de baixo pra cima
+    bg(`assets/tatu/lane${L.t}.webp`, L.top, L.h);
+    const f = L.h / 128, z = 200 - L.k * 10;  // faixa mais de baixo fica na frente
+    const lane = { ...L, f, z, dir: L.k % 2 ? 1 : -1, cars: [], block: false, vmax: rnd(300, 470) * RISK_SPEED[nivel], next: rnd(0, 1.5), cones: [], stopFront: 0 };
+    lane.feet = L.top + L.h * .8;
+    const bw = 190 * f, bh = bw * META.bump[1] / META.bump[0];
+    lane.bump = div('bump', { left: CX - bw / 2 + 'px', top: L.top + L.h * .74 - bh / 2 + 'px', width: bw + 'px', height: bh + 'px', backgroundImage: A('bump'), zIndex: z });
+    const pw = 128 * f, ph = pw * META.plank[1] / META.plank[0];
+    lane.plq = div('plq', { left: CX - pw / 2 + 'px', top: L.top + L.h * .42 - ph / 2 + 'px', width: pw + 'px', height: ph + 'px', zIndex: z + 4, fontSize: 31 * f + 'px' });  // placa por cima dos carros da faixa
+    lanes[L.k] = lane;
+    // trânsito já rolando
+    for (let x = rnd(-200, 300); x < W + 200; x += rnd(520, 900)) addCar(lane, lane.dir > 0 ? x : W - x);
+  }
+  camY = camT = camMax();
+  paintPlaques();
+}
+const camMax = () => worldH - H;
+const sideFeet = () => worldH - SIDE_H + 172;
+const feetY = k => k ? lanes[k].feet : sideFeet();
+
+function addCar(lane, x, { name = pick(VNAMES), v = null, killer = false } = {}) {
+  const [len, sp] = VEIC[name], f = lane.f * .9, w = len * f, h = w * META['v_' + name][1] / META['v_' + name][0];
+  const el = div('veh', { width: w + 'px', height: h + 'px', backgroundImage: A('v_' + name), zIndex: lane.z + 3 });
+  if (name === 'policia') { el.innerHTML = '<i style="left:42%"></i><i style="left:54%"></i>'; }
+  const vmax = killer ? v : Math.min(760, lane.vmax * sp * rnd(.9, 1.1));
+  const car = { name, el, x, w, h, vmax, v: v ?? vmax, lane, killer, phase: rnd(0, 6), braked: false, passed: false,
+    bob: name === 'carroca' ? 4 : name === 'moto' ? 1 : 1.6 };
+  lane.cars.push(car);
+  return car;
+}
+
+// ---------- trânsito ----------
+let timeScale = 1, lastT = performance.now(), watch = null, whooshT = 0;
+const ACC = 380, DEC = 1500, GAP = 22;
+function stepLane(lane, dt, t) {
+  const d = lane.dir;
+  // nasce carro na entrada se tiver espaço
+  lane.next -= dt;
+  if (lane.next <= 0) {
+    lane.next = rnd(1.3, 3.8) / RISK_DENS[nivel];
+    const entry = d > 0 ? -160 : W + 160;
+    const last = lane.cars.reduce((m, c) => (!m || d * c.x < d * m.x ? c : m), null);
+    if (!last || d * (last.x - entry) - last.w / 2 > 200) addCar(lane, entry);
+  }
+  // segue o da frente; com a faixa bloqueada (tatu em cima) para antes do cone
+  lane.cars.sort((a, b) => d * (b.x - a.x));
+  for (let i = 0; i < lane.cars.length; i++) {
+    const c = lane.cars[i], front = c.x + d * c.w / 2;
+    let gap = Infinity;
+    if (i > 0) { const o = lane.cars[i - 1]; gap = d * ((o.x - d * o.w / 2) - front) - GAP; }
+    if (lane.block && d * (lane.stopFront - front) > -4) gap = Math.min(gap, d * (lane.stopFront - front));
+    const need = c.v * c.v / (2 * DEC) + c.v * .04;
+    if (gap < need) {
+      const hard = lane.block && gap === d * (lane.stopFront - front) && c.v > 220 && !c.braked;
+      if (hard) { c.braked = true; skid(c); }
+      c.v = Math.max(0, c.v - DEC * (hard || c.braked ? 1.6 : 1) * dt);
+      if (gap < 1) c.v = 0;
+    } else c.v = Math.min(c.vmax, c.v + ACC * dt);
+    const px = c.x;
+    c.x += d * c.v * dt;
+    // zum quando passa na frente do tatu (faixas vizinhas a ele)
+    if (!c.passed && d * (c.x - CX) > 0 && d * (px - CX) <= 0) {
+      c.passed = true;
+      if (Math.abs(lane.k - pos) <= 1 && t - whooshT > 260 && c.v > 250) { whooshT = t; play('whoosh', d * .6); }
+    }
+  }
+  lane.cars = lane.cars.filter(c => {
+    const gone = d > 0 ? c.x - c.w / 2 > W + 200 : c.x + c.w / 2 < -200;
+    if (gone) c.el.remove();
+    return !gone;
+  });
+}
+function skid(c) {
+  const L = c.lane, w = 120 * L.f, h = 46 * L.f, x = c.x - L.dir * c.w * .25;
+  const s = div('skid', { left: x - w / 2 + 'px', top: L.top + L.h * .78 + 'px', width: w + 'px', height: h + 'px', zIndex: L.z + 2, transform: `scaleX(${L.dir})` });
+  s.animate([{ opacity: .6 }, { opacity: .6, offset: .7 }, { opacity: 0 }], { duration: 4000 }).onfinish = () => s.remove();
+  if (Math.abs(L.top + L.h / 2 - camY - 700) < 700) play('screech', (c.x - CX) / W);
+  dust(c.x - L.dir * c.w * .4, L.top + L.h * .85, 90 * L.f, L.z + 4);
+}
+function render(t) {
+  world.style.transform = `translateY(${-camY}px)`;
+  for (let k = 1; k < lanes.length; k++) {
+    const L = lanes[k];
+    if (L.top - camY > H || L.top + L.h - camY < -150) continue; // fora da tela
+    const yb = L.top + L.h * .94;
+    for (const c of L.cars) {
+      const bob = Math.sin(t / 90 + c.phase) * c.bob * (c.v > 20 ? 1 : .3);
+      c.el.style.transform = `translate(${c.x - c.w / 2}px,${yb - c.h + bob}px) scaleX(${L.dir})`;
+      c.el.style.setProperty('--s', Math.max(0, (c.v - 300) / 500).toFixed(2));
+    }
+  }
+}
+function frame(t) {
+  const dt = Math.min(.05, (t - lastT) / 1000) * timeScale; lastT = t;
+  for (let k = 1; k < lanes.length; k++) stepLane(lanes[k], dt, t);
+  camY += (camT - camY) * Math.min(1, dt / timeScale * 4.5);
+  if (watch) watch(t);
+  render(t);
+  requestAnimationFrame(frame);
+}
+
+// ---------- tatu ----------
+const tatu = div('', {}, world); tatu.id = 'tatu';
+tatu.innerHTML = '<div class="shadow"></div><div class="body"></div>';
+const tBody = tatu.querySelector('.body'), tShadow = tatu.querySelector('.shadow');
+let tx = CX, ty = 0, tH = 1, tFrame = 0, tFlip = false;
+const T_H = 170, T_LANE_H = 128;
+/** desenha o quadro f do tatu com o pé em (x, y); `scale` vem da altura-alvo do quadro 0 */
+function tatuDraw(f = tFrame, { x = tx, y = ty, s = tH, flip = tFlip, rot = 0, sq = 1, origin = '50% 100%' } = {}) {
+  tFrame = f; tx = x; ty = y; tH = s; tFlip = flip;
+  const [mw, mh] = META['t' + f], k = s / META.t0[1], w = mw * k, h = mh * k;
+  Object.assign(tatu.style, { left: x + 'px', top: y + 'px' });
+  Object.assign(tBody.style, { width: w + 'px', height: h + 'px', left: -w / 2 + 'px', top: -h + 'px', backgroundImage: A('t' + f), transformOrigin: origin,
+    transform: `scaleX(${flip ? -1 : 1}) rotate(${flip ? -rot : rot}deg) scale(${1 / sq},${sq})` });
+}
+const laneScale = k => k ? T_LANE_H * lanes[k].f : T_H;
+function tatuZ(k) { tatu.style.zIndex = k ? lanes[k].z + 5 : 260; }
+// parado: respira, pisca e olha pros lados (nervoso quando tem carro perto)
+let idleT;
+function idle(on) {
+  clearTimeout(idleT); tBody.classList.toggle('breath', on);
+  if (!on) return;
+  (function loop() {
+    if (state === 'move' || state === 'end') return;
+    const near = lanes[pos + 1]?.cars.some(c => Math.abs(c.x - CX) < 260 && c.v > 100);
+    const f = near ? 3 : pick([0, 0, 0, 1, 2, 2, 3]);
+    tatuDraw(f, { flip: near ? Math.random() < .5 : f === 2 ? Math.random() < .5 : tFlip });
+    if (f === 1) idleT = setTimeout(() => { tatuDraw(0); idleT = setTimeout(loop, rnd(600, 1400)); }, 160);
+    else idleT = setTimeout(loop, f ? rnd(500, 900) : rnd(900, 2000));
+  })();
+}
+
+// ---------- estado ----------
+let state = 'idle', pos = 0, serie = null; // serie = { bet, n } enquanto tem aposta rolando
+let betIdx = load('tatu.bet', 1);
+function paintPlaques() {
+  const n = serie ? serie.n : nivel;
+  for (let k = 1; k < lanes.length; k++) {
+    const L = lanes[k], done = k <= pos && serie, next = k === pos + 1 && state !== 'end';
+    L.plq.textContent = done ? '✓ ' + fx(mult(n, k)) : fx(mult(n, k));
+    L.plq.className = 'plq' + (done ? ' done' : next ? ' next' : k > pos + 4 ? ' far' : '');
+    L.plq.style.opacity = serie && k === pos ? 0 : '';  // o tatu está em cima dela
+    L.bump.style.backgroundImage = A(next ? 'bumpgold' : 'bump');
+    L.bump.style.filter = next ? 'drop-shadow(0 0 12px #ffd54a)' : '';
+  }
+}
+function hud() {
+  $('#bal').textContent = brl(balance);
+  $('#bet').textContent = BETS[betIdx].toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  const live = !!serie, can = state === 'idle' || state === 'live';
+  document.querySelectorAll('.risk').forEach(b => { b.classList.toggle('on', +b.dataset.n === nivel); b.classList.toggle('lock', live); b.disabled = live && +b.dataset.n !== nivel; });
+  document.querySelectorAll('.chip').forEach(b => { b.classList.toggle('on', +b.dataset.v === BETS[betIdx]); b.disabled = live; });
+  $('#bDown').disabled = $('#bUp').disabled = live;
+  $('#go').disabled = !can; $('#go').classList.toggle('pulse', can);
+  const canCash = state === 'live' && pos > 0;
+  $('#cash').disabled = !canCash; $('#cash').classList.toggle('pulse', canCash);
+  $('#cashVal').classList.toggle('hide', !canCash);
+  if (serie) $('#cashVal').textContent = brl(premio(serie.bet, serie.n, pos));
+  // tensão: valendo 10x ou mais
+  const tense = serie && state !== 'end' && !fim(serie.n, pos) && mult(serie.n, pos + 1) >= 10;
+  $('#vig').classList.toggle('on', !!tense);
+  tempo = 1 + (serie ? Math.min(.6, pos / NIVEIS[serie.n].faixas * .6) : 0);
+}
+let heartT = setInterval(() => { if ($('#vig').classList.contains('on') && !document.hidden) play('heart'); }, 850);
+/** espera a faixa k ficar livre na frente do tatu (ninguém chega na zona durante o pulo) */
+function clearFor(k, ms) {
+  const L = lanes[k];
+  return L.cars.every(c => {
+    const d = L.dir, front = c.x + d * c.w / 2, rear = c.x - d * c.w / 2;
+    if (d * (rear - (CX + d * ZONE)) > 0) return true;             // já passou
+    const dist = d * ((CX - d * ZONE) - front);                      // quanto falta pra encostar
+    return dist > c.v * ms / 1000 + 30;
+  });
+}
+const until = test => new Promise(res => { const t0 = performance.now(); (function f() { test(performance.now() - t0) ? res() : requestAnimationFrame(f); })(); });
+const camFor = k => Math.max(0, Math.min(camMax(), feetY(k) - 790));
+
+async function atravessar() {
+  if (state !== 'idle' && state !== 'live') return;
+  if (!serie) {
+    const bet = BETS[betIdx];
+    if (balance < bet) {
+      if (host && balance < BETS[0]) { msg('Saldo acabou, faça um depósito', '#ff8a8a', 3000); setTimeout(() => host.openModal('modal-deposit'), 1000); }
+      else if (!host && balance < BETS[0]) { balance = START; save(); msg('Créditos recarregados: ' + brl(START), '#fff', 2500); }
+      else msg('Saldo insuficiente, diminua a aposta', '#ff8a8a', 2500);
+      return hud();
+    }
+    balance = r2(balance - bet); save(); play('bet'); bump($('#balBox'));
+    serie = { bet, n: nivel }; pos = 0;
+  }
+  const n = serie.n, alvo = pos + 1, ok = passa(n), L = lanes[alvo];
+  state = 'move'; idle(false); hud();
+  msg(`Valendo ${brl(premio(serie.bet, n, alvo))}!`, '#fff27a');
+  // espera uma brecha no trânsito (olhando pros lados)
+  tatuDraw(2);
+  let look = 0;
+  await until(ms => { if (ms - look > 350) { look = ms; tatuDraw(ms % 700 < 350 ? 2 : 3, { flip: !tFlip }); } return clearFor(alvo, 520); });
+  if (ok) { L.block = true; L.stopFront = CX - L.dir * (ZONE + 70); }
+  await hop(pos, alvo);
+  if (ok) {
+    pos = alvo; play('pass', pos); paintPlaques();
+    placeCone(L);
+    ringAt(CX, L.top + L.h * .74, 150 * L.f);
+    popText('+' + fx(mult(n, pos)), CX, L.top - 30, 'g');
+    coinFountain(CX, L.feet - 60, 5, 180);
+    bump($('#cashVal'));
+    tatuDraw(pick([12, 15]));
+    if (fim(n, pos)) { state = 'live'; return sacar(true); }
+    state = 'live'; hud();
+    msg(`Sacar ${brl(premio(serie.bet, n, pos))} ou arriscar ${fx(mult(n, pos + 1))}?`, '#b9ff8a');
+    setTimeout(() => { if (state === 'live') { tatuDraw(0); idle(true); } }, 650);
+  } else atropelado(alvo);
+}
+
+async function hop(de, para) {
+  const y0 = feetY(de), y1 = feetY(para), s0 = laneScale(de), s1 = laneScale(para), arc = 80 * (lanes[para].f);
+  tatuZ(para); camT = camFor(para);
+  tatuDraw(7, { sq: .85 }); play('jump'); dust(CX, y0 - 10, 130, (de ? lanes[de].z : 250) + 6);
+  await sleep(70);
+  await tween(430, (k) => {
+    const y = y0 + (y1 - y0) * k - Math.sin(k * Math.PI) * arc;
+    tatuDraw(6, { y, s: s0 + (s1 - s0) * k, sq: 1 + Math.sin(k * Math.PI) * .08, rot: (k - .5) * 10 });
+    tShadow.style.transform = `translateY(${(y0 + (y1 - y0) * k) - y}px) scale(${1 - Math.sin(k * Math.PI) * .45})`;
+  });
+  tShadow.style.transform = '';
+  play('land'); dust(CX, y1 - 6, 120 * lanes[para].f, lanes[para].z + 6);
+  await tween(160, k => tatuDraw(0, { sq: 1 - Math.sin(k * Math.PI) * .18 }));
+}
+
+function placeCone(L) {
+  const w = 54 * L.f, h = w * META.cone[1] / META.cone[0], x = CX - L.dir * (ZONE + 40);
+  const c = div('cone', { left: x - w / 2 + 'px', top: L.top + L.h * .86 - h + 'px', width: w + 'px', height: h + 'px', zIndex: L.z + 4 });
+  c.animate([{ transform: 'translateY(-160px) rotate(-30deg)', opacity: 0 }, { transform: 'translateY(0) rotate(0)', opacity: 1, offset: .6 }, { transform: 'translateY(-18px) rotate(6deg)', offset: .8 }, { transform: 'none' }],
+    { duration: 520, easing: 'ease-in' });
+  setTimeout(() => play('tock'), 300);
+  L.cones.push(c);
+}
+
+async function atropelado(k) {
+  const L = lanes[k], d = L.dir;
+  // se ninguém vem logo, manda um apressado lá do começo da faixa
+  const vindo = L.cars.some(c => { const dist = d * ((CX - d * ZONE) - (c.x + d * c.w / 2)); return dist > 0 && dist < c.v * 1.1 + 40; });
+  if (!vindo) addCar(L, d > 0 ? -220 : W + 220, { name: pick(['onibus', 'melancia', 'tanque', 'lixo', 'kombi', 'pickup', 'hatch', 'policia']), v: 980, killer: true });
+  tatuDraw(3, { flip: d > 0 });
+  let avisou = false, carro = null;
+  await new Promise(res => {
+    watch = () => {
+      for (const c of L.cars) {
+        const front = c.x + d * c.w / 2, rear = c.x - d * c.w / 2, dist = d * ((CX - d * ZONE) - front);
+        if (d * (rear - (CX + d * ZONE)) > 0) continue;
+        if (!avisou && dist < c.v * .55) {
+          avisou = true; play('horn', -d * .5); timeScale = .35;
+          tatuDraw(8, { flip: d > 0 });
+          const b = div('bubble', { left: c.x - d * c.w * .1 + 'px', top: L.top - 10 + 'px', zIndex: 450 }); b.textContent = 'BIIIII!'; setTimeout(() => b.remove(), 1000);
+        }
+        if (dist <= 0) { carro = c; watch = null; return res(); }
+      }
+    };
+  });
+  timeScale = 1;
+  play('crash'); shake(); flash('radial-gradient(circle,#ff2a3a88,#ff2a3a00 70%)', 700);
+  burst('boom', CX - d * 30, L.feet - 70 * L.f, 230 * L.f, [{ transform: 'scale(.2) rotate(0)', opacity: 1 }, { transform: 'scale(1.3) rotate(25deg)', opacity: 1, offset: .4 }, { transform: 'scale(1.6) rotate(40deg)', opacity: 0 }], 650, { z: 460 });
+  burst('sparkle', CX, L.feet - 90 * L.f, 160 * L.f, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.5)', opacity: 0 }], 500, { z: 461 });
+  skid(carro);
+  // vira bolinha e sai rolando quicando no sentido do carro
+  const x0 = CX, x1 = CX + d * 330, s = laneScale(k) * .9;
+  tatu.style.zIndex = 470;
+  tatuDraw(9, { s, origin: '50% 55%' });
+  await tween(1000, (q) => {
+    const bounce = Math.abs(Math.sin(q * Math.PI * 2.5)) * 110 * (1 - q) * L.f;
+    tatuDraw(q < .15 ? 9 : 10, { x: x0 + (x1 - x0) * easeOut(q), y: L.feet - bounce, s, rot: d * q * 900, flip: d < 0, origin: '50% 55%' });
+    if (q > .2 && Math.random() < .08) dust(tx, L.feet - 10, 70 * L.f, L.z + 6);
+  });
+  play('boing');
+  tatuDraw(11, { x: x1, y: L.feet, s, origin: '50% 55%' });
+  tBody.animate([{ rotate: '-8deg' }, { rotate: '8deg' }], { duration: 260, iterations: 6, direction: 'alternate', easing: 'ease-in-out' });
+  sign('atropelou', 640, 640, 2200);
+  play('lose');
+  const perdido = serie.bet, feitos = pos, n = serie.n;
+  reportarRodada('tatu', perdido, 0);
+  mine.unshift({ bet: perdido, n, faixas: feitos, pay: 0 }); mine = mine.slice(0, 30); store('tatu.mine', mine);
+  msg(feitos ? `Perdeu ${brl(premio(perdido, n, feitos))} na faixa ${k} 😵` : `Atropelado na 1ª faixa! Tenta de novo`, '#ff8a8a');
+  state = 'end'; hud();
+  await sleep(2200);
+  resetRound();
+}
+
+async function sacar(auto = false) {
+  if (state !== 'live' || !serie || !pos) return;
+  const { bet, n } = serie, feitos = pos, pay = premio(bet, n, feitos), m = mult(n, feitos);
+  state = 'end'; idle(false);
+  balance = r2(balance + pay); save(); reportarRodada('tatu', bet, pay);
+  mine.unshift({ bet, n, faixas: feitos, pay }); mine = mine.slice(0, 30); store('tatu.mine', mine);
+  hud();
+  play('cash');
+  msg(`Sacou ${brl(pay)}! 💰`, '#b9ff8a');
+  const L = lanes[feitos], sy = L.feet - camY;
+  coinFountain(CX, L.feet - 80, 12, 300);
+  coinsToBalance(CX, sy - 80, 12);
+  sign('sacou', 560, 600, 2300, brl(pay));
+  // festa do tatu
+  let i = 0; const dance = setInterval(() => { tatuDraw([12, 13, 15, 12, 13, 14][i++ % 6]); tBody.animate([{ translate: '0 0' }, { translate: '0 -26px' }, { translate: '0 0' }], { duration: 260, easing: 'ease-out' }); }, 280);
+  if (auto || m >= 10) { await sleep(500); bigWin(pay, auto ? 'CHEGOU DO OUTRO LADO!' : 'GANHO GRANDE!'); }
+  await sleep(2300);
+  clearInterval(dance);
+  resetRound();
+}
+
+function bigWin(pay, title) {
+  const ov = $('#overlay');
+  $('#ovTitle').textContent = title;
+  play('fanfare');
+  let i = 0; clearInterval(ov.d); ov.d = setInterval(() => { $('#ovTatu').style.backgroundImage = A('t' + [12, 13, 15, 14][i++ % 4]); }, 220);
+  ov.classList.add('show');
+  const t0 = performance.now(); (function up(t) { const k = Math.min(1, (t - t0) / 1500); $('#ovAmt').textContent = brl(pay * k); if (k < 1) requestAnimationFrame(up); })(t0);
+  for (let j = 0; j < 40; j++) {
+    const c = document.createElement('div'); c.className = 'rain';
+    Object.assign(c.style, { left: Math.random() * 100 + 'vw', animationDuration: rnd(1.6, 3.2) + 's', animationDelay: rnd(0, 1.2) + 's' });
+    document.body.append(c); setTimeout(() => c.remove(), 4600);
+  }
+  clearTimeout(ov.t); ov.t = setTimeout(closeOv, 4500);
+}
+function closeOv() { const ov = $('#overlay'); ov.classList.remove('show'); clearInterval(ov.d); }
+$('#overlay').onclick = closeOv;
+
+/** volta pro começo: libera as faixas, câmera desce e o tatu reaparece na calçada */
+async function resetRound() {
+  state = 'end';
+  dust(tx, ty - 40, 180, 480); play('poof');
+  tBody.animate([{ opacity: 1, transform: tBody.style.transform }, { opacity: 0, transform: 'scale(.3)' }], { duration: 250, fill: 'forwards' });
+  for (let k = 1; k < lanes.length; k++) {
+    const L = lanes[k]; L.block = false; L.cars.forEach(c => c.braked = false);
+    L.cones.forEach((c, i) => setTimeout(() => { c.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(-40px) scale(.6)' }], { duration: 300, fill: 'forwards' }).onfinish = () => c.remove(); }, i * 60));
+    L.cones = [];
+  }
+  serie = null; pos = 0; camT = camMax(); paintPlaques(); hud();
+  await sleep(camY < camMax() - 10 ? 750 : 350);
+  tBody.getAnimations().forEach(a => a.cancel());
+  tatuZ(0); tatuDraw(0, { x: CX, y: sideFeet(), s: T_H, flip: false });
+  dust(CX, sideFeet() - 20, 200, 270); play('poof');
+  tBody.animate([{ transform: 'scale(.2)' }, { transform: 'scale(1.15)', offset: .6 }, { transform: 'scale(1)' }], { duration: 380, easing: 'ease-out' });
+  state = 'idle'; paintPlaques(); hud(); idle(true);
+  msg('Escolha o risco e atravesse!', '#fff', 2500);
+}
+
+// ---------- cenário vivo: poeira no ar e brilho no logo ----------
+for (let i = 0; i < 16; i++) {
+  const m = div('mote', { left: rnd(0, 1024) + 'px', top: rnd(150, 1150) + 'px', animationDuration: rnd(7, 14) + 's', animationDelay: -rnd(0, 14) + 's' }, $('#motes'));
+  m.style.setProperty('--dx', rnd(-260, 260) + 'px'); m.style.setProperty('--dy', rnd(-200, 60) + 'px');
+}
+setInterval(() => {
+  if (document.hidden || camY > 150) return;
+  burst('sparkle', rnd(330, 700), rnd(20, 180), rnd(40, 70), [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(90deg)', opacity: 1 }, { transform: 'scale(0) rotate(180deg)', opacity: 0 }], 900, { z: 5 });
+}, 650);
+
+// ---------- controles ----------
+$('#go').onclick = () => { play('click'); atravessar(); };
+$('#cash').onclick = () => { play('click'); sacar(); };
+const setBet = i => { if (serie) return; betIdx = Math.max(0, Math.min(BETS.length - 1, i)); store('tatu.bet', betIdx); play('click'); bump($('#bet')); hud(); };
+$('#bDown').onclick = () => setBet(betIdx - 1);
+$('#bUp').onclick = () => setBet(betIdx + 1);
+document.querySelectorAll('.chip').forEach(b => b.onclick = () => setBet(BETS.indexOf(+b.dataset.v)));
+document.querySelectorAll('.risk').forEach(b => b.onclick = () => {
+  const n = +b.dataset.n;
+  if (serie || state !== 'idle' || n === nivel) return;
+  nivel = n; store('tatu.nivel', n); play('click');
+  world.animate([{ opacity: 1 }, { opacity: .2 }, { opacity: 1 }], { duration: 500 });
+  setTimeout(() => { buildWorld(); world.append(tatu); tatuZ(0); tatuDraw(0, { x: CX, y: sideFeet(), s: T_H }); hud(); }, 250);
+  msg(`${NIVEIS[n].nome}: ${NIVEIS[n].faixas} faixas, até ${fx(mult(n, NIVEIS[n].faixas))}`, '#fff27a', 2500);
+});
+function setSfx(on) {
+  sfxOn = on; store('tatu.sfx', on); $('#snd').classList.toggle('off', !on); $('#snd').textContent = on ? '🔊' : '🔇';
+  if (on) { startRoad(); startMusic(); } else { stopRoad(); stopMusic(); }
+}
+$('#snd').onclick = () => { setSfx(!sfxOn); play('click'); };
+$('#snd').classList.toggle('off', !sfxOn); $('#snd').textContent = sfxOn ? '🔊' : '🔇';
+$('#menu').onclick = () => { play('click'); menuTxt(); dlgMenu.showModal(); };
+function menuTxt() { $('#mMusic').textContent = `🪗 Forró: ${musicOn ? 'ligado' : 'desligado'}`; }
+$('#mMusic').onclick = () => { musicOn = !musicOn; store('tatu.music', musicOn); musicOn ? startMusic() : stopMusic(); menuTxt(); };
+$('#mRules').onclick = () => { dlgMenu.close(); rulesTxt(); dlgRules.showModal(); };
+$('#mHist').onclick = () => {
+  dlgMenu.close();
+  $('#listTitle').textContent = '📊 Suas últimas travessias';
+  $('#listRows').innerHTML = mine.length ? mine.slice(0, 12).map(b => `<tr><td>${brl(b.bet)} · ${NIVEIS[b.n]?.nome ?? ''} · ${b.faixas} faixa${b.faixas === 1 ? '' : 's'}</td><td style="color:${b.pay ? '#9dff5c' : '#ff8a8a'}">${b.pay ? '+' + brl(b.pay) : 'atropelado'}</td></tr>`).join('') : '<tr><td>Nenhuma travessia ainda</td></tr>';
+  dlgList.showModal();
+};
+function sair() {
+  if (state === 'move') return alert('Espere o tatu terminar de atravessar antes de sair.');
+  if (serie && pos && state === 'live') sacar(); // prêmio garantido vai pro saldo
+  host ? host.closeGame() : (parent !== window ? parent.closeGame() : (location.href = 'index.html'));
+}
+$('#mExit').onclick = sair;
+document.addEventListener('keydown', e => {
+  if (document.querySelector('dialog[open]') || e.repeat) return; // segurar a tecla não vira várias apostas
+  if (e.code === 'Enter' && e.target.closest('button')) return;    // Enter num botão já é o clique dele
+  if (e.code === 'ArrowUp' || e.code === 'Enter') { e.preventDefault(); atravessar(); }
+  if (e.code === 'Space') { e.preventDefault(); sacar(); }
+});
+document.addEventListener('pointerdown', () => { audio(); startRoad(); startMusic(); }, { once: true });
+// fechar o jogo (iframe) com faixas vencidas: saca sozinho
+addEventListener('pagehide', () => { if (serie && pos && state === 'live') sacar(); });
+// RTP mudou no painel: aplica entre séries (as placas são redesenhadas com os multiplicadores novos)
+const rtpTxt = r => (r * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+function rulesTxt() {
+  $('#rtpInfo').textContent = rtpTxt(TT.RTP);
+  $('#rulesTbl').innerHTML = '<tr><th>Risco</th><th>Faixas</th><th>Chance por faixa</th><th>Prêmio máximo</th></tr>' +
+    NIVEIS.map((v, n) => `<tr><td>${v.nome}</td><td>${v.faixas}</td><td>${Math.round(v.p * 100)}%</td><td>${fx(mult(n, v.faixas))}</td></tr>`).join('');
+}
+rtpAoVivo('tatu', TT, { ocupado: () => !!serie || state !== 'idle', depois: () => { paintPlaques(); rulesTxt(); } });
+
+buildWorld(); world.append(tatu);
+tatuZ(0); tatuDraw(0, { x: CX, y: sideFeet(), s: T_H });
+hud(); idle(true);
+msg('Escolha o risco e atravesse!', '#fff', 3000);
+requestAnimationFrame(t => { lastT = t; frame(t); });
+</script>
+</body>
+</html>
